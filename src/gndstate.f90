@@ -164,6 +164,8 @@ Subroutine gndstate
             If (rank .Eq. 0) Then
                Write (60,*)
                Write (60, '("Reached self-consistent loops maximum")')
+               Write (100,*)
+               Write (100, '("Warning(gndstate): Reached self-consistent loops maximum")')
             End If
             tlast = .True.
          End If
@@ -316,7 +318,7 @@ Subroutine gndstate
                call writepchgs(69,input%groundstate%lmaxvr)
                call flushifc(69)
             end if
- ! symmetrise the density
+        ! symmetrise the density
             Call symrf (input%groundstate%lradstep, rhomt, rhoir)
         ! symmetrise the magnetisation
             If (associated(input%groundstate%spin)) Call symrvf &
@@ -620,7 +622,7 @@ Subroutine gndstate
             Write (60, '(" total", T40, ": ", F12.2)') timetot
             Write (60,*)
             Write (60, '("+-------------------------+")')
-            Write (60, '("| EXCITING helium stopped |")')
+            Write (60, '("| EXCITING Lithium stopped |")')
             Write (60, '("+-------------------------+")')
  ! close the TOTENERGY.OUT file
             Close (61)

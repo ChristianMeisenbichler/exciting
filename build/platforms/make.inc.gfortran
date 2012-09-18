@@ -1,5 +1,5 @@
 AR=xiar
-F90=gfortran  
+F90=gfortran
 CXX=gcc
 CC=$(CXX)
 OPENMPFLAG= -openmp
@@ -10,7 +10,7 @@ F77_OPTS = -O3
 LIB_ARP =libarpack.a
 LIB_LPK =liblapack.a libblas.a 
 LIB_FFT = fftlib.a
-LIB_BZINT=libbzint.a
+LIB_BZINT= libbzint.a
 
 LIBS=  $(LIB_ARP) $(LIB_LPK) $(LIB_FFT) $(LIB_BZINT) 
 
@@ -24,8 +24,8 @@ MPIF90_OPTS=$(F90_OPTS) $(CPP_ON_OPT) -DMPI -DMPIRHO -DMPISEC
 
 F77MT=$(F77)
 F90MT=$(F90)
-SMP_LIBS=$(LIB_LPK)   $(LIB_ARP) $(LIB_LPK) $(LIB_FFT) $(LIB_BZINT) -lpthread
-SMPF90_OPTS=$(F90_OPTS) 
+SMP_LIBS=$(LIBS)
+SMPF90_OPTS=-fopenmp $(F90_OPTS) 
 SMPF77_OPTS=$(SMPF90_OPTS) 
 MPIF77MT=$(MPIF77)
 MPIF90MT=$(MPIF90)
