@@ -79,6 +79,9 @@ Subroutine init1
          nkpt = input%properties%bandstructure%plot1d%path%steps
          If (allocated(vkl)) deallocate (vkl)
          Allocate (vkl(3, nkpt))
+         If (allocated(wkpt)) deallocate (wkpt)
+         Allocate(wkpt(nkpt))
+         wkpt=1
          If (allocated(vkc)) deallocate (vkc)
          Allocate (vkc(3, nkpt))
          Do ik = 1, nkpt

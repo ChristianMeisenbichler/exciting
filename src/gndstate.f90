@@ -227,7 +227,7 @@ Subroutine gndstate
             Allocate (evecfv(nmatmax, nstfv, nspnfv))
             Allocate (evecsv(nstsv, nstsv))
         ! solve the first- and second-variational secular equations
-            Call seceqn (ik, evalfv, evecfv, evecsv)
+            Call seceqn (ik, evalfv, evecfv, evecsv,3)
 !#ifdef _LIBAPW_
 !            call lapw_get_evec(ik, evecfv, evecsv)
 !#endif
@@ -266,6 +266,12 @@ Subroutine gndstate
 
 #ifdef _LIBAPW_
   call libapw_rhomag
+  If (rank .Eq. 0) Then
+       Do ik = 1, nkpt
+          !write the occupancies to file
+          Call putoccsv (ik, occsv(:, ik))
+        End Do
+  End If
 #else  
          
 #ifdef MPIRHO

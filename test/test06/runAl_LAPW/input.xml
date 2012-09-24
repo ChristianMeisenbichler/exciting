@@ -9,7 +9,7 @@
 <basevect>  1.0  0.0  1.0</basevect>
 <basevect>  0.0  1.0  1.0</basevect>
 </crystal>
-<species speciesfile="Al.xml">
+<species speciesfile="Al_LAPW.xml">
 <atom coord="0.0  0.0  0.0" bfcmt="0.0  0.0  0.0"></atom>
 </species>
 </structure>

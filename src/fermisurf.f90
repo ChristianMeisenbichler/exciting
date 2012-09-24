@@ -12,6 +12,8 @@ Subroutine fermisurf
       Use modmain
       Use modinput
       Use FoX_wxml
+      Use mod_libapw
+
       Implicit None
   ! local variables
       Integer :: ik, jk, ist, i
@@ -45,7 +47,9 @@ Subroutine fermisurf
   ! compute the Hamiltonian radial integrals
       Call hmlrad
   ! begin parallel loop over reduced k-points set
-
+#ifdef _LIBAPW_
+	     call libapw_seceqn_init
+#endif
       Do ik = 1, nkpt
          Allocate (evalfv(nstfv, nspnfv))
          Allocate (evecfv(nmatmax, nstfv, nspnfv))
@@ -55,7 +59,7 @@ Subroutine fermisurf
          Write (*, '("Info(fermisurf): ", I6, " of ", I6, " k-points")') ik, nkpt
 
      ! solve the first- and second-variational secular equations
-         Call seceqn (ik, evalfv, evecfv, evecsv)
+         Call seceqn (ik, evalfv, evecfv, evecsv,1)
          Deallocate (evalfv, evecfv, evecsv)
      ! end loop over reduced k-points set
       End Do

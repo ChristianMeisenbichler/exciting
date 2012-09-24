@@ -12,7 +12,7 @@ Subroutine bandstr
       Use modinput
       Use modmain
       Use FoX_wxml
-
+      Use mod_libapw
   !   requred by GW task="band"
       Use modgw,  only: nkp2, kvecs2, eks2
 
@@ -85,6 +85,9 @@ Subroutine bandstr
   !$OMP PRIVATE(l,m,lm,sum)
   !$OMP DO
 #endif
+#ifdef _LIBAPW_
+	     call libapw_seceqn_init
+#endif
       Do ik = 1, nkpt
          Allocate (evalfv(nstfv, nspnfv))
          Allocate (evecfv(nmatmax, nstfv, nspnfv))
@@ -94,7 +97,9 @@ Subroutine bandstr
         & ik, nkpt
      !$OMP END CRITICAL
      ! solve the first- and second-variational secular equations
-         Call seceqn (ik, evalfv, evecfv, evecsv)
+
+         Call seceqn (ik, evalfv, evecfv, evecsv,1)
+          write(*,*)evalsv(:,ik)
          Do ist = 1, nstsv
         ! subtract the Fermi energy
             e (ist, ik) = evalsv (ist, ik) - efermi

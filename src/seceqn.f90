@@ -9,7 +9,7 @@
 ! !ROUTINE: seceqn
 !
 !
-Subroutine seceqn (ik, evalfv, evecfv, evecsv)
+Subroutine seceqn (ik, evalfv, evecfv, evecsv,flags)
   ! !USES:
       Use modinput
       Use modmain
@@ -23,6 +23,7 @@ Subroutine seceqn (ik, evalfv, evecfv, evecsv)
   !   evalfv : first-variational eigenvalues (out,real(nstfv))
   !   evecfv : first-variational eigenvectors (out,complex(nmatmax,nstfv))
   !   evecsv : second-variational eigenvectors (out,complex(nstsv,nstsv))
+  !   flags  : flag bits used by lapw_exec. 1:evec,2evec+density
   ! !DESCRIPTION:
   !   Solves the first- and second-variational secular equations. See routines
   !   {\tt match}, {\tt seceqnfv}, {\tt seceqnss} and {\tt seceqnsv}.
@@ -33,7 +34,7 @@ Subroutine seceqn (ik, evalfv, evecfv, evecsv)
   !BOC
       Implicit None
   ! arguments
-      Integer, Intent (In) :: ik
+      Integer, Intent (In) :: ik,flags
       Real (8), Intent (Out) :: evalfv (nstfv, nspnfv)
       Complex (8), Intent (Out) :: evecfv (nmatmax, nstfv, nspnfv)
       Complex (8), Intent (Out) :: evecsv (nstsv, nstsv)
@@ -57,7 +58,7 @@ Subroutine seceqn (ik, evalfv, evecfv, evecsv)
 #ifdef _LIBAPW_
 call match(ngk(1,ik),gkc(:,1,ik),tpgkc(:,:,1,ik), &
    &sfacgk(:,:,1,ik),apwalm(:,:,:,:,1))
-call lapw_execute(ik,apwalm,evalsv(1,ik),occsv(1,ik),densmt,densir,3)
+call lapw_execute(ik,apwalm,evalsv(1,ik),occsv(1,ik),densmt,densir,flags)
 deallocate(apwalm)
 return
 #endif

@@ -45,14 +45,16 @@ inline void move_apw_blocks(complex16 *wf)
     }
 }
 
-inline void copy_lo_blocks(complex16 *wf, complex16 *evec)
-{
+  void copy_lo_blocks(complex16 *wf, complex16 *evec)
+{ std::cout<<"coppy_lo_blocks:begin\n";
     for (unsigned int ias = 0; ias < lapw_global.natmtot; ias++)
-    {
+    {   std::cout<<"coppy_lo_blocks:final offset\n";
         unsigned int final_block_offset = lapw_global.atoms[ias]->offset_wfmt + lapw_global.atoms[ias]->species->size_ci_apw;
+        std::cout<<"coppy_lo_blocks:init offset\n";
         unsigned int initial_block_offset = lapw_global.atoms[ias]->offset_lo;
+        std::cout<<"coppy_lo_blocks:block size\n";
         unsigned int block_size = lapw_global.atoms[ias]->species->size_ci_lo;
-        
+        std::cout<<"coppy_lo_blocks:copy\n";
         if (block_size > 0)
             memcpy(&wf[final_block_offset], &evec[initial_block_offset], block_size * sizeof(complex16));
     }
@@ -66,19 +68,21 @@ inline void copy_pw_block(unsigned int ngk, complex16 *wf, complex16 *evec)
 void bloch_states_k::generate_scalar_wave_functions()
 {
     timer t("bloch_states_k::generate_scalar_wave_functions");
-    
+    std :: cout << "bloch_states_k::generate_scalar_wave_functions:set dim\n";
     scalar_wave_functions.set_dimensions(wave_function_size, lapw_global.nstfv);
+    std :: cout << "bloch_states_k::generate_scalar_wave_functions:alloc \n";
     scalar_wave_functions.allocate();
-    
+    std :: cout << "bloch_states_k::generate_scalar_wave_functions:zgemm \n";
     zgemm<cpu>(2, 0, lapw_global.size_wfmt_apw, lapw_global.nstfv, ngk, zone, &apwalm(0, 0), ngk, &evecfv(0, 0), 
         evecfv.size(0), zzero, &scalar_wave_functions(0, 0), scalar_wave_functions.size(0));
     
     for (unsigned int j = 0; j < lapw_global.nstfv; j++)
     {
+    	std :: cout << "bloch_states_k::generate_scalar_wave_functions:move_apw \n";
         move_apw_blocks(&scalar_wave_functions(0, j));
-
+        std :: cout << "bloch_states_k::generate_scalar_wave_functions:cp lo \n";
         copy_lo_blocks(&scalar_wave_functions(0, j), &evecfv(ngk, j));
-
+        std :: cout << "bloch_states_k::generate_scalar_wave_functions:cp pw\n";
         copy_pw_block(ngk, &scalar_wave_functions(lapw_global.size_wfmt, j), &evecfv(0, j));
     }
 }

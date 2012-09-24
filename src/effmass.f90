@@ -61,7 +61,7 @@ Subroutine effmass
          i3 = ivk (3, ik)
          If ((i1 .Eq. 0) .And. (i2 .Eq. 0) .And. (i3 .Eq. 0)) ik0 = ik
 ! solve the first- and second-variational secular equations
-         Call seceqn (ik, evalfv, evecfv, evecsv)
+         Call seceqn (ik, evalfv, evecfv, evecsv,3)
 ! copy eigenvalues to new array
          j1 = i1 + input%properties%masstensor%ndspem
          j2 = i2 + input%properties%masstensor%ndspem

@@ -61,7 +61,7 @@ Subroutine genkinmat
 ! loop over k-points
       Do ik = 1, nkpt
 ! solve the first- and second-variational secular equations
-         Call seceqn (ik, evalfv, evecfv, evecsv)
+         Call seceqn (ik, evalfv, evecfv, evecsv,3)
 ! write the first variational eigenvalues/vectors to file (this ensures the
 ! phase in eigenvectors is the same for subsequent matrix element evaluations)
          Call putevalfv (ik, evalfv)
