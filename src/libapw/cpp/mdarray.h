@@ -68,12 +68,11 @@ template <typename T> class mdarray<T,2> : public mdarray_base_impl<T,2>
         }
     
         inline T& operator()(const int i0, const int i1) 
-        {
+        { 
             assert(this->mdarray_ptr);
-            std::cout<<"i0: "<<i0<<"> d[0].start(): "<<this->d[0].start()<<" d[0].end()):"<<this->d[0].end()<<"\n";
-           /* assert(i0 >= this->d[0].start() && i0 <= this->d[0].end());
+            assert(i0 >= this->d[0].start() && i0 <= this->d[0].end());
             assert(i1 >= this->d[1].start() && i1 <= this->d[1].end());
-            */
+
             int i = this->offset[0] + i0 + i1 * this->offset[1];
             return this->mdarray_ptr[i];
         }

@@ -1,5 +1,5 @@
 include ../../build/make.inc
-include ../libraries.inc
+include ../../build/libraries.inc
 LDFLAGS = $(LIBS) $(F90_DEBUGOPTS) $(INTERNALLIBS)
 
 FC = $(F90) -I./finclude
