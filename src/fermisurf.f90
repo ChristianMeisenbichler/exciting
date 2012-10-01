@@ -100,6 +100,7 @@ Subroutine fermisurf
                Do ist = 1, nstfv
                   prod1(ik) = prod1(ik) * (evalsv(ist, jk)-efermi)
                   prod2(ik) =   prod2(ik) * (evalsv(nstfv+ist, jk)-efermi)
+
                End Do
                if(exponent(prod1(ik))<minexp)then
                minexp= exponent(prod1(ik))
@@ -191,10 +192,13 @@ Subroutine fermisurf
 
                Do ist = 1, nstsv
                   prod1(ik) = prod1(ik)* (evalsv(ist, jk)-efermi)
+
                End Do
+
                 if(exponent(prod1(ik))<minexp)then
                minexp= exponent(prod1(ik))
                endif
+
             end do
             Do ik = 1, nkptnr
                Write (50, '(4G18.10)') vkcnr (:, ik), prod1(ik) * 10**(-minexp)

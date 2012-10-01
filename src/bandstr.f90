@@ -99,8 +99,7 @@ Subroutine bandstr
      ! solve the first- and second-variational secular equations
 
          Call seceqn (ik, evalfv, evecfv, evecsv,1)
-          write(*,*)evalsv(:,ik)
-         Do ist = 1, nstsv
+          Do ist = 1, nstsv
         ! subtract the Fermi energy
             e (ist, ik) = evalsv (ist, ik) - efermi
         ! add scissors correction

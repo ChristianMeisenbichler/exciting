@@ -95,6 +95,7 @@ Subroutine gendmat (tspndg, tlmdg, lmin, lmax, is, ia, ngp, apwalm, &
 ! spin-unpolarised wavefunction
             Call wavefmt (input%groundstate%lradstep, lmax, is, ia, &
            & ngp, apwalm, evecfv(:, j, 1), lmmax, wfmt2)
+           write(*,*) apwalm
          End If
          Do ispn = 1, nspinor
             Do jspn = 1, nspinor
@@ -106,6 +107,7 @@ Subroutine gendmat (tspndg, tlmdg, lmin, lmax, is, ia, ngp, apwalm, &
                         lm2 = idxlm (l, m2)
                         If (tlmdg .And. (lm1 .Ne. lm2)) Go To 10
                         Do irc = 1, nrcmt (is)
+                        write(*,*) "wfmt2 (lm1, irc, ispn)",wfmt2 (lm1, irc, ispn)
                            zt1 = wfmt2 (lm1, irc, ispn) * conjg &
                           & (wfmt2(lm2, irc, jspn))
                            t1 = rcmt (irc, is) ** 2
