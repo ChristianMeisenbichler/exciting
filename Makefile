@@ -5,7 +5,7 @@
  
 default: build/make.inc all 
 
-all: serial mpi  smp mpiandsmp  eos spacegroup stateinfo stateconvert species
+all:    serial mpi smp spacegroup stateinfo stateconvert species
 
 build/make.inc:
 	perl ./setup.pl
@@ -28,7 +28,6 @@ mpiandsmp:
 	cd build/mpiandsmp; $(MAKE)
 
 test::
-	cd test/; $(MAKE) 
 	cd test/; $(MAKE) summary
 	
 
@@ -128,7 +127,7 @@ libxcclean:
 tgz::doc #libxcclean
 	tar  --exclude-from=".gitignore"  --transform 's,^,/exciting/,' -c -v  -f ./exciting.tar  *
 	tar    -r -v  -f ./exciting.tar  --transform 's,^,/exciting/,' .git/HEAD  .git/refs .git/packed-refs \
-	test/test02/reference/
+	test/test02/reference/ test/test08/reference/
 	gzip  -f --best ./exciting.tar 
 	du -h ./exciting.tar.gz 
 	
@@ -137,5 +136,5 @@ tidy:
 	$(MAKE) -f ../Make.common tidy 
 
 vdwdf:
-	cd src/vdwdf
+	cd src/src_vdwdf
 	$(MAKE)
