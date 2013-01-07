@@ -21,21 +21,27 @@ Subroutine olpaan (overlap, is, ia, ngp, apwalm)
       Complex (8) :: x (ngp), y (ngp)
 !
 ! local variables
-      Integer :: ias, l, m, lm, io
+      Integer :: ias, l, m, lm, io,naa
+      Complex(8),allocatable::zm1(:,:)
 ! external functions
       Complex (8) zdotu
       External zdotu
       ias = idxas (ia, is)
+      naa=0
+     allocate(zm1(apwordmax*lmmaxapw,ngkmax))
+	 zm1=zzero
+	 naa=0
       Do l = 0, input%groundstate%lmaxmat
          Do m = - l, l
             lm = idxlm (l, m)
             Do io = 1, apword (l, is)
-               x = conjg (apwalm(1:ngp, io, lm, ias))
-               y = conjg (apwalm(1:ngp, io, lm, ias))
-               Call Hermitianmatrix_rank2update (overlap, ngp, zhalf, &
-              & x, y)
+              naa=naa+1
+              zm1(naa,:)=apwalm(1:ngp, io, lm, ias)
             End Do
          End Do
       End Do
       Return
+      call zgemm('C','N',ngp,ngp,naa,zone,zm1,apwordmax*lmmaxapw,&
+  				 zm1,apwordmax*lmmaxapw,zone,overlap%za(1,1),overlap%rank)
+deallocate(zm1)
 End Subroutine
