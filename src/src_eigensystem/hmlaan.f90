@@ -130,9 +130,7 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                   zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
                   zm2(naa,:)= zt1*apwalm(1:ngp, io1, lm1, ias)
 				 x=apwalm(1:ngp, io1, lm1, ias)
-				 write(*,*)"zt1",zt1
-                !  Call Hermitianmatrix_rank2update (hamilton, ngp, zt1, &
-                ! & x, x)
+
                End Do
             End Do
          End Do

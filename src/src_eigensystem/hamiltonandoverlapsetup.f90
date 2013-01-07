@@ -43,17 +43,17 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
       Do is = 1, nspecies
          Do ia = 1, natoms (is)
             Call hmlaan (system%hamilton, is, ia, ngp, apwalm)
-      !      Call hmlalon (system%hamilton, is, ia, ngp, apwalm)
-      !      Call hmllolon (system%hamilton, is, ia, ngp)
+            Call hmlalon (system%hamilton, is, ia, ngp, apwalm)
+            Call hmllolon (system%hamilton, is, ia, ngp)
             Call olpaan (system%overlap, is, ia, ngp, apwalm)
-      !      Call olpalon (system%overlap, is, ia, ngp, apwalm)
-      !      Call olplolon (system%overlap, is, ia, ngp)
+            Call olpalon (system%overlap, is, ia, ngp, apwalm)
+            Call olplolon (system%overlap, is, ia, ngp)
          End Do
       End Do
 !
 ! interstitial contributions
-      !Call hmlistln (system%hamilton, ngp, igpig, vgpc)
-      !Call olpistln (system%overlap, ngp, igpig)
+      Call hmlistln (system%hamilton, ngp, igpig, vgpc)
+      Call olpistln (system%overlap, ngp, igpig)
       threshold = 1e-16
 !call HermitianMatrixTruncate(system%hamilton,threshold)
 !call HermitianMatrixTruncate(system%overlap,threshold)
@@ -63,9 +63,8 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
       If ( .Not. ispacked(system%hamilton)) Then
          Call hamiltonoverlapocopy_UL (system)
       End If
-#define DEBUGHO 
 #ifdef DEBUGHO
-      
+      Write (*,*) "apwalm", apwalm
       prefix = "H"
       Call HermitianMatrixToFiles (system%hamilton, prefix)
       prefix = "O"
