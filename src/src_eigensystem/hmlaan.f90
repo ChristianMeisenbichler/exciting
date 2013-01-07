@@ -109,11 +109,9 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
             End Do
          End Do
       End Do
+       call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
+       call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
 
-      call zgemm('C','N',ngp,ngp,naa,zone,zm1,lmmaxapw*apwordmax,zm2,lmmaxapw*apwordmax, &
-      			& zone,hamilton%za,hamilton%rank)
-       call zgemm('C','N',ngp,ngp,naa,zone,zm2,lmmaxapw*apwordmax,zm1,lmmaxapw*apwordmax, &
-      			& zone,hamilton%za,hamilton%rank)
 
 ! kinetic surface contribution
       t1 = 0.25d0 * rmt (is) ** 2
@@ -135,10 +133,8 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
             End Do
          End Do
       End Do
-      call zgemm('C','N',ngp,ngp,naa,zone,zm1,apwordmax*lmmaxapw,&
-  	   			 zm2,apwordmax*lmmaxapw,zone,hamilton%za(1,1),hamilton%rank)
-  	  call zgemm('C','N',ngp,ngp,naa,zone,zm2,apwordmax*lmmaxapw,&
-  	   			 zm1,apwordmax*lmmaxapw,zone,hamilton%za(1,1),hamilton%rank)
+      call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
+      call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
 
       deallocate(zm1,zm2)
       Return

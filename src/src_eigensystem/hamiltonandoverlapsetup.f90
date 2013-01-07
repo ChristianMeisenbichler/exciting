@@ -60,9 +60,7 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
 !
 !
 !
-      If ( .Not. ispacked(system%hamilton)) Then
-         Call hamiltonoverlapocopy_UL (system)
-      End If
+
 #ifdef DEBUGHO
       Write (*,*) "apwalm", apwalm
       prefix = "H"

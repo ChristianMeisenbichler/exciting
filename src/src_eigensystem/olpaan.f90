@@ -40,9 +40,8 @@ Subroutine olpaan (overlap, is, ia, ngp, apwalm)
             End Do
          End Do
       End Do
+      call HermitianMatrixMatrix(overlap,zm1,zm1,apwordmax*lmmaxapw,naa,ngp)
 
-      call zgemm('C','N',ngp,ngp,naa,zone,zm1,apwordmax*lmmaxapw,&
-  				 zm1,apwordmax*lmmaxapw,zone,overlap%za(1,1),overlap%rank)
      deallocate(zm1)
 
 	 Return
