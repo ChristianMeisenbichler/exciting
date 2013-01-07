@@ -147,13 +147,9 @@ Subroutine iterativearpacksecequn (ik, ispn, apwalm, vgpc, evalfv, &
   !##################
 !
 !
-      If (associated(input%groundstate%solver)) Then
-         packed = input%groundstate%solver%packedmatrixstorage
-      Else
-         packed = .True.
-      End If
+
 !
-      Call newsystem (system, packed, n)
+      Call newsystem (system, n)
       Call hamiltonandoverlapsetup (system, ngk(ispn, ik), apwalm, &
      & igkig(1, ispn, ik), vgpc)
 !

@@ -27,20 +27,17 @@ Module modfvsystem
 Contains
     !
     !
-    Subroutine newmatrix (self, packed, rank)
+    Subroutine newmatrix (self,   rank)
         type (HermitianMatrix), Intent (Inout) :: self
-        Logical, Intent (In) :: packed
+
         Integer, Intent (In) :: rank
         self%rank = rank
-        self%packed = packed
+        self%packed = .false.
         self%ludecomposed = .False.
-        If (packed .Eqv. .True.) Then
-            Allocate (self%zap(rank*(rank+1)/2))
-            self%zap = 0.0
-        Else
+
             Allocate (self%za(rank, rank))
             self%za = 0.0
-        End If
+
     End Subroutine newmatrix
     !
     !
@@ -55,12 +52,12 @@ Contains
     End Subroutine deletematrix
     !
     !
-    Subroutine newsystem (self, packed, rank)
+    Subroutine newsystem (self,   rank)
         Type (evsystem), Intent (Out) :: self
-        Logical, Intent (In) :: packed
+
         Integer, Intent (In) :: rank
-        Call newmatrix (self%hamilton, packed, rank)
-        Call newmatrix (self%overlap, packed, rank)
+        Call newmatrix (self%hamilton,   rank)
+        Call newmatrix (self%overlap,  rank)
     End Subroutine newsystem
     !
     !

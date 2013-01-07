@@ -56,10 +56,10 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   !----------------------------------------!
 !
 
-      packed = input%groundstate%solver%packedmatrixstorage
 
 
-      Call newsystem (system, packed, nmatp)
+
+      Call newsystem (system,   nmatp)
       Call hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
 !
   !------------------------------------!

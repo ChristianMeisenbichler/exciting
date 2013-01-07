@@ -25,7 +25,6 @@ exciting::
 test02::exciting
 	cd ./test02/runlapack ;../../../build/debug/exciting
 	cd ./test02/runarp; ../../../build/debug/exciting
-	cd ./test02/runarpnpacked;../../../build/debug/exciting
 	cd ./test02 ; perl assert.pl
 
 test03::exciting  
