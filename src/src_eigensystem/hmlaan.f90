@@ -47,26 +47,27 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
 !
 ! local variables
       Integer :: ias, io1, io2
-      Integer :: l1, l2, l3, m1, m2, m3, lm1, lm2, lm3
+      Integer :: l1, l2, l3, m1, m2, m3, lm1, lm2, lm3, naa
       Real (8) :: t1
       Complex (8) zt1, zsum
+      complex(8),allocatable::zm1(:,:),zm2(:,:)
 ! automatic arrays
       Complex (8) zv (ngp)
 ! external functions
       Real (8) :: polynom
       Complex (8) zdotc
       External polynom, zdotc
+      allocate(zm1(lmmaxapw*apwordmax,ngp))
+	  allocate(zm2(lmmaxapw*apwordmax,ngp))
+	  zm1=zzero
+	  zm2=zzero
+	  naa=0
       ias = idxas (ia, is)
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
             lm1 = idxlm (l1, m1)
             Do io1 = 1, apword (l1, is)
                zv (:) = 0.d0
-!$#OMP parallel default(none) &
-!$#OMP private(l3,m3,io2,l2,m2,zt1,zsum,lm3,lm2) &
-!$#OMP shared(gntyry,apwalm,apword,haa,ias,idxlm,is,lm1,lmaxvr,ngp,zv,lmaxapw,io1,l1)
-!$#OMP do  reduction(+:zv)
-!
                Do l3 = 0, input%groundstate%lmaxapw
                   Do m3 = - l3, l3
                      lm3 = idxlm (l3, m3)
@@ -101,18 +102,23 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                      End If
                   End Do
                End Do
-!#$omp end do
-!#$omp end parallel
-               x = conjg (apwalm(1:ngp, io1, lm1, ias))
-               y = conjg (zv)
-               Call Hermitianmatrix_rank2update (hamilton, ngp, zone, &
-              & x, y)
-!
+               naa=naa+1
+              zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
+              zm2(naa,:)=zv(:)
+
             End Do
          End Do
       End Do
+
+      call zgemm('C','N',ngp,ngp,naa,zone,zm1,lmmaxapw*apwordmax,zm2,lmmaxapw*apwordmax, &
+      			& zone,hamilton%za,hamilton%rank)
+       call zgemm('C','N',ngp,ngp,naa,zone,zm2,lmmaxapw*apwordmax,zm1,lmmaxapw*apwordmax, &
+      			& zone,hamilton%za,hamilton%rank)
+
 ! kinetic surface contribution
       t1 = 0.25d0 * rmt (is) ** 2
+      zm1=zzero
+      naa=0
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
             lm1 = idxlm (l1, m1)
@@ -120,14 +126,23 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                Do io2 = 1, apword (l1, is)
                   zt1 = t1 * apwfr (nrmt(is), 1, io1, l1, ias) * apwdfr &
                  & (io2, l1, ias)
-                  x = conjg (apwalm(1:ngp, io1, lm1, ias))
-                  y = conjg (apwalm(1:ngp, io2, lm1, ias))
-                  Call Hermitianmatrix_rank2update (hamilton, ngp, zt1, &
-                 & x, y)
+                  naa=naa+1
+                  zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
+                  zm2(naa,:)= zt1*apwalm(1:ngp, io1, lm1, ias)
+				 x=apwalm(1:ngp, io1, lm1, ias)
+				 write(*,*)"zt1",zt1
+                !  Call Hermitianmatrix_rank2update (hamilton, ngp, zt1, &
+                ! & x, x)
                End Do
             End Do
          End Do
       End Do
+      call zgemm('C','N',ngp,ngp,naa,zone,zm1,apwordmax*lmmaxapw,&
+  	   			 zm2,apwordmax*lmmaxapw,zone,hamilton%za(1,1),hamilton%rank)
+  	  call zgemm('C','N',ngp,ngp,naa,zone,zm2,apwordmax*lmmaxapw,&
+  	   			 zm1,apwordmax*lmmaxapw,zone,hamilton%za(1,1),hamilton%rank)
+
+      deallocate(zm1,zm2)
       Return
 End Subroutine
 !EOC

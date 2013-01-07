@@ -28,7 +28,7 @@ Subroutine olpaan (overlap, is, ia, ngp, apwalm)
       External zdotu
       ias = idxas (ia, is)
       naa=0
-     allocate(zm1(apwordmax*lmmaxapw,ngkmax))
+     allocate(zm1(apwordmax*lmmaxapw,ngp))
 	 zm1=zzero
 	 naa=0
       Do l = 0, input%groundstate%lmaxmat
@@ -40,8 +40,10 @@ Subroutine olpaan (overlap, is, ia, ngp, apwalm)
             End Do
          End Do
       End Do
-      Return
+
       call zgemm('C','N',ngp,ngp,naa,zone,zm1,apwordmax*lmmaxapw,&
   				 zm1,apwordmax*lmmaxapw,zone,overlap%za(1,1),overlap%rank)
-deallocate(zm1)
+     deallocate(zm1)
+
+	 Return
 End Subroutine
