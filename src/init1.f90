@@ -45,7 +45,7 @@ Subroutine init1
       Complex (8) gauntyry
       External gauntyry
 !
-      Call timesec (ts0)
+!      Call timesec (ts0)
 !
 !---------------------!
 !     k-point set     !
@@ -486,8 +486,8 @@ Subroutine init1
   chgpart(:,:,:)=0.d0
 #endif
 !
-      Call timesec (ts1)
-      timeinit = timeinit + ts1 - ts0
+!      Call timesec (ts1)
+!!      timeinit = timeinit + ts1 - ts0
 !
       Return
 End Subroutine

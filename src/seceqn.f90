@@ -37,6 +37,8 @@ Subroutine seceqn (ik, evalfv, evecfv, evecsv)
       Complex (8), Intent (Out) :: evecsv (nstsv, nstsv)
   ! local variables
       Integer :: ispn
+  ! time
+      Real (8) :: ts0,ts1
 !
 !
   ! allocatable arrays
@@ -50,8 +52,11 @@ Subroutine seceqn (ik, evalfv, evecfv, evecsv)
   !
       Do ispn = 1, nspnfv
      ! find the matching coefficients
+         Call timesec(ts0)
          Call match (ngk(ispn, ik), gkc(:, ispn, ik), tpgkc(:, :, ispn, &
         & ik), sfacgk(:, :, ispn, ik), apwalm(:, :, :, :, ispn))
+         Call timesec(ts1)
+         timematch=ts1-ts0+timematch
      ! solve the first-variational secular equation
           If (doARPACKiteration()) Then
             Call iterativearpacksecequn (ik, ispn, apwalm(1, 1, 1, 1, &

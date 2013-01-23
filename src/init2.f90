@@ -20,7 +20,7 @@ Subroutine init2
       Integer :: iq, iv (3)
 #endif
 
-      Call timesec (ts0)
+!      Call timesec (ts0)
 
 !---------------------!
 !     q-point set     !
@@ -382,8 +382,8 @@ Subroutine init2
          Allocate (vnlrdm(nstsv, nkpt, nstsv, nkptnr))
       End If
 !
-      Call timesec (ts1)
-      timeinit = timeinit + ts1 - ts0
+!      Call timesec (ts1)
+!!      timeinit = timeinit + ts1 - ts0
 !
       Return
 End Subroutine
