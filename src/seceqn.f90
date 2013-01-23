@@ -15,7 +15,6 @@ Subroutine seceqn (ik, evalfv, evecfv, evecsv)
       Use modmain
       Use modmpi
       Use sclcontroll
-      Use diisinterfaces
 !
   ! !INPUT/OUTPUT PARAMETERS:
   !   ik     : k-point number (in,integer)
