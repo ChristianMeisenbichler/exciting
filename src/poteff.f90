@@ -25,7 +25,7 @@ Subroutine poteff
 ! local variables
       Integer :: is, ia, ias, ir, lm, lmmax
       Real (8) :: ts0, ts1
-      Call timesec (ts0)
+!      Call timesec (ts0)
 ! compute the Coulomb potential
       Call potcoul
 ! compute the exchange-correlation potential
@@ -50,8 +50,8 @@ Subroutine poteff
       End Do
 ! interstitial part
       veffir (:) = vclir (:) + vxcir (:)
-      Call timesec (ts1)
-      timepot = timepot + ts1 - ts0
+!      Call timesec (ts1)
+!      timepot = timepot + ts1 - ts0
       Return
 End Subroutine
 !EOC

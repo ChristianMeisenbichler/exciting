@@ -30,6 +30,9 @@ mpiandsmp:
 test::
 	cd test/; $(MAKE) summary
 
+unittests:
+	cd build/unittests; $(MAKE)
+
 
 
 doc:  spacegroupdoc stateconvertdoc stateinfodoc inputdoc excitingfuncdoc Splitt_inputdoc speciesdoc 
