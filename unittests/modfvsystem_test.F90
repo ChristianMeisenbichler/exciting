@@ -1,7 +1,9 @@
 module modfvsystem_test
     use fruit
     use modfvsystem
+#ifdef MPI
     use modmpi
+#endif
 
     implicit none
 
@@ -11,8 +13,34 @@ module modfvsystem_test
     contains
 
 !------------------------------------------------------------------------------
-! test testNewmatrixSerial
+! test testNewsystemserial
 !------------------------------------------------------------------------------
+    subroutine testNewsystemserial
+    implicit none
+
+    integer, parameter :: nmatp = 9
+    Type (evsystem) :: system
+    
+    Call newsystem (system, nmatp)
+
+    CALL assert_equals(nmatp, system%hamilton%size, 'checking newmatrix H rank')
+    CALL assert_true(.not. system%hamilton%ludecomposed, 'checking newmatrix H ludecomposed')
+    CALL assert_equals(nmatp, size(system%hamilton%za,1), 'checking newmatrix H size rows')
+    CALL assert_equals(nmatp, size(system%hamilton%za,2), 'checking newmatrix H size cols')
+    CALL assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newmatrix H=0')
+
+    CALL assert_equals(nmatp, system%overlap%size,  'checking newmatrix S rank')
+    CALL assert_true(.not. system%overlap%ludecomposed, 'checking newmatrix S ludecomposed')
+    CALL assert_equals(nmatp, size(system%overlap%za,1), 'checking newmatrix S size rows')
+    CALL assert_equals(nmatp, size(system%overlap%za,2), 'checking newmatrix S size cols')
+    CALL assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newmatrix S=0')
+
+    end subroutine testNewsystemserial
+
+!------------------------------------------------------------------------------
+! test testNewsystem1proc
+!------------------------------------------------------------------------------
+#ifdef MPI
     subroutine testNewsystem1proc
     implicit none
 
@@ -57,10 +85,12 @@ module modfvsystem_test
     endif
 
     end subroutine testNewsystem1proc
+#endif
 
 !------------------------------------------------------------------------------
-! test testNewmatrixParallel
+! test testNewsystem4proc
 !------------------------------------------------------------------------------
+#ifdef MPI
     subroutine testNewsystem4proc
     implicit none
 
@@ -90,8 +120,6 @@ module modfvsystem_test
 
     if (rank < n_procs_test) then
       CALL BLACS_GRIDINFO(context, nprocrows, nproccols, myprocrow, myproccol)
-
-write (*,*) 'rank', rank, 'row', myprocrow, 'col', myproccol
 
       CALL newsystem (system, nmatp)
       
@@ -129,7 +157,7 @@ write (*,*) 'rank', rank, 'row', myprocrow, 'col', myproccol
     end if
 
     end subroutine testNewsystem4proc
-
+#endif
 
 
 end module modfvsystem_test

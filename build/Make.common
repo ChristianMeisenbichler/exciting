@@ -36,7 +36,7 @@ bin::../make.inc libs $(GeneratedFiles)  $(LIBXCMOD)
 	../../build/utilities/mkmf -t ./template -f -m Makefile.mkmf -p exciting \
 	$(SOURCEDIRS)  $(LIBXCMOD)	../../src/mainxml/ \
 	&& $(MAKE) -f Makefile.mkmf exciting \
-#	&& cp exciting ../../bin/exciting$(SUFFIX)
+	&& cp exciting ../../bin/exciting$(SUFFIX)
 	
 	
 doc::

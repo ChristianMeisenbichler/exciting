@@ -81,7 +81,11 @@ module fruit
   type(ty_stack), save :: stashed_suite
 
   public :: &
-    init_fruit, initializeFruit, fruit_summary, fruit_summary_MPI, getTestSummary, get_last_message, &
+    init_fruit, initializeFruit, fruit_summary, &
+#ifdef MPI
+    fruit_summary_MPI, &
+#endif
+    getTestSummary, get_last_message, &
     is_last_passed, assert_true, assertTrue, assert_equals, assertEquals, &
     is_case_passed, &
     init_fruit_xml, &
@@ -516,6 +520,7 @@ contains
   end subroutine run_test_case_
 
 
+#ifdef MPI
   subroutine fruit_summary_MPI(comm)
     use mpi
 
@@ -539,10 +544,10 @@ contains
       ! gather information from other procs and print them
       ! just do as if their information were ours
       do remoteproc = 1,nprocs-1
-        ! reallocate message buffer  
         Call MPI_recv(message_index, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
         Call MPI_recv(successful_assert_count, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
         Call MPI_recv(failed_assert_count, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
+        ! reallocate message buffer  
         deallocate(message_array)
         allocate(message_array(message_index-1))
 
@@ -562,7 +567,7 @@ contains
       end do
 
     else
-        ! send number of messages
+        ! send information about asserts and messages
         Call MPI_send(message_index, 1, MPI_INTEGER, 0, 0, comm, ierr)
         Call MPI_send(successful_assert_count, 1, MPI_INTEGER, 0, 0, comm, ierr)
         Call MPI_send(failed_assert_count, 1, MPI_INTEGER, 0, 0, comm, ierr)
@@ -573,10 +578,9 @@ contains
         end do
 
     endif 
-    
-
 
   end subroutine fruit_summary_MPI
+#endif
 
 
   subroutine fruit_summary
