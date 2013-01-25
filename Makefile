@@ -30,7 +30,7 @@ mpiandsmp:
 test::
 	cd test/; $(MAKE) summary
 
-unittests:
+unittests::
 	cd build/unittests; $(MAKE)
 
 
