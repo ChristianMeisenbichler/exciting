@@ -43,6 +43,14 @@ Module mod_timing
       Real (8) :: time_hmlistln
       Real (8) :: time_olpistln
 
+      Real (8) :: time_init0
+      Real (8) :: time_init1
+      Real (8) :: time_density_init
+      Real (8) :: time_pot_init
+    
+! reference time and date
+      Real (8) :: time_ref
+      Integer date_ref(8)
 
 End Module
 !

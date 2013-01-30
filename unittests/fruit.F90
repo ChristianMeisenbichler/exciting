@@ -578,7 +578,7 @@ contains
         end do
 
     endif 
-
+    write (stdout,*)
   end subroutine fruit_summary_MPI
 #endif
 

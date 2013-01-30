@@ -39,10 +39,13 @@ Subroutine gndstate
       Complex (8), Allocatable :: evecsv (:, :)
       Logical :: force_converged, tibs
   ! time measurements
-      Real(8) :: ts0,ts1,tsg0,tsg1
+      Real(8) :: ts0,ts1,tsg0,tsg1,tin1,tin0
+
 
 
 !! TIME - Initialisation segment
+    call date_and_time(values=date_ref)
+    time_ref=60d0*(60d0*dble(date_ref(5))+dble(date_ref(6)))+dble(date_ref(7))+1d-3*dble(date_ref(8))
     Call timesec (tsg0)
     Call timesec (ts0)
      
@@ -50,8 +53,14 @@ Subroutine gndstate
       If ((task .Eq. 2) .Or. (task .Eq. 3)) input%groundstate%tforce = &
      & .True.
   ! initialise global variables
+      Call timesec (tin0)
       Call init0
+      Call timesec (tin1)
+      time_init0=tin1-tin0
+      Call timesec (tin0)
       Call init1
+      Call timesec (tin1)
+      time_init1=tin1-tin0
   ! initialize reference density
       If (allocated(rhomtref)) deallocate (rhomtref)
       Allocate (rhomtref(lmmaxvr, nrmtmax, natmtot))
@@ -121,12 +130,18 @@ Subroutine gndstate
          If (rank .Eq. 0) write (60, '("Supercell potential constructed&
         & from STATE.OUT")')
       Else
+         Call timesec(tin0)
          Call rhoinit
+         Call timesec(tin1)
+         time_density_init=tin1-tin0
   ! store density to reference
          rhoirref(:)=rhoir(:)
          rhomtref(:,:,:)=rhomt(:,:,:)
+         Call timesec(tin0)
          Call poteff
          Call genveffig
+         Call timesec(tin1)
+         time_pot_init=tin1-tin0
          If (rank .Eq. 0) write (60, '("Density and potential initialis&
         &ed from atomic data")')
       End If
@@ -688,28 +703,30 @@ Subroutine gndstate
         & n, v, currentconvergence,-2)
          Deallocate (v)
          Call mpiresumeevecfiles ()
-
          Call timesec(ts1)
          timeio=ts1-ts0+timeio
 !! TIME - End of fifth IO segment
-
 
  ! close the INFO.OUT file
          If (rank .Eq. 0) then
             Write (60,*)
             Write (60, '("Timings (seconds) :")')
-            Write (60, '(" initialisation", T40, ": ", F12.2)') &
-           & timeinit
+            Write (60, '(" initialisation", T40, ": ", F12.2)') timeinit
+            Write (60, '("            - init0", T40,": ", F13.2)') time_init0
+            Write (60, '("            - init1", T40,": ", F13.2)') time_init1
+            Write (60, '("            - rhoinit", T40,": ", F13.2)') time_density_init
+            Write (60, '("            - potential initialisation", T40,": ", F13.2)') time_pot_init
+            Write (60, '("            - others", T40,": ", F13.2)') timeinit-time_init0-time_init1-time_density_init-time_pot_init
             Write (60, '(" Hamiltonian and overlap matrix set up", T40,&
            & ": ", F12.2)') timemat
-            Write (60, '("            - hmlaan", T40,": ", F12.2)') time_hmlaan
-            Write (60, '("            - hmlalon", T40,": ", F12.2)') time_hmlalon
-            Write (60, '("            - hmllolon", T40,": ", F12.2)') time_hmllolon
-            Write (60, '("            - olpaan", T40,": ", F12.2)') time_olpaan
-            Write (60, '("            - olpalon", T40,": ", F12.2)') time_olpalon
-            Write (60, '("            - olplolon", T40,": ", F12.2)') time_olplolon
-            Write (60, '("            - hmlistln", T40,": ", F12.2)') time_hmlistln
-            Write (60, '("            - olpistln", T40,": ", F12.2)') time_olpistln
+            Write (60, '("            - hmlaan", T40,": ", F13.2)') time_hmlaan
+            Write (60, '("            - hmlalon", T40,": ", F13.2)') time_hmlalon
+            Write (60, '("            - hmllolon", T40,": ", F13.2)') time_hmllolon
+            Write (60, '("            - olpaan", T40,": ", F13.2)') time_olpaan
+            Write (60, '("            - olpalon", T40,": ", F13.2)') time_olpalon
+            Write (60, '("            - olplolon", T40,": ", F13.2)') time_olplolon
+            Write (60, '("            - hmlistln", T40,": ", F13.2)') time_hmlistln
+            Write (60, '("            - olpistln", T40,": ", F13.2)') time_olpistln
 
             Write (60, '(" first-variational secular equation", T40, ":&
            & ", F12.2)') timefv

@@ -54,8 +54,12 @@ Subroutine init0
       time_olplolon=0d0
       time_hmlistln=0d0
       time_olpistln=0d0
-
+!      call date_and_time(values=date_ref)
+!      time_ref=60d0*(60d0*dble(date_ref(5))+dble(date_ref(6)))+dble(date_ref(7))+1d-3*dble(date_ref(8))
       Call timesec (ts0)
+!      write(*,*) date_ref(:)      
+!      stop
+!      time_ref=ts0
 !
 !------------------------------------!
 !     angular momentum variables     !

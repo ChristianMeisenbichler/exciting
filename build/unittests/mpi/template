@@ -1,0 +1,10 @@
+include ../make.inc
+include ../libraries.inc
+
+FC = $(MPIF90)
+FFLAGS = $(F90_OPTS_UT_MPI) -Ifinclude
+LD = $(FC)
+LDFLAGS =$(F90_OPTS_UT_MPI) $(LIBS) $(INTERNALLIBS)
+TMPFILES = *.mod
+PREFIX=../../..
+SUFFIX=utmpi

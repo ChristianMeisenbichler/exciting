@@ -1,0 +1,11 @@
+include ../make.inc
+include ../libraries.inc
+FC = $(F90)
+
+FFLAGS = $(F90_OPTS_UT_SERIAL) $(CPP_ON_OPT) -I./finclude
+LD = $(FC)
+LDFLAGS = $(LIBS) $(F90_OPTS_UT_SERIAL) $(INTERNALLIBS)
+F77_OPTS =$(F77_OPTS_UT_SERIAL)
+PREFIX=../../..
+TMPFILES = *.mod
+SUFFIX=debug
