@@ -2,7 +2,6 @@
 .NOTPARALLEL:
 
 #	../../src/src_iterative_solver/src_diis/ \
-PREFIX=../..
 	
 SOURCEDIRS=	$(PREFIX)/src/  \
 	$(PREFIX)/src/src_xs/ \

@@ -44,8 +44,6 @@ Subroutine gndstate
 
 
 !! TIME - Initialisation segment
-    call date_and_time(values=date_ref)
-    time_ref=60d0*(60d0*dble(date_ref(5))+dble(date_ref(6)))+dble(date_ref(7))+1d-3*dble(date_ref(8))
     Call timesec (tsg0)
     Call timesec (ts0)
      

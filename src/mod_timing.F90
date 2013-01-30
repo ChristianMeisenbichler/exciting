@@ -34,6 +34,7 @@ Module mod_timing
 ! matching coefficients 
       Real (8) :: timematch
 
+! Parts of Hamiltonian and overlap matrix set up
       Real (8) :: time_hmlaan
       Real (8) :: time_hmlalon
       Real (8) :: time_hmllolon
@@ -43,14 +44,11 @@ Module mod_timing
       Real (8) :: time_hmlistln
       Real (8) :: time_olpistln
 
+! Parts of initialisation
       Real (8) :: time_init0
       Real (8) :: time_init1
       Real (8) :: time_density_init
       Real (8) :: time_pot_init
     
-! reference time and date
-      Real (8) :: time_ref
-      Integer date_ref(8)
-
 End Module
 !
