@@ -12,29 +12,32 @@ LIBS_T = $(foxlib)
 
 # main program ##############################################
 
-all: tests_mpi tests_serial
+export SUFFIX=_unittests
+
+all: make.inc Make.common libraries.inc tests_mpi tests_serial
 
 tests_mpi: 
-	cd mpi && make
+	cd mpi && $(MAKE)
     
 tests_serial: 
-	cd serial && make
+	cd serial && $(MAKE)
     
 
 
 # general stuff ##############################################
 
-lib: libexciting_mpi.a libexciting_serial.a
-
-libexciting_mpi.a: 
-	cd ../mpi && make && ar q ../unittests/mpi/libexciting_mpi.a `ls *.o`
-
-libexciting_serial.a: 
-	cd ../serial && make && ar q ../unittests/serial/libexciting_serial.a `ls *.o`
-
 run:
 	./serial/tests_serial && mpirun -n 4 ./mpi/tests_mpi
 
 clean:
-	rm *.o *.mod tests* 
+	cd serial && $(MAKE) clean 
+	cd mpi && $(MAKE) clean
+	rm -f make.inc Make.common libraries.inc
+#	rm serial/*.o serial/*.mod serial/*.a mpi/*.o mpi/*.mod mpi/*.a tests*
 
+make.inc:
+	cp ../make.inc .
+Make.common:
+	cp ../Make.common .
+libraries.inc:
+	cp ../libraries.inc .
