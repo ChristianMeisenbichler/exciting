@@ -30,7 +30,7 @@ mpiandsmp:
 test::
 	cd test/; $(MAKE) summary
 
-unittests:
+unittests::
 	cd build/unittests; $(MAKE)
 
 
@@ -106,6 +106,7 @@ clean:
 	cd build/smp; $(MAKE) clean cleanlibs
 	cd build/debug; $(MAKE) clean cleanlibs
 	cd build/mpiandsmp; $(MAKE) clean cleanlibs
+	cd build/unittests; $(MAKE) clean
 	cd test/build ;$(MAKE) clean
 	cd src/eos; $(MAKE) clean
 	cd src/spacegroup; $(MAKE) clean

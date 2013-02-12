@@ -2,50 +2,54 @@
 .NOTPARALLEL:
 
 #	../../src/src_iterative_solver/src_diis/ \
-
 	
-SOURCEDIRS=	../../src/  \
-	../../src/src_xs/ \
-	../../src/src_fermisurfdx/ \
-	../../src/src_iterative_solver/ \
-	../../src/src_mixing/ \
-	../../src/src_phonon/ \
-	../../src/src_optics/ \
-	../../src/src_LDAU/ \
-	../../src/src_rdmft/ \
-	../../src/src_lib/ \
-	../../src/src_advanced/ \
-	../../src/src_eigensystem/ \
-	../../src/src_mpi/ \
-	../../src/src_xc/ \
-	../../src/src_xml/ \
-	../../src/src_inputparser/ \
-	../../src/src_sym/ \
-	../../src/src_gw/ \
-	../../src/src_gw/src_acfreq/ \
-	../../src/unittests \
-	../../src/ \
+SOURCEDIRS=	$(PREFIX)/src/  \
+	$(PREFIX)/src/src_xs/ \
+	$(PREFIX)/src/src_fermisurfdx/ \
+	$(PREFIX)/src/src_iterative_solver/ \
+	$(PREFIX)/src/src_mixing/ \
+	$(PREFIX)/src/src_phonon/ \
+	$(PREFIX)/src/src_optics/ \
+	$(PREFIX)/src/src_LDAU/ \
+	$(PREFIX)/src/src_rdmft/ \
+	$(PREFIX)/src/src_lib/ \
+	$(PREFIX)/src/src_advanced/ \
+	$(PREFIX)/src/src_eigensystem/ \
+	$(PREFIX)/src/src_mpi/ \
+	$(PREFIX)/src/src_xc/ \
+	$(PREFIX)/src/src_xml/ \
+	$(PREFIX)/src/src_inputparser/ \
+	$(PREFIX)/src/src_sym/ \
+	$(PREFIX)/src/src_gw/ \
+	$(PREFIX)/src/src_gw/src_acfreq/ \
+	$(PREFIX)/src/unittests \
+	$(PREFIX)/src/ \
 	
-GeneratedFiles=  ../../src/src_inputparser/inputmodules.f90 ../../src/src_inputparser/speciesmodules.f90	
-LIBXCMOD= ../../src/libXC/src/libxc.f90  ../../src/libXC/src/libxc_funcs.f90
+GeneratedFiles=  $(PREFIX)/src/src_inputparser/inputmodules.f90 $(PREFIX)/src/src_inputparser/speciesmodules.f90	
+LIBXCMOD= $(PREFIX)/src/libXC/src/libxc.f90  $(PREFIX)/src/libXC/src/libxc_funcs.f90
 
 #all:bin
 
-bin::../make.inc libs $(GeneratedFiles)  $(LIBXCMOD)
-	perl ../../build/utilities/versionstamp.pl  
-	../../build/utilities/mkmf -t ./template -f -m Makefile.mkmf -p exciting \
-	$(SOURCEDIRS)  $(LIBXCMOD)	../../src/mainxml/ \
+bin::$(PREFIX)/build/make.inc libs $(GeneratedFiles)  $(LIBXCMOD)
+	perl $(PREFIX)/build/utilities/versionstamp.pl  
+	$(PREFIX)/build/utilities/mkmf -t ./template -f -m Makefile.mkmf -p exciting \
+	$(SOURCEDIRS)  $(LIBXCMOD)	$(PREFIX)/src/mainxml/ \
 	&& $(MAKE) -f Makefile.mkmf exciting \
-	&& cp exciting ../../bin/exciting$(SUFFIX)
+	&& cp exciting $(PREFIX)/bin/exciting$(SUFFIX)
 	
+libexciting::$(PREFIX)/build/make.inc libs $(GeneratedFiles)  $(LIBXCMOD)
+	perl $(PREFIX)/build/utilities/versionstamp.pl
+	$(PREFIX)/build/utilities/mkmf -t ./template -f -m Makefile.mkmf -p exciting \
+	$(SOURCEDIRS)  $(LIBXCMOD)      $(PREFIX)/src/mainxml/ \
+	&& $(MAKE) -f Makefile.mkmf exciting LD=echo 
 	
 doc::
 	cd ./docs/exciting; \
-	perl ../../build/utilities/scripts/genprotexdoc.pl ../../src/mainxml/  $(SOURCEDIRS)  ;\
+	perl $(PREFIX)/build/utilities/scripts/genprotexdoc.pl $(PREFIX)/src/mainxml/  $(SOURCEDIRS)  ;\
 	mv doc.pdf excitingsubroutines.pdf
 
 tidy::
-	perl ../../build/utilities/scripts/prettyprint.pl $(SOURCEDIRS)
+	perl $(PREFIX)/build/utilities/scripts/prettyprint.pl $(SOURCEDIRS)
 
 ifeq ($(USE_SYS_LAPACK),true)
 libs::libbzint.a fftlib.a  libarpack.a libmsec.a libfox leblaiklib.a libxc.a
@@ -56,75 +60,75 @@ libs::libbzint.a	libblas.a liblapack.a fftlib.a  libarpack.a  libmsec.a libfox l
 endif
 
 libblas.a:: 
-	../../build/utilities/mkmf -t ./template.f77 -f -m Makefile.blas -p libblas.a \
-	../../src/BLAS\
+	$(PREFIX)/build/utilities/mkmf -t ./template.f77 -f -m Makefile.blas -p libblas.a \
+	$(PREFIX)/src/BLAS\
 	&& $(MAKE) -f Makefile.blas libblas.a 
 	
 
 liblapack.a:: 
-	../../build/utilities/mkmf -t ./template.f77 -f -m Makefile.lapack -p liblapack.a \
-	../../src/LAPACK\
+	$(PREFIX)/build/utilities/mkmf -t ./template.f77 -f -m Makefile.lapack -p liblapack.a \
+	$(PREFIX)/src/LAPACK\
 	&& $(MAKE) -f Makefile.lapack liblapack.a 
 	
 fftlib.a::
-	../../build/utilities/mkmf -t ./template -f -m Makefile.fft -p fftlib.a \
-	../../src/fftlib\
+	$(PREFIX)/build/utilities/mkmf -t ./template -f -m Makefile.fft -p fftlib.a \
+	$(PREFIX)/src/fftlib\
 	&& $(MAKE) -f Makefile.fft fftlib.a 
 
 libbzint.a:: 
-	../../build/utilities/mkmf -t ./template -f -m Makefile.libbzint -p libbzint.a \
-	../../src/libbzint\
+	$(PREFIX)/build/utilities/mkmf -t ./template -f -m Makefile.libbzint -p libbzint.a \
+	$(PREFIX)/src/libbzint\
 	&& $(MAKE) -f Makefile.libbzint libbzint.a 
 	
 libmsec.a:: 
-	../../build/utilities/mkmf -t ./template.f77 -f -m Makefile.libmsec -p libmsec.a \
-	../../src/src_mixing/lib/ \
+	$(PREFIX)/build/utilities/mkmf -t ./template.f77 -f -m Makefile.libmsec -p libmsec.a \
+	$(PREFIX)/src/src_mixing/lib/ \
 	&& $(MAKE) -f Makefile.libmsec libmsec.a 
 	
 
 
 libarpack.a::
-	../../build/utilities/mkmf -t ./template.f77 -f -m Makefile.libarpack -p libarpack.a \
-	../../src/ARPACK/SRC/ \
-	../../src/ARPACK/UTIL/ \
+	$(PREFIX)/build/utilities/mkmf -t ./template.f77 -f -m Makefile.libarpack -p libarpack.a \
+	$(PREFIX)/src/ARPACK/SRC/ \
+	$(PREFIX)/src/ARPACK/UTIL/ \
 	&& $(MAKE) -f Makefile.libarpack libarpack.a
 
 
 libfox:lib/libFoX_common.a
 
 lib/libFoX_common.a:
-	cd ../../src/FoX/ && \
+	cd $(PREFIX)/src/FoX/ && \
 	./configure FC=$(F90) &&\
 	make 
-	cp -r ../../src/FoX/objs/* ./
+	cp -r $(PREFIX)/src/FoX/objs/* ./
 	
 leblaiklib.a::
-	cd ../../src/leblaiklib && make
-	cp ../../src/leblaiklib/leblaiklib.a ./
+	cd $(PREFIX)/src/leblaiklib && make
+	cp $(PREFIX)/src/leblaiklib/leblaiklib.a ./
 	
 libxc.a:lib/libxc.a
 
 
 
 lib/libxc.a: 
-	cd ../../src/libXC/ && \
+	cd $(PREFIX)/src/libXC/ && \
 	./configure FC=$(F90) FCFLAGS="$(CPP_ON_OPT)"  CC=$(CC) FCCPP=$(FCCPP) --enable-static=yes --enable-shared=no &&\
 	make 
-	cp -r ../../src/libXC/src/.libs/libxc.a ./lib/libxc.a
+	cp -r $(PREFIX)/src/libXC/src/.libs/libxc.a ./lib/libxc.a
 #cp -f ../make.inc ../..
 #cd ../../src/ARPACK && $(MAKE) clean 
 #cp ../../src/ARPACK/libarpack.a .
 #cd ../../src/ARPACK && $(MAKE) clean
 
-../../xml/excitinginput.xsd: ../../xml/schema/*.xsd  ../../xml/schema/schemaexpand.xsl
-	xsltproc ../../xml/schema/schemaexpand.xsl ../../xml/schema/input.xsd > ../../xml/excitinginput.xsd
+$(PREFIX)/xml/excitinginput.xsd: $(PREFIX)/xml/schema/*.xsd  $(PREFIX)/xml/schema/schemaexpand.xsl
+	xsltproc $(PREFIX)/xml/schema/schemaexpand.xsl $(PREFIX)/xml/schema/input.xsd > $(PREFIX)/xml/excitinginput.xsd
 	
 
-../../src/src_inputparser/inputmodules.f90:   ../../xml/excitinginput.xsd ../../xml/schematofortran.xsl
-	xsltproc ../../xml/schematofortran.xsl   ../../xml/excitinginput.xsd > ../../src/src_inputparser/inputmodules.f90
+$(PREFIX)/src/src_inputparser/inputmodules.f90:   $(PREFIX)/xml/excitinginput.xsd $(PREFIX)/xml/schematofortran.xsl
+	xsltproc $(PREFIX)/xml/schematofortran.xsl   $(PREFIX)/xml/excitinginput.xsd > $(PREFIX)/src/src_inputparser/inputmodules.f90
 
-../../src/src_inputparser/speciesmodules.f90:   ../../xml/species.xsd ../../xml/schematofortran.xsl
-	xsltproc  ../../xml/schematofortran.xsl  ../../xml/species.xsd > ../../src/src_inputparser/speciesmodules.f90
+$(PREFIX)/src/src_inputparser/speciesmodules.f90:   $(PREFIX)/xml/species.xsd $(PREFIX)/xml/schematofortran.xsl
+	xsltproc  $(PREFIX)/xml/schematofortran.xsl  $(PREFIX)/xml/species.xsd > $(PREFIX)/src/src_inputparser/speciesmodules.f90
 
 
 clean:
@@ -133,7 +137,7 @@ clean:
 cleanlibs:
 	rm -f *.a
 	rm -rf lib finclude
-	-cd ../../src/libXC/ && make clean
-	-cd ../../src/FoX && make clean
+	-cd $(PREFIX)/src/libXC/ && make clean
+	-cd $(PREFIX)/src/FoX && make clean
 
 

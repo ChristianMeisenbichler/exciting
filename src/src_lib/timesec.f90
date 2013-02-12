@@ -14,7 +14,8 @@ Subroutine timesec (ts)
 ! arguments
       Real (8), Intent (Out) :: ts
 ! local variables
-      Integer :: count, count_rate
+      Integer(8) :: count, count_rate
+    
 #ifdef MPI
       ts = MPI_wtime()
 #else

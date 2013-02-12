@@ -121,6 +121,7 @@ Subroutine mpiresumeevecfiles
          Close (77, Status='DELETE')
          Close (71)
 !
+         write(*,*) 'cheers'
          Call SYSTEM ("sync")
          If (rank .Eq. 0) Then
             Write (60,*) "resumed split files"
