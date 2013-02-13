@@ -43,7 +43,8 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Integer, Intent (In) :: ngp
       Complex (8), Intent (In) :: apwalm (ngkmax, apwordmax, lmmaxapw, &
      & natmtot)
-      Complex (8) :: x (ngp), y (ngp)
+      Complex (8) :: x (ngp)
+!      Complex (8) :: y (ngp)
 !
 ! local variables
       Integer :: ias, io1, io2
@@ -53,15 +54,17 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       complex(8),allocatable::zm1(:,:),zm2(:,:)
 ! automatic arrays
       Complex (8) zv (ngp)
+
 ! external functions
-      Real (8) :: polynom
-      Complex (8) zdotc
-      External polynom, zdotc
+!      Real (8) :: polynom
+!      Complex (8) zdotc
+!      External polynom, zdotc
+
       allocate(zm1(lmmaxapw*apwordmax,ngp))
-	  allocate(zm2(lmmaxapw*apwordmax,ngp))
-	  zm1=zzero
-	  zm2=zzero
-	  naa=0
+      allocate(zm2(lmmaxapw*apwordmax,ngp))
+      zm1=zzero
+      zm2=zzero
+      naa=0
       ias = idxas (ia, is)
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
@@ -125,10 +128,9 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                   zt1 = t1 * apwfr (nrmt(is), 1, io1, l1, ias) * apwdfr &
                  & (io2, l1, ias)
                   naa=naa+1
-                  zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
-                  zm2(naa,:)= zt1*apwalm(1:ngp, io1, lm1, ias)
-				 x=apwalm(1:ngp, io1, lm1, ias)
-
+                  zm1(naa,:) = apwalm(1:ngp, io1, lm1, ias)
+                  zm2(naa,:) = zt1*apwalm(1:ngp, io1, lm1, ias)
+                  x          = apwalm(1:ngp, io1, lm1, ias)
                End Do
             End Do
          End Do

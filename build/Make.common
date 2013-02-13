@@ -98,7 +98,7 @@ libfox:lib/libFoX_common.a
 
 lib/libFoX_common.a:
 	cd $(PREFIX)/src/FoX/ && \
-	./configure FC=$(F90) &&\
+	./configure FC="$(F90)" &&\
 	make 
 	cp -r $(PREFIX)/src/FoX/objs/* ./
 	
@@ -112,7 +112,7 @@ libxc.a:lib/libxc.a
 
 lib/libxc.a: 
 	cd $(PREFIX)/src/libXC/ && \
-	./configure FC=$(F90) FCFLAGS="$(CPP_ON_OPT)"  CC=$(CC) FCCPP=$(FCCPP) --enable-static=yes --enable-shared=no &&\
+	./configure FC="$(F90)" FCFLAGS="$(CPP_ON_OPT)"  CC=$(CC) FCCPP=$(FCCPP) --enable-static=yes --enable-shared=no &&\
 	make 
 	cp -r $(PREFIX)/src/libXC/src/.libs/libxc.a ./lib/libxc.a
 #cp -f ../make.inc ../..

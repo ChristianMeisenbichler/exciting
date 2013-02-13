@@ -18,14 +18,14 @@ Subroutine olpaan (overlap, is, ia, ngp, apwalm)
       Integer, Intent (In) :: ngp
       Complex (8), Intent (In) :: apwalm (ngkmax, apwordmax, lmmaxapw, &
      & natmtot)
-      Complex (8) :: x (ngp), y (ngp)
+!      Complex (8) :: x (ngp), y (ngp)
 !
 ! local variables
       Integer :: ias, l, m, lm, io,naa
       Complex(8),allocatable::zm1(:,:)
 ! external functions
-      Complex (8) zdotu
-      External zdotu
+!      Complex (8) zdotu
+!      External zdotu
       ias = idxas (ia, is)
       naa=0
      allocate(zm1(apwordmax*lmmaxapw,ngp))

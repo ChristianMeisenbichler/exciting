@@ -9,8 +9,22 @@
   ! data transparently allowing to choose from different datatypes
   ! more easily
   Module modfvsystem
+#ifdef MPI
+    use modmpi
+#endif
     Implicit None
+
     !
+    Type ComplexMatrix
+       !
+       Integer :: size   !TODO: in the end we should be able to get rid of this variable. 
+       Integer :: nrows_loc, ncols_loc
+       Complex (8), Pointer :: za (:, :)
+#ifdef MPI
+       Integer, Dimension(9)    :: desc
+#endif
+    End Type ComplexMatrix
+
     Type HermitianMatrix
        !
        Integer :: size   !TODO: in the end we should be able to get rid of this variable. 
@@ -18,20 +32,62 @@
        Logical :: ludecomposed
        Integer, Pointer :: ipiv (:)
        Complex (8), Pointer :: za (:, :)
+#ifdef MPI
+       Integer, Dimension(9)    :: desc
+#endif
 
     End Type HermitianMatrix
     !
     Type evsystem
        Type (HermitianMatrix) :: hamilton, overlap
     End Type evsystem
+
+    Interface newmatrix
+      Module Procedure newComplexMatrix
+      Module Procedure newHermitianMatrix
+    End Interface
+
+    Interface deletematrix
+      Module Procedure deleteComplexMatrix
+      Module Procedure deleteHermitianMatrix
+    End Interface
+
+    ! temporary interface for the transition to the new function
+    Interface HermitianMatrixMatrix
+      Module Procedure HermitianMatrixMatrixNew
+      Module Procedure HermitianMatrixMatrixOld
+    End Interface
     !
   Contains
     !
     !
-    Subroutine newmatrix (self,  size)
+    Subroutine newComplexMatrix (self,  size)
+      Implicit None
+      type (ComplexMatrix), Intent (Inout) :: self
+      Integer, Intent (In) :: size
+
+      Integer, External   :: NUMROC
+
+      self%size = size
 #ifdef MPI
-      use modmpi
+      self%nrows_loc = NUMROC(self%size, blocksize, myprocrow, 0, nprocrows)
+      self%ncols_loc = NUMROC(self%size, blocksize, myproccol, 0, nproccols)
+      CALL DESCINIT(self%desc, self%size, self%size, &
+                    blocksize, blocksize, 0, 0, &
+                    context, self%nrows_loc, ierr)
+#else
+      self%nrows_loc = size
+      self%ncols_loc = size
 #endif
+      Allocate (self%za(self%nrows_loc, self%ncols_loc))
+      self%za = 0.0
+
+    End Subroutine newComplexMatrix
+    !
+    !
+    Subroutine newHermitianMatrix (self,  size)
+!    Subroutine newMatrix (self,  size)
+      Implicit None
       type (HermitianMatrix), Intent (Inout) :: self
       Integer, Intent (In) :: size
 
@@ -39,54 +95,67 @@
 
       self%size = size
 #ifdef MPI
-        self%nrows_loc = NUMROC(self%size, blocksize, myprocrow, 0, nprocrows)
-        self%ncols_loc = NUMROC(self%size, blocksize, myproccol, 0, nproccols)
+      self%nrows_loc = NUMROC(self%size, blocksize, myprocrow, 0, nprocrows)
+      self%ncols_loc = NUMROC(self%size, blocksize, myproccol, 0, nproccols)
+      CALL DESCINIT(self%desc, self%size, self%size, &
+                    blocksize, blocksize, 0, 0, &
+                    context, self%nrows_loc, ierr)
 #else
-        self%nrows_loc = size
-        self%ncols_loc = size
+      self%nrows_loc = size
+      self%ncols_loc = size
 #endif
       self%ludecomposed = .False.
 
       Allocate (self%za(self%nrows_loc, self%ncols_loc))
       self%za = 0.0
 
-    End Subroutine newmatrix
+!    End Subroutine newMatrix
+    End Subroutine newHermitianMatrix
     !
     !
-    Subroutine deletematrix (self)
+    Subroutine deleteHermitianMatrix (self)
       Type (HermitianMatrix), Intent (Inout) :: self
 
       Deallocate (self%za)
 
       If (self%ludecomposed) deallocate (self%ipiv)
-    End Subroutine deletematrix
+    End Subroutine deleteHermitianMatrix
+    !
+    !
+    Subroutine deleteComplexMatrix (self)
+      Type (ComplexMatrix), Intent (Inout) :: self
+
+      Deallocate (self%za)
+
+    End Subroutine deleteComplexMatrix
     !
     !
     Subroutine newsystem (self,   size)
       Type (evsystem), Intent (Out) :: self
 
       Integer, Intent (In) :: size
-      Call newmatrix (self%hamilton,   size)
+      Call newmatrix (self%hamilton, size)
       Call newmatrix (self%overlap,  size)
     End Subroutine newsystem
     !
     !
-    Subroutine deleteystem (self)
+    Subroutine deletesystem (self)
       Type (evsystem), Intent (Inout) :: self
       Call deletematrix (self%hamilton)
       Call deletematrix (self%overlap)
-    End Subroutine deleteystem
+    End Subroutine deletesystem
     !
     !
-    Subroutine Hermitianmatrix_size2update (self, n, alpha, x, y)
-      Type (HermitianMatrix), Intent (Inout) :: self
-      Integer, Intent (In) :: n
-      Complex (8), Intent (In) :: alpha, x (:), y (:)
-      !
-
-      Call ZHER2 ('U', n, alpha, x, 1, y, 1, self%za, self%size)
-
-    End Subroutine Hermitianmatrix_size2update
+! never used???
+!     Subroutine Hermitianmatrix_size2update (self, n, alpha, x, y)
+!       Type (HermitianMatrix), Intent (Inout) :: self
+!       Integer, Intent (In) :: n
+!       Complex (8), Intent (In) :: alpha, x (:), y (:)
+!       !
+! 
+!       Call ZHER2 ('U', n, alpha, x, 1, y, 1, self%za, self%size)
+! 
+!     End Subroutine Hermitianmatrix_size2update
     !
     !
     Subroutine Hermitianmatrix_indexedupdate (self, i, j, z)
@@ -145,14 +214,95 @@
       End If
     End Subroutine HermitianmatrixLU
 
-    subroutine HermitianMatrixMatrix(self,zm1,zm2,ldzm,naa,ngp)
-     Type (HermitianMatrix),intent(inout) :: self
-     Complex(8),intent(in)::zm1(:,:),zm2(:,:)
-     integer,intent(in)::ldzm,ngp,naa
-     complex(8)::zone=(1.0,0.0)
-     call zgemm('C','N',ngp,ngp,naa,zone,zm1,ldzm,&
-  	   			 zm2,ldzm,zone,self%za(1,1),self%size)
-    end subroutine
+
+
+
+    ! wrapper defining the new interface
+    subroutine HermitianMatrixMatrixNew(self,zm1,zm2,ldzm,naa,ngp)
+      Implicit None
+      Type (HermitianMatrix),intent(inout) :: self
+      Type (ComplexMatrix),intent(in) :: zm1,zm2
+      integer,intent(in)::ldzm,ngp,naa
+     
+      complex(8)::zone=(1.0,0.0)
+
+#ifdef MPI
+        CALL PZGEMM( 'C', &           ! TRANSA = 'C'  op( A ) = A**H.
+                     'N', &           ! TRANSB = 'N'  op( B ) = B.
+                     ngp, &           ! M ... rows of op( A ) = rows of C
+                     ngp, &           ! N ... cols of op( B ) = cols of C
+                     naa, &           ! K ... cols of op( A ) = rows of op( B )
+                     zone, &          ! alpha
+                     zm1%za, &        ! A, local part
+                     1, &             ! IA,
+                     1, &             ! JA,
+                     zm1%desc, &      ! DESCA,
+                     zm2%za, &        ! B, local part
+                     1, &             ! IB,
+                     1, &             ! JB,
+                     zm2%desc, &      ! DESCB,
+                     zone, &          ! beta
+                     self%za(1,1), &  ! C,
+                     1, &             ! IC,
+                     1, &             ! JC,
+                     self%desc &      ! DESCC
+                     )
+#else
+      ! ZGEMM  performs one of the matrix-matrix operations
+      !        C := alpha*op( A )*op( B ) + beta*C,
+      call zgemm('C', &           ! TRANSA = 'C'  op( A ) = A**H.
+                 'N', &           ! TRANSB = 'N'  op( B ) = B.
+                 ngp, &           ! M ... rows of op( A ) = rows of C
+                 ngp, &           ! N ... cols of op( B ) = cols of C
+                 naa, &           ! K ... cols of op( A ) = rows of op( B )
+                 zone, &          ! alpha
+                 zm1%za, &        ! A
+                 ldzm,&           ! LDA ... leading dimension of A
+                 zm2%za, &        ! B
+                 ldzm, &          ! LDB ... leading dimension of B
+                 zone, &          ! beta
+                 self%za(1,1), &  ! C
+                 self%size &      ! LDC ... leading dimension of C
+                )
+
+#endif
+
+
+
+    end subroutine HermitianMatrixMatrixNew
+
+    ! Performs the matrix-matrix multiplication
+    ! self%za = zm1**H * zm2 + self%za
+    ! matrices have dimensions
+    !   zm1(naa,ngp)
+    !   zm2(naa,ngp)
+    !   self%za(ngp,ngp)
+    subroutine HermitianMatrixMatrixOld(self,zm1,zm2,ldzm,naa,ngp)
+      Implicit None
+      Type (HermitianMatrix),intent(inout) :: self
+      Complex(8),intent(in)::zm1(:,:),zm2(:,:)
+      integer,intent(in)::ldzm,ngp,naa
+     
+      complex(8)::zone=(1.0,0.0)
+
+      ! ZGEMM  performs one of the matrix-matrix operations
+      !        C := alpha*op( A )*op( B ) + beta*C,
+      call zgemm('C', &           ! TRANSA = 'C'  op( A ) = A**H.
+                 'N', &           ! TRANSB = 'N'  op( B ) = B.
+                 ngp, &           ! M ... rows of op( A ) = rows of C
+                 ngp, &           ! N ... cols of op( B ) = cols of C
+                 naa, &           ! K ... cols of op( A ) = rows of op( B )
+                 zone, &          ! alpha
+                 zm1, &           ! A
+                 ldzm,&           ! LDA ... leading dimension of A
+                 zm2, &           ! B
+                 ldzm, &          ! LDB ... leading dimension of B
+                 zone, &          ! beta
+                 self%za(1,1), &  ! C
+                 self%size &      ! LDC ... leading dimension of C
+                )
+
+    end subroutine HermitianMatrixMatrixOld
 
     !
     !
