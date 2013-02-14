@@ -111,7 +111,7 @@ Subroutine scrcoulint
       nst13 = rnst1 * rnst3
       nst24 = rnst2 * rnst4
       Call genfilname (dotext='_SCI.OUT', setfilext=.True.)
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Eq. 0) Then
          Call writekpts
          Call writeqpts
       End If
@@ -175,10 +175,10 @@ Subroutine scrcoulint
   !-------------------------------!
       Call genfilname (basename='SCCLI', asc=.True., filnam=fnsccli)
       Call getunit (un)
-      If (rank .Eq. 0) open (un, file=trim(fnsccli), form='formatted', &
+      If (MPIglobal%rank .Eq. 0) open (un, file=trim(fnsccli), form='formatted', &
      & action='write', status='replace')
       Call genparidxran ('p', nkkp)
-      Allocate (bsedt(3, 0:procs-1))
+      Allocate (bsedt(3, 0:MPIglobal%procs-1))
       bsedt (1, :) = 1.d8
       bsedt (2, :) = - 1.d8
       bsedt (3, :) = zzero
@@ -286,7 +286,7 @@ Subroutine scrcoulint
                End Do
             End Do
          End Do
-         If ((rank .Eq. 0) .And. (ikkp .Le. 3)) Then
+         If ((MPIglobal%rank .Eq. 0) .And. (ikkp .Le. 3)) Then
         ! write to ASCII file
             Do ist1 = 1, rnst1
                Do ist3 = 1, rnst3
@@ -310,9 +310,9 @@ Subroutine scrcoulint
                   zt1 = sccli (ist1, ist3, ist1, ist3)
                   scclid (ist1, ist3) = zt1
                   t1 = dble (zt1)
-                  bsedt (1, rank) = Min (dble(bsedt(1, rank)), t1)
-                  bsedt (2, rank) = Max (dble(bsedt(2, rank)), t1)
-                  bsedt (3, rank) = bsedt (3, rank) + zt1 / (rnst1*rnst3)
+                  bsedt (1, MPIglobal%rank) = Min (dble(bsedt(1, MPIglobal%rank)), t1)
+                  bsedt (2, MPIglobal%rank) = Max (dble(bsedt(2, MPIglobal%rank)), t1)
+                  bsedt (3, MPIglobal%rank) = bsedt (3, MPIglobal%rank) + zt1 / (rnst1*rnst3)
                End Do
             End Do
          End If
@@ -327,13 +327,13 @@ Subroutine scrcoulint
 !
      ! end loop over (k,kp)-pairs
       End Do
-      If (rank .Eq. 0) write (un, '("# ikkp, iknr,ist1,ist3, jknr,ist2,&
+      If (MPIglobal%rank .Eq. 0) write (un, '("# ikkp, iknr,ist1,ist3, jknr,ist2,&
      &ist4,    Re(W),            Im(W),             |W|^2,           an&
      &g/pi")')
-      If (rank .Eq. 0) close (un)
+      If (MPIglobal%rank .Eq. 0) close (un)
       Call barrier
   ! communicate array-parts wrt. q-points
-      call mpi_allgatherv_ifc(procs,3,zbuf=bsedt)
+      call mpi_allgatherv_ifc(MPIglobal%procs,3,zbuf=bsedt)
   ! BSE kernel diagonal parameters
       bsedl = minval (dble(bsedt(1, :)))
       bsedu = maxval (dble(bsedt(2, :)))
@@ -341,7 +341,7 @@ Subroutine scrcoulint
       bsed = sum (bsedt(3, :)) / nkptnr
       Deallocate (bsedt, scclid)
   ! write BSE kernel diagonal parameters
-      If (rank .Eq. 0) Call putbsediag ('BSEDIAG.OUT')
+      If (MPIglobal%rank .Eq. 0) Call putbsediag ('BSEDIAG.OUT')
 !
       Call findgntn0_clear
 !

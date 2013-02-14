@@ -11,8 +11,8 @@ Subroutine terminate
       Implicit None
   ! abort MPI if necessary
 #ifdef MPI
-      Call mpi_abort (mpi_comm_world, 1, ierr)
-      If (ierr .Eq. 0) Then
+      Call mpi_abort (mpi_comm_world, 1, MPIglobal%ierr)
+      If (MPIglobal%ierr .Eq. 0) Then
          Write (*, '(a)') 'MPI abort'
       Else
          Write (*, '(a)') 'MPI abort with errors - zombie processes mig&

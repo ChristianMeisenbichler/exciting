@@ -39,7 +39,7 @@ Subroutine xsfinit
       Call gentim (cput, hrs, days, hours, minutes, seconds)
       str1 = stringtim (cput, hrs, days, hours, minutes, seconds)
       Write (unitout, '(a, 4g18.6)') '  CPU time		  : ' // trim (str1)
-      If (procs .Eq. 1) Then
+      If (MPIglobal%procs .Eq. 1) Then
          Call gentim (dble(wallt), hrs, days, hours, minutes, seconds)
          str1 = stringtim (dble(wallt), hrs, days, hours, minutes, &
         & seconds)
@@ -53,7 +53,7 @@ Subroutine xsfinit
       str1 = stringtim (cputcum, hrs, days, hours, minutes, seconds)
       Write (unitout, '(a, 4g18.6)') '  CPU time  (cumulative) : ' // &
      & trim (str1)
-      If (procs .Eq. 1) Then
+      If (MPIglobal%procs .Eq. 1) Then
          Call gentim (dble(walltcum), hrs, days, hours, minutes, &
         & seconds)
          str1 = stringtim (dble(walltcum), hrs, days, hours, minutes, &

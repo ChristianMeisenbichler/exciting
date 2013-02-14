@@ -10,7 +10,7 @@
 !
 !
 Character (256) Function outfilenamestring (filetag, ik)
-      Use modmpi, Only: procs, lastk, firstk, procofk, splittfile
+      Use modmpi, Only: MPIglobal, lastk, firstk, procofk, splittfile
       Use modmain, Only: scrpath, filext, task
       Use modinput
       Implicit None
@@ -28,7 +28,7 @@ Character (256) Function outfilenamestring (filetag, ik)
 #ifdef MPI
       If ((task .Eq. 0) .Or. (task .Eq. 1).Or. (task .Eq. 2).Or. (task .Eq. 3).or. &
         (task.eq.200)) Then
-         If ((procs .Gt. 1) .And. splittfile) Then
+         If ((MPIglobal%procs .Gt. 1) .And. splittfile) Then
             Write (tmp, '(I5)') firstk (procofk(ik))
             Write (tmp2, '(I5)') lastk (procofk(ik))
             krange = trim (adjustl(tmp)) // '-' // trim (adjustl(tmp2))

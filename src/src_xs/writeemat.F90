@@ -30,7 +30,7 @@ Subroutine writeemat
       If ((task .Ge. 400) .And. (task .Le. 499)) Call genparidxran ('q',&
      &  nqpt)
    ! write q-point set
-      If (rank .Eq. 0) Call writeqpts
+      If (MPIglobal%rank .Eq. 0) Call writeqpts
   ! read Fermi energy from file
       Call readfermi
   ! save variables for the Gamma q-point

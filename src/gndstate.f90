@@ -66,7 +66,7 @@ Subroutine gndstate
       Allocate (rhoirref(ngrtot))
   ! initialise OEP variables if required
       If (input%groundstate%xctypenumber .Lt. 0) Call init2
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Eq. 0) Then
      ! write the real and reciprocal lattice vectors to file
          Call writelat
      ! write interatomic distances to file
@@ -118,14 +118,14 @@ Subroutine gndstate
      ! initialise or read the charge density and potentials from file
       End If
       iscl = 0
-      If (rank .Eq. 0) write (60,*)
+      If (MPIglobal%rank .Eq. 0) write (60,*)
       If ((task .Eq. 1) .Or. (task .Eq. 3)) Then
          Call readstate
-         If (rank .Eq. 0) write (60, '("Potential read in from STATE.OU&
+         If (MPIglobal%rank .Eq. 0) write (60, '("Potential read in from STATE.OU&
         &T")')
       Else If (task .Eq. 200) Then
          Call phveff
-         If (rank .Eq. 0) write (60, '("Supercell potential constructed&
+         If (MPIglobal%rank .Eq. 0) write (60, '("Supercell potential constructed&
         & from STATE.OUT")')
       Else
          Call timesec(tin0)
@@ -140,10 +140,10 @@ Subroutine gndstate
          Call genveffig
          Call timesec(tin1)
          time_pot_init=tin1-tin0
-         If (rank .Eq. 0) write (60, '("Density and potential initialis&
+         If (MPIglobal%rank .Eq. 0) write (60, '("Density and potential initialis&
         &ed from atomic data")')
       End If
-      If (rank .Eq. 0) Call flushifc (60)
+      If (MPIglobal%rank .Eq. 0) Call flushifc (60)
   ! size of mixing vector
       n = lmmaxvr * nrmtmax * natmtot + ngrtot
       If (associated(input%groundstate%spin)) n = n * (1+ndmag)
@@ -166,7 +166,7 @@ Subroutine gndstate
   !call mixing array allocation functions by setting
       nwork = - 1
   !and call interface
-      If (rank .Eq. 0) Call mixerifc (input%groundstate%mixernumber, n, &
+      If (MPIglobal%rank .Eq. 0) Call mixerifc (input%groundstate%mixernumber, n, &
      & v, currentconvergence, nwork)
       et = 0.d0
       fm = 0.d0
@@ -179,24 +179,24 @@ Subroutine gndstate
   ! set last iteration flag
       tlast = .False.
   ! delete any existing eigenvector files
-      If ((rank .Eq. 0) .And. ((task .Eq. 0) .Or. (task &
+      If ((MPIglobal%rank .Eq. 0) .And. ((task .Eq. 0) .Or. (task &
      & .Eq. 2))) Call delevec
   ! begin the self-consistent loop
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Eq. 0) Then
          Write (60,*)
          Write (60, '("+------------------------------+")')
          Write (60, '("| Self-consistent loop started |")')
          Write (60, '("+------------------------------+")')
       End If
       Do iscl = 1, input%groundstate%maxscl
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             Write (60,*)
             Write (60, '("+-------------------------+")')
             Write (60, '("| Iteration number : ", I4, " |")') iscl
             Write (60, '("+-------------------------+")')
          End If
          If (iscl .Ge. input%groundstate%maxscl) Then
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
                Write (60,*)
                Write (60, '("Reached self-consistent loops maximum")')
                Write (100,*)
@@ -204,7 +204,7 @@ Subroutine gndstate
             End If
             tlast = .True.
          End If
-         If (rank .Eq. 0) Call flushifc (60)
+         If (MPIglobal%rank .Eq. 0) Call flushifc (60)
          Call timesec (ts1)
          timeio=ts1-ts0+timeio
 !! TIME - End of first IO segment
@@ -216,7 +216,7 @@ Subroutine gndstate
          Select Case (trim(input%groundstate%findlinentype))
          Case ('simple')
          Case ('advanced')
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
                Write (60,*)
                Write (60, '("Using advanced method for search of linear&
               &ization energies")')
@@ -225,7 +225,7 @@ Subroutine gndstate
      ! find the new linearisation energies
          Call linengy
      ! write out the linearisation energies
-         if (rank .eq. 0) Call writelinen
+         if (MPIglobal%rank .eq. 0) Call writelinen
      ! generate the APW radial functions
          Call genapwfr
      ! generate the local-orbital radial functions
@@ -245,12 +245,12 @@ Subroutine gndstate
 !! TIME - Second IO segment       
           Call timesec (ts0)
 #ifdef MPI
-         Call MPI_barrier (MPI_COMM_WORLD, ierr)
-         If (rank .Eq. 0) Call delevec ()
+         Call MPI_barrier (MPI_COMM_WORLD, MPIglobal%ierr)
+         If (MPIglobal%rank .Eq. 0) Call delevec ()
 #endif
 #ifdef MPISEC
          splittfile = .True.
-         Do ik = firstk (rank), lastk (rank)
+         Do ik = firstk (MPIglobal%rank), lastk (MPIglobal%rank)
 !
 #endif
 #ifdef NEVERDEFINED
@@ -291,11 +291,11 @@ Subroutine gndstate
 #endif
 #ifdef MPISEC
          call mpi_allgatherv_ifc(nkpt,nstsv,rbuf=evalsv)
-         Call MPI_barrier (MPI_COMM_WORLD, ierr)
+         Call MPI_barrier (MPI_COMM_WORLD, MPIglobal%ierr)
 #endif
      ! find the occupation numbers and Fermi energy
          Call occupy
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
         ! write out the eigenvalues and occupation numbers
             Call writeeval
         ! write the Fermi energy to file
@@ -309,14 +309,14 @@ Subroutine gndstate
             magir (:, :) = 0.d0
          End If
 #ifdef MPIRHO
-         Do ik = firstk (rank), lastk (rank)
+         Do ik = firstk (MPIglobal%rank), lastk (MPIglobal%rank)
         !write the occupancies to file
             Call putoccsv (ik, occsv(:, ik))
          End Do
-         Do ik = firstk (rank), lastk (rank)
+         Do ik = firstk (MPIglobal%rank), lastk (MPIglobal%rank)
 #endif
 #ifndef MPIRHO
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
                Do ik = 1, nkpt
               !write the occupancies to file
                   Call putoccsv (ik, occsv(:, ik))
@@ -358,7 +358,7 @@ Subroutine gndstate
             If (input%groundstate%xctypenumber .Lt. 0) Call &
            & mpiresumeevecfiles ()
 #endif
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
         ! write out partial charges
                call writepchgs(69,input%groundstate%lmaxvr)
                call flushifc(69)
@@ -396,7 +396,7 @@ Subroutine gndstate
            ! generate the LDA+U potential matrix
                Call genvmatlu
            ! write the LDA+U matrices to file
-               if (rank .eq. 0) Call writeldapu
+               if (MPIglobal%rank .eq. 0) Call writeldapu
             End If
         ! generate charge distance
             call chgdist
@@ -408,11 +408,11 @@ Subroutine gndstate
         ! pack interstitial and muffin-tin effective potential and field into one array
             Call packeff (.True., n, v)
         ! mix in the old potential and field with the new
-            If (rank .Eq. 0) Call mixerifc &
+            If (MPIglobal%rank .Eq. 0) Call mixerifc &
            & (input%groundstate%mixernumber, n, v, currentconvergence, &
            & nwork)
 #ifdef MPI
-         Call MPI_bcast (v(1), n, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+         Call MPI_bcast (v(1), n, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, MPIglobal%ierr)
 #endif
  ! unpack potential and field
             Call packeff (.False., n, v)
@@ -453,7 +453,7 @@ Subroutine gndstate
                Call timesec(ts0)
                
                input%groundstate%tfibs=tibs
-               If (rank .Eq. 0) Then
+               If (MPIglobal%rank .Eq. 0) Then
                   
        ! output forces to INFO.OUT
                   Call writeforce (60)
@@ -462,7 +462,7 @@ Subroutine gndstate
                   Call flushifc (64)
                end if
             end if
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
         ! output energy components
                Call writeengy (60)
                Write (60,*)
@@ -519,7 +519,7 @@ Subroutine gndstate
 
 !! TIME - Fourth IO segment
             Call timesec(ts0)
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
     ! check for convergence
                If (iscl .Ge. 2) Then
                   Write (60,*)
@@ -578,8 +578,8 @@ Subroutine gndstate
            ! end the self-consistent loop
             End If
 #ifdef MPI
-            Call MPI_bcast (tstop, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
-            Call MPI_bcast (tlast, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+            Call MPI_bcast (tstop, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, MPIglobal%ierr)
+            Call MPI_bcast (tlast, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, MPIglobal%ierr)
 #endif
             Call timesec(ts1)
             timeio=ts1-ts0+timeio
@@ -589,7 +589,7 @@ Subroutine gndstate
 
 !! TIME - Fifth IO segment
          Call timesec(ts0)
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             Write (60,*)
             Write (60, '("+------------------------------+")')
             Write (60, '("| Self-consistent loop stopped |")')
@@ -607,7 +607,7 @@ Subroutine gndstate
 
          If (( .Not. tstop) .And. (input%groundstate%tforce)) Then
             Call force
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
        ! output forces to INFO.OUT
                   Call writeforce (60)
 
@@ -622,7 +622,7 @@ Subroutine gndstate
      !---------------------------------------!
          If (( .Not. tstop) .And. ((task .Eq. 2) .Or. (task .Eq. 3))) &
         & Then
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
                Write (60,*)
                Write (60, '("Maximum force magnitude (target) : ", G18.&
               &10, " (", G18.10, ")")') forcemax, &
@@ -632,7 +632,7 @@ Subroutine gndstate
  ! check force convergence
             force_converged = .False.
             If (forcemax .Le. input%structureoptimization%epsforce) Then
-               If (rank .Eq. 0) Then
+               If (MPIglobal%rank .Eq. 0) Then
                   Write (60,*)
                   Write (60, '("Force convergence target achieved")')
                End If
@@ -641,7 +641,7 @@ Subroutine gndstate
             If (force_converged) Go To 30
  ! update the atomic positions if forces are not converged
             Call updatpos
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Eq. 0) Then
                Write (60,*)
                Write (60, '("+--------------------------+")')
                Write (60, '("| Updated atomic positions |")')
@@ -673,7 +673,7 @@ Subroutine gndstate
          End If
 30       Continue
      ! output timing information
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
  ! close the TOTENERGY.OUT file
             Close (61)
  ! close the FERMIDOS.OUT file
@@ -697,7 +697,7 @@ Subroutine gndstate
             Call scl_xml_out_write ()
          End If
      !set nwork to -2 to tell interface to call the deallocation functions
-         If (rank .Eq. 0) Call mixerifc (input%groundstate%mixernumber, &
+         If (MPIglobal%rank .Eq. 0) Call mixerifc (input%groundstate%mixernumber, &
         & n, v, currentconvergence,-2)
          Deallocate (v)
          Call mpiresumeevecfiles ()
@@ -706,7 +706,7 @@ Subroutine gndstate
 !! TIME - End of fifth IO segment
 
  ! close the INFO.OUT file
-         If (rank .Eq. 0) then
+         If (MPIglobal%rank .Eq. 0) then
             Write (60,*)
             Write (60, '("Timings (seconds) :")')
             Write (60, '(" initialisation", T40, ": ", F12.2)') timeinit

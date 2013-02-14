@@ -74,7 +74,7 @@ Subroutine df
       End Do
   ! synchronize
       Call barrier
-      If ((procs .Gt. 1) .And. (rank .Eq. 0) .And. ( .Not. tscreen)) &
+      If ((MPIglobal%procs .Gt. 1) .And. (MPIglobal%rank .Eq. 0) .And. ( .Not. tscreen)) &
      & Call dfgather
       Call barrier
       Write (unitout, '(a)') "Info(" // trim (thisnam) // "): Kohn-Sham&

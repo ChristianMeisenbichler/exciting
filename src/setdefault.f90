@@ -14,7 +14,7 @@ Subroutine setdefault
       Use modtetra
 #endif
 #ifdef XS
-      Use modmpi, Only: rank
+!      Use modmpi, Only: MPIglobal
       Use modxs
 #endif
       Use sclcontroll

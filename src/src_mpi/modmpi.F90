@@ -22,38 +22,45 @@ Module modmpi
 use mpi
 #endif
 implicit none
-      Integer :: rank, myprocrow, myproccol
-      Integer :: procs, nprocrows, nproccols
-      Integer :: blocksize = 64
-      Integer :: ierr
-      Integer :: comm, context
+
+      Type MPIinfo
+
+        Integer :: rank, myprocrow, myproccol
+        Integer :: procs, nprocrows, nproccols
+        Integer :: blocksize = 64
+        Integer :: ierr
+        Integer :: comm, context
+
+      End Type MPIinfo
+
       Logical :: splittfile
+      Type(MPIinfo) :: MPIglobal
 !
 !!$  character(256)::filename
 Contains
       Subroutine initMPI
 #ifdef MPI
     !        mpi init
-         Call mpi_init (ierr)
-         comm = mpi_comm_world
-         Call mpi_comm_size (mpi_comm_world, procs, ierr)
-         Call mpi_comm_rank (mpi_comm_world, rank, ierr)
+         Call mpi_init (MPIglobal%ierr)
+         MPIglobal%comm = mpi_comm_world
+         Call mpi_comm_size (mpi_comm_world, MPIglobal%procs, MPIglobal%ierr)
+         Call mpi_comm_rank (mpi_comm_world, MPIglobal%rank, MPIglobal%ierr)
          splittfile = .True.
 !TODO: decent processor grid initialization
-         nprocrows = 1
-         nproccols = 1
+         MPIglobal%nprocrows = 1
+         MPIglobal%nproccols = 1
 #endif
 #ifndef MPI
-         comm  = 0
-         procs = 1
-         rank  = 0
+         MPIglobal%comm  = 0
+         MPIglobal%procs = 1
+         MPIglobal%rank  = 0
          splittfile = .False.
 #endif
       End Subroutine initMPI
 !
       Subroutine finitMPI
 #ifdef MPI
-         Call MPI_Finalize (ierr)
+         Call MPI_Finalize (MPIglobal%ierr)
 #endif
       End Subroutine finitMPI
 !
@@ -64,8 +71,8 @@ Contains
          Use modmain, Only: nkpt
          Integer :: nofk
          Integer, Intent (In) :: process
-         nofk = nkpt / procs
-         If ((Mod(nkpt, procs) .Gt. process)) nofk = nofk + 1
+         nofk = nkpt / MPIglobal%procs
+         If ((Mod(nkpt, MPIglobal%procs) .Gt. process)) nofk = nofk + 1
       End Function nofk
 !
       Function firstk (process)
@@ -92,7 +99,7 @@ Contains
          Integer, Intent (In) :: k
          Integer :: iproc
          procofk = 0
-         Do iproc = 0, procs - 1
+         Do iproc = 0, MPIglobal%procs - 1
             If (k .Gt. lastk(iproc)) procofk = procofk + 1
          End Do
       End Function procofk
@@ -101,8 +108,8 @@ Contains
       Function nofset (process, set)
          Integer :: nofset
          Integer, Intent (In) :: process, set
-         nofset = set / procs
-         If ((Mod(set, procs) .Gt. process)) nofset = nofset + 1
+         nofset = set / MPIglobal%procs
+         If ((Mod(set, MPIglobal%procs) .Gt. process)) nofset = nofset + 1
       End Function nofset
 !
       Function firstofset (process, set)
@@ -130,7 +137,7 @@ Contains
          Integer, Intent (In) :: k, set
          Integer :: iproc
          procofindex = 0
-         Do iproc = 0, procs - 1
+         Do iproc = 0, MPIglobal%procs - 1
             If (k .Gt. lastofset(iproc, set)) procofindex = procofindex &
            & + 1
          End Do
@@ -141,10 +148,10 @@ Contains
          Integer :: lastproc
          Integer, Intent (In) :: row, set
          If (row .Ne. nofset(0, set)) Then
-            lastproc = procs
+            lastproc = MPIglobal%procs
          Else
-            lastproc = modulo (set, procs)
-            If (lastproc .Eq. 0) lastproc = procs
+            lastproc = modulo (set, MPIglobal%procs)
+            If (lastproc .Eq. 0) lastproc = MPIglobal%procs
          End If
          lastproc = lastproc - 1
       End Function lastproc
@@ -156,11 +163,11 @@ Contains
          Implicit None
   ! do nothing if only one process
 #ifndef MPI
-         If (procs .Eq. 1) Return
+         If (MPIglobal%procs .Eq. 1) Return
 #endif
   ! call the MPI barrier
 #ifdef MPI
-         Call MPI_barrier (mpi_comm_world, ierr)
+         Call MPI_barrier (mpi_comm_world, MPIglobal%ierr)
 #endif
       End Subroutine barrier
 
@@ -169,7 +176,7 @@ Contains
          Implicit None
          Integer, Intent (In) :: set, mult
          Integer :: i
-         Do i = 1, (nofset(0, set)-nofset(rank, set)) * mult
+         Do i = 1, (nofset(0, set)-nofset(MPIglobal%rank, set)) * mult
             Call barrier
          End Do
       End Subroutine endloopbarrier
@@ -202,27 +209,27 @@ Contains
           stop
         end if
 #ifdef MPI
-        allocate(buf_n(procs),buf_dspls(procs))
+        allocate(buf_n(MPIglobal%procs),buf_dspls(MPIglobal%procs))
         ! displacements within receive buffer (flattened array)
-        buf_dspls=(/(rlen*(firstofset(j,set)-1),j=0,procs-1)/)
+        buf_dspls=(/(rlen*(firstofset(j,set)-1),j=0,MPIglobal%procs-1)/)
         ! number of elements in send buffer (flattened array)
-        buf_n=(/(rlen*nofset(j,set),j=0,procs-1)/)
+        buf_n=(/(rlen*nofset(j,set),j=0,MPIglobal%procs-1)/)
         ! use recieve buffer as sendbuffer by specifying mpi_in_place
         if (ti) then
 #ifdef MPI1
 #define BUFFER bufi
-          allocate(bufi(buf_n(rank+1)))
-          bufi(:)=ibuf(buf_dspls(rank+1)+1:buf_dspls(rank+1)+buf_n(rank+1))
+          allocate(bufi(buf_n(MPIglobal%rank+1)))
+          bufi(:)=ibuf(buf_dspls(MPIglobal%rank+1)+1:buf_dspls(MPIglobal%rank+1)+buf_n(MPIglobal%rank+1))
 #endif
           call mpi_allgatherv(BUFFER, &
-            buf_n(rank+1), &
+            buf_n(MPIglobal%rank+1), &
             mpi_integer, &
             ibuf, &
             buf_n, &
             buf_dspls, &
             mpi_integer, &
             mpi_comm_world, &
-            ierr)
+            MPIglobal%ierr)
 #ifdef MPI1
           deallocate(bufi)
 #undef BUFFER
@@ -231,18 +238,18 @@ Contains
         if (tr) then
 #ifdef MPI1
 #define BUFFER bufr
-          allocate(bufr(buf_n(rank+1)))
-          bufr(:)=rbuf(buf_dspls(rank+1)+1:buf_dspls(rank+1)+buf_n(rank+1))
+          allocate(bufr(buf_n(MPIglobal%rank+1)))
+          bufr(:)=rbuf(buf_dspls(MPIglobal%rank+1)+1:buf_dspls(MPIglobal%rank+1)+buf_n(MPIglobal%rank+1))
 #endif
           call mpi_allgatherv(BUFFER, &
-            buf_n(rank+1), &
+            buf_n(MPIglobal%rank+1), &
             mpi_double_precision, &
             rbuf, &
             buf_n, &
             buf_dspls, &
             mpi_double_precision, &
             mpi_comm_world, &
-            ierr)
+            MPIglobal%ierr)
 #ifdef MPI1
           deallocate(bufr)
 #undef BUFFER
@@ -251,18 +258,18 @@ Contains
         if (tz) then
 #ifdef MPI1
 #define BUFFER bufz
-          allocate(bufz(buf_n(rank+1)))
-          bufz(:)=zbuf(buf_dspls(rank+1)+1:buf_dspls(rank+1)+buf_n(rank+1))
+          allocate(bufz(buf_n(MPIglobal%rank+1)))
+          bufz(:)=zbuf(buf_dspls(MPIglobal%rank+1)+1:buf_dspls(MPIglobal%rank+1)+buf_n(MPIglobal%rank+1))
 #endif
           call mpi_allgatherv(BUFFER, &
-            buf_n(rank+1), &
+            buf_n(MPIglobal%rank+1), &
             mpi_double_complex, &
             zbuf, &
             buf_n, &
             buf_dspls, &
             mpi_double_complex, &
             mpi_comm_world, &
-            ierr)
+            MPIglobal%ierr)
 #ifdef MPI1
           deallocate(bufz)
 #undef BUFFER

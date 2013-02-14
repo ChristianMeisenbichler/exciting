@@ -101,7 +101,7 @@ Subroutine exccoulint
       nst13 = rnst1 * rnst3
       nst24 = rnst2 * rnst4
       Call genfilname (dotext='_SCI.OUT', setfilext=.True.)
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Eq. 0) Then
          Call writekpts
          Call writeqpts
       End If
@@ -140,7 +140,7 @@ Subroutine exccoulint
       Call genparidxran ('p', nkkp)
       Call genfilname (basename='EXCLI', asc=.True., filnam=fnexcli)
       Call getunit (un)
-      If (rank .Eq. 0) open (un, file=trim(fnexcli), form='formatted', &
+      If (MPIglobal%rank .Eq. 0) open (un, file=trim(fnexcli), form='formatted', &
      & action='write', status='replace')
 !
       Do ikkp = ppari, pparf
@@ -198,7 +198,7 @@ Subroutine exccoulint
             End Do
          End Do
 !
-         If ((rank .Eq. 0) .And. (ikkp .Le. 3)) Then
+         If ((MPIglobal%rank .Eq. 0) .And. (ikkp .Le. 3)) Then
             Do ist1 = 1, rnst1
                Do ist2 = 1, rnst2
                   Do ist3 = 1, rnst1
@@ -221,9 +221,9 @@ Subroutine exccoulint
 !
      ! end loop over (k,kp) pairs
       End Do
-      If (rank .Eq. 0) write (un, '("# ikkp, iknr,ist1,ist3, jknr,ist2,&
+      If (MPIglobal%rank .Eq. 0) write (un, '("# ikkp, iknr,ist1,ist3, jknr,ist2,&
      &ist4,    Re(V),            Im(V),             |V|^2")')
-      If (rank .Eq. 0) close (un)
+      If (MPIglobal%rank .Eq. 0) close (un)
 !
       Call barrier
       Call findgntn0_clear

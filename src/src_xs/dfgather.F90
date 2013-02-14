@@ -34,11 +34,11 @@ Subroutine dfgather
      ! allocate
          Allocate (chi0(n, n), chi0wg(n, 2, 3), chi0hd(3, 3))
      ! file extension for q-point
-         Do iproc = 0, procs - 1
+         Do iproc = 0, MPIglobal%procs - 1
             Call genfilname (basename='X0', bzsampl=bzsampl, &
            & acont=input%xs%tddft%acont, nar= .Not. &
            & input%xs%tddft%aresdf, tord=input%xs%tddft%torddf, &
-           & markfxcbse=tfxcbse, iqmt=iq, procs=procs, rank=iproc, &
+           & markfxcbse=tfxcbse, iqmt=iq, procs=MPIglobal%procs, rank=iproc, &
            & filnam=fnchi0_t)
             wpari = firstofset (iproc, nwdf)
             wparf = lastofset (iproc, nwdf)
@@ -50,8 +50,8 @@ Subroutine dfgather
               & chi0hd)
             End Do
          End Do
-         Do iproc = 0, procs - 1
-            Call genfilname (basename='X0', iqmt=iq, procs=procs, &
+         Do iproc = 0, MPIglobal%procs - 1
+            Call genfilname (basename='X0', iqmt=iq, procs=MPIglobal%procs, &
            & rank=iproc, filnam=fnchi0_t)
          End Do
          Deallocate (chi0, chi0wg, chi0hd)

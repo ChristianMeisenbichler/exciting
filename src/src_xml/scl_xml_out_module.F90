@@ -15,7 +15,7 @@ Module scl_xml_out_Module
       Use mod_force
       Use mod_spin
       Use mod_misc, Only: githash, filext
-      Use modmpi, Only: rank
+      Use modmpi, Only: MPIglobal
 !
       Use modinput
       Implicit None
@@ -30,7 +30,7 @@ Contains
 !
       Subroutine scl_xml_out_create
          Character (10) :: dat, tim
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
        ! Create a new document and get a pointer to the root element, this gives you the minimum empty dom
             sclDoc => createDocument (getImplementation(), "", "info", &
            & null())
@@ -73,7 +73,7 @@ Contains
          Integer :: is, ia, ias, i
          Type (Node), Pointer :: structure, crystal, nbasevect, &
         & nreziprvect, species, atom, forces, text, force
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             structure => createElementNS (sclDoc, "", "structure")
             dummy => appendChild (nscl, structure)
             crystal => createElementNS (sclDoc, "", "crystal")
@@ -152,7 +152,7 @@ Contains
          Implicit None
          Integer :: is, ia, ias
          Real (8) :: scltime, t1
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             niter => createElementNS (sclDoc, "", "iter")
             dummy => appendChild (nscl, niter)
             Write (buffer,*) iscl
@@ -351,7 +351,7 @@ Contains
       Subroutine scl_xml_write_moments ()
          Type (Node), Pointer :: moments, moment
          Integer :: is, ia, ias
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             moments => createElementNS (sclDoc, "", "moments")
             dummy => appendChild (niter, moments)
 !
@@ -384,20 +384,20 @@ Contains
       End Subroutine scl_xml_write_moments
 
       Subroutine scl_xml_out_close ()!
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             Call destroy (sclDoc)
          End If
       End Subroutine scl_xml_out_close
 !
       Subroutine scl_xml_setGndstateStatus (status)
          Character (Len=*) :: status
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             Call setAttribute (ngroundstate, "status", status)
          End If
       End Subroutine scl_xml_setGndstateStatus
 !
       Subroutine scl_xml_out_write ()
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             Call normalizeDocument (sclDoc)
             Call serialize (sclDoc, "info" // &
               filext(1:index(filext, ".OUT", .true.)-1) // ".xml")

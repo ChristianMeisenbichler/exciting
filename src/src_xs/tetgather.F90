@@ -32,10 +32,10 @@ Subroutine tetgather
             Do i1 = 1, nst1
                Do i2 = 1, nst2
               ! collect weights from processes
-                  Do iproc = 0, procs - 1
+                  Do iproc = 0, MPIglobal%procs - 1
                  ! filename for input file
                      Call genfilname (basename='TETW', iqmt=iq, &
-                    & rank=iproc, procs=procs, filnam=filnam_t)
+                    & rank=iproc, procs=MPIglobal%procs, filnam=filnam_t)
                      wpari = firstofset (iproc, nwdf)
                      wparf = lastofset (iproc, nwdf)
                      nwdfp = wparf - wpari + 1
@@ -54,9 +54,9 @@ Subroutine tetgather
             End Do
         ! end loop over k-points
          End Do
-         Do iproc = 0, procs - 1
-            Call genfilname (basename='TETW', iqmt=iq, rank=rank, &
-           & procs=procs, filnam=filnam_t)
+         Do iproc = 0, MPIglobal%procs - 1
+            Call genfilname (basename='TETW', iqmt=iq, rank=MPIglobal%rank, &
+           & procs=MPIglobal%procs, filnam=filnam_t)
             Call filedel (trim(filnam_t))
          End Do
          Write (unitout, '(a, i8)') 'Info(' // thisnam // '): weights f&

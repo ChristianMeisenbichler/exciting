@@ -30,8 +30,8 @@ Subroutine writeevec (vq, voff, filxt)
       Allocate (apwcmt(nstfv, apwordmax, lmmaxapw, natmtot))
       Allocate (locmt(nstfv, nlomax,-lolmax:lolmax, natmtot))
   ! delete existing coefficients files
-      If (rank .Eq. 0) Call filedel ('APWCMT'//trim(filxt))
-      If (rank .Eq. 0) Call filedel ('LOCMT'//trim(filxt))
+      If (MPIglobal%rank .Eq. 0) Call filedel ('APWCMT'//trim(filxt))
+      If (MPIglobal%rank .Eq. 0) Call filedel ('LOCMT'//trim(filxt))
       Call genparidxran ('k', nkpt)
       Do ik = kpari, kparf
          apwcmt (:, :, :, :) = zzero
@@ -42,8 +42,8 @@ Subroutine writeevec (vq, voff, filxt)
          Call genapwcmt (input%groundstate%lmaxapw, ngk(1, ik), 1, &
         & nstfv, apwalm, evecfv, apwcmt)
          Call genlocmt (ngk(1, ik), 1, nstfv, evecfv, locmt)
-         Do j = 0, procs - 1
-            If (rank .Eq. j) Then
+         Do j = 0, MPIglobal%procs - 1
+            If (MPIglobal%rank .Eq. j) Then
                Call putapwcmt ('APWCMT'//trim(filxt), ik, vkl(1, ik), &
               & vq, apwcmt)
                Call putlocmt ('LOCMT'//trim(filxt), ik, vkl(1, ik), vq, &
@@ -52,7 +52,7 @@ Subroutine writeevec (vq, voff, filxt)
             Call barrier
          End Do
       End Do
-      Call endloopbarrier (nkpt, procs)
+      Call endloopbarrier (nkpt, MPIglobal%procs)
       isreadstate0 = .False.
       Deallocate (evecfv, apwalm, apwcmt, locmt)
 End Subroutine writeevec

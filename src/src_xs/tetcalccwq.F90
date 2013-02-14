@@ -45,18 +45,18 @@ Subroutine tetcalccwq (iq)
       nwdfp = wf - wi + 1
       If (tscreen) Then
      ! generate filenames
-         Call genfilname (basename='TETW', iq=iq, rank=rank, &
-        & procs=procs, appfilext=.True., filnam=filnam)
-         Call genfilname (basename='TETWT', iq=iq, rank=rank, &
-        & procs=procs, appfilext=.True., filnam=filnamt)
+         Call genfilname (basename='TETW', iq=iq, rank=MPIglobal%rank, &
+        & procs=MPIglobal%procs, appfilext=.True., filnam=filnam)
+         Call genfilname (basename='TETWT', iq=iq, rank=MPIglobal%rank, &
+        & procs=MPIglobal%procs, appfilext=.True., filnam=filnamt)
       Else
      ! set q-dependent file extension
          Call genfilname (iqmt=iq, setfilext=.True.)
      ! generate filenames
-         Call genfilname (basename='TETW', iqmt=iq, rank=rank, &
-        & procs=procs, filnam=filnam)
-         Call genfilname (basename='TETWT', iqmt=iq, rank=rank, &
-        & procs=procs, filnam=filnamt)
+         Call genfilname (basename='TETW', iqmt=iq, rank=MPIglobal%rank, &
+        & procs=MPIglobal%procs, filnam=filnam)
+         Call genfilname (basename='TETWT', iqmt=iq, rank=MPIglobal%rank, &
+        & procs=MPIglobal%procs, filnam=filnamt)
       End If
   ! find highest (partially) occupied and lowest (partially) unoccupied states
       Call findocclims (iq, istocc0, istocc, istunocc0, istunocc, &
@@ -110,7 +110,7 @@ Subroutine tetcalccwq (iq)
             Write (un, Rec=irec) cwt2, cwat2, cwsurft2
          End Do
      ! synchronize for common number of w-points to all processes
-         If (iw <= nwdf/procs) Call barrier
+         If (iw <= nwdf/MPIglobal%procs) Call barrier
       End Do
       Close (un)
       Deallocate (cw, cwa, cwsurf)

@@ -145,16 +145,16 @@ use ioarray
          Call genfilname (basename='SCREEN', bzsampl=bzsampl, iq=iq, &
         & filnam=fnscreen)
          Call genfilname (nodotpar=.True., basename='EMAT_TIMING', &
-        & iq=iq, etype=input%xs%emattype, procs=procs, rank=rank, &
+        & iq=iq, etype=input%xs%emattype, procs=MPIglobal%procs, rank=MPIglobal%rank, &
         & appfilext=.True., filnam=fnetim)
          Call genfilname (nodotpar=.True., basename='X0_TIMING', iq=iq, &
-        & procs=procs, rank=rank, appfilext=.True., filnam=fnxtim)
+        & procs=MPIglobal%procs, rank=MPIglobal%rank, appfilext=.True., filnam=fnxtim)
       Else
          Call genfilname (basename='TETW', iqmt=iq, filnam=fnwtet)
          Call genfilname (basename='PMAT_XS', filnam=fnpmat)
          Call genfilname (basename='EMAT', iqmt=iq, filnam=fnemat)
          Call genfilname (nodotpar=.True., basename='X0_TIMING', &
-        & bzsampl=bzsampl, iqmt=iq, procs=procs, rank=rank, &
+        & bzsampl=bzsampl, iqmt=iq, procs=MPIglobal%procs, rank=MPIglobal%rank, &
         & filnam=fnxtim)
          Call genfilname (basename='X0', bzsampl=bzsampl, &
         & acont=input%xs%tddft%acont, nar= .Not. input%xs%tddft%aresdf, &
@@ -163,7 +163,7 @@ use ioarray
          Call genfilname (basename='X0', bzsampl=bzsampl, &
         & acont=input%xs%tddft%acont, nar= .Not. input%xs%tddft%aresdf, &
         & tord=input%xs%tddft%torddf, markfxcbse=tfxcbse, iqmt=iq, &
-        & procs=procs, rank=rank, filnam=fnchi0_t)
+        & procs=MPIglobal%procs, rank=MPIglobal%rank, filnam=fnchi0_t)
       End If
   ! remove timing files from previous runs
       Call filedel (trim(fnxtim))
@@ -502,7 +502,7 @@ use ioarray
          Forall (iw=1:nwdf)
             eps0 (:, :, iw) = dble (krondelta) - chi0h (:, :, iw)
          End Forall
-         If (rank .Eq. 0) Call writedielt ('DIELTENS0_NOSYM', 1, 0.d0, &
+         If (MPIglobal%rank .Eq. 0) Call writedielt ('DIELTENS0_NOSYM', 1, 0.d0, &
         & eps0(:, :, 1), 0)
      ! symmetrize the macroscopic dielectric function tensor
          Do oct1 = 1, 3
@@ -517,7 +517,7 @@ use ioarray
          Forall (iw=1:nwdf)
             eps0 (:, :, iw) = dble (krondelta) - chi0hs (:, :, iw)
          End Forall
-         If (rank .Eq. 0) Call writedielt ('DIELTENS0', 1, 0.d0, &
+         If (MPIglobal%rank .Eq. 0) Call writedielt ('DIELTENS0', 1, 0.d0, &
         & eps0(:, :, 1), 0)
          Deallocate (chi0hs, eps0)
       End If
@@ -532,8 +532,8 @@ use ioarray
          Call writevars (un, iq, 0)
          Close (un)
       Else
-         Do j = 0, procs - 1
-            If (rank .Eq. j) Then
+         Do j = 0, MPIglobal%procs - 1
+            If (MPIglobal%rank .Eq. j) Then
                Do iw = wi, wf
                   Call putx0 (tq0, iq, iw-wi+1, trim(fnchi0_t), '', &
                  & chi0(:, :, iw-wi+1), chi0w(:, :, :, iw-wi+1), &

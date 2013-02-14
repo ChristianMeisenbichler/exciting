@@ -45,7 +45,7 @@ Subroutine tetcalccw
       End Do
   ! synchronize
       Call barrier
-      If ((procs .Gt. 1) .And. (rank .Eq. 0) .And. ( .Not. tscreen)) &
+      If ((MPIglobal%procs .Gt. 1) .And. (MPIglobal%rank .Eq. 0) .And. ( .Not. tscreen)) &
      & Call tetgather
       Call barrier
       input%xs%tetra%tetradf = tet

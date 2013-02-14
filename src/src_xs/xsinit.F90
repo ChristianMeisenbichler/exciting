@@ -35,8 +35,8 @@ Subroutine xsinit
   !     output file     !
   !---------------------!
   ! name of output file
-      Call genfilname (nodotpar=.True., basename='INFOXS', procs=procs, &
-     & rank=rank, filnam=xsfileout)
+      Call genfilname (nodotpar=.True., basename='INFOXS', procs=MPIglobal%procs, &
+     & rank=MPIglobal%rank, filnam=xsfileout)
   ! reset or append to output file
       Call getunit (unitout)
       If (input%xs%tappinfo .Or. (calledxs .Gt. 1)) Then
@@ -53,9 +53,9 @@ Subroutine xsinit
          Write (unitout, '("| EXCITING lithium    (",I2.2,".",I2.2,".",I2.2,") started                     |")') version
          Write (unitout, '("| version hash id: ",a," |")') githash
 #ifdef MPI
-         Write (unitout, '("| MPI version using ",i6," processor(s)                     |")') procs
-         if (rank .ne. 0) &
-         Write (unitout, '("|  rank of current processor: ",i6,"                        |")') rank
+         Write (unitout, '("| MPI version using ",i6," processor(s)                     |")') MPIglobal%procs
+         if (MPIglobal%rank .ne. 0) &
+         Write (unitout, '("|  rank of current processor: ",i6,"                        |")') MPIglobal%rank
 #ifndef MPI1
          Write (unitout, '("|  using MPI-2 features                                     |")')
 #endif
@@ -87,17 +87,17 @@ Subroutine xsinit
   !-----------------------------------!
   !     parallelization variables     !
   !-----------------------------------!
-      If ((procs .Lt. 1) .Or. (procs .Gt. maxproc)) Then
+      If ((MPIglobal%procs .Lt. 1) .Or. (MPIglobal%procs .Gt. maxproc)) Then
          Write (unitout,*)
          Write (unitout, '("Error(xsinit): Error in parallel initializa&
-        &tion: number of processes out of range: ", i6)') procs
+        &tion: number of processes out of range: ", i6)') MPIglobal%procs
          Write (unitout,*)
          Call terminate
       End If
-      If ((rank .Gt. procs) .Or. (rank .Lt. 0)) Then
+      If ((MPIglobal%rank .Gt. MPIglobal%procs) .Or. (MPIglobal%rank .Lt. 0)) Then
          Write (unitout,*)
          Write (unitout, '("Error(xsinit): Error in parallel initializa&
-        &tion: rank out of range: ", i6)') rank
+        &tion: rank out of range: ", i6)') MPIglobal%rank
          Write (unitout,*)
          Call terminate
       End If
@@ -306,8 +306,8 @@ Subroutine xsinit
   !---------------------!
   !     checkpoints     !
   !---------------------!
-      If (procs .Gt. 1) Then
-         Call genfilname (basename='resume', rank=rank, procs=procs, &
+      If (MPIglobal%procs .Gt. 1) Then
+         Call genfilname (basename='resume', rank=MPIglobal%rank, procs=MPIglobal%procs, &
         & dotext='', filnam=fnresume)
       Else
          Call genfilname (basename='resume', dotext='', &

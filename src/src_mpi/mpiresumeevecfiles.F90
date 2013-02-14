@@ -34,18 +34,18 @@ Subroutine mpiresumeevecfiles
       Real (8) :: evalfv (nstfv, nspnfv), vkl_ (3), evalsvp (nstsv), &
      & occsvp (nstsv)
       Character (256), External :: outfilenamestring
-      If (procs .Gt. 1) Call MPI_barrier (MPI_COMM_WORLD, ierr)
-      If (splittfile .And. (procs .Gt. 1) .and. (nkpt .gt.rank)) Then
+      If (MPIglobal%procs .Gt. 1) Call MPI_barrier (MPI_COMM_WORLD, MPIglobal%ierr)
+      If (splittfile .And. (MPIglobal%procs .Gt. 1) .and. (nkpt .gt.MPIglobal%rank)) Then
 ! start a receive in order to pass around a token from rank 0 to max
-         If (rank .Ne. 0) Call mpi_recv (token, 1, MPI_INTEGER, rank-1, &
-        & 1, MPI_COMM_WORLD, recvstatus, ierr)
+         If (MPIglobal%rank .Ne. 0) Call mpi_recv (token, 1, MPI_INTEGER, MPIglobal%rank-1, &
+        & 1, MPI_COMM_WORLD, recvstatus, MPIglobal%ierr)
 !
          filetag = 'EVECFV'
          Inquire (IoLength=Recl) vkl_, nmatmax_, nstfv_, nspnfv_, &
         & evecfv
          Open (71, File=trim(filetag)//trim(filext), Action='WRITE', &
         & Form='UNFORMATTED', Access='DIRECT', Recl=Recl)
-         proc = rank
+         proc = MPIglobal%rank
          Open (77, File=outfilenamestring(filetag, firstk(proc)), &
         & Action='READ', Form='UNFORMATTED', Access='DIRECT', &
         & Recl=Recl)
@@ -61,7 +61,7 @@ Subroutine mpiresumeevecfiles
          Inquire (IoLength=Recl) vkl_, nstsv_, evecsv
          Open (71, File=trim(filetag)//trim(filext), Action='WRITE', &
         & Form='UNFORMATTED', Access='DIRECT', Recl=Recl)
-         proc = rank
+         proc = MPIglobal%rank
          Open (77, File=outfilenamestring(filetag, firstk(proc)), &
         & Action='READ', Form='UNFORMATTED', Access='DIRECT', &
         & Recl=Recl)
@@ -77,7 +77,7 @@ Subroutine mpiresumeevecfiles
          Inquire (IoLength=Recl) vkl_, nstfv_, nspnfv_, evalfv
          Open (71, File=trim(filetag)//trim(filext), Action='WRITE', &
         & Form='UNFORMATTED', Access='DIRECT', Recl=Recl)
-         proc = rank
+         proc = MPIglobal%rank
          Open (77, File=outfilenamestring(filetag, firstk(proc)), &
         & Action='READ', Form='UNFORMATTED', Access='DIRECT', &
         & Recl=Recl)
@@ -93,7 +93,7 @@ Subroutine mpiresumeevecfiles
          Inquire (IoLength=Recl) vkl_, nstsv_, evalsvp
          Open (71, File=trim(filetag)//trim(filext), Action='WRITE', &
         & Form='UNFORMATTED', Access='DIRECT', Recl=Recl)
-         proc = rank
+         proc = MPIglobal%rank
          Open (77, File=outfilenamestring(filetag, firstk(proc)), &
         & Action='READ', Form='UNFORMATTED', Access='DIRECT', &
         & Recl=Recl)
@@ -109,7 +109,7 @@ Subroutine mpiresumeevecfiles
          Inquire (IoLength=Recl) vkl_, nstsv_, occsvp
          Open (71, File=trim(filetag)//trim(filext), Action='WRITE', &
         & Form='UNFORMATTED', Access='DIRECT', Recl=Recl)
-         proc = rank
+         proc = MPIglobal%rank
          Open (77, File=outfilenamestring(filetag, firstk(proc)), &
         & Action='READ', Form='UNFORMATTED', Access='DIRECT', &
         & Recl=Recl)
@@ -123,14 +123,14 @@ Subroutine mpiresumeevecfiles
 !
          write(*,*) 'cheers'
          Call SYSTEM ("sync")
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
             Write (60,*) "resumed split files"
             Call flushifc (60)
          End If
          !if I am not the last process pass on the token
-         If (rank .Ne. (procs-1) .and. (rank .ne. (nkpt-1))) then
+         If (MPIglobal%rank .Ne. (MPIglobal%procs-1) .and. (MPIglobal%rank .ne. (nkpt-1))) then
          Call mpi_send (token, 1, MPI_INTEGER, &
-        & rank+1, 1, MPI_COMM_WORLD, ierr)
+        & MPIglobal%rank+1, 1, MPI_COMM_WORLD, MPIglobal%ierr)
          endif
       End If
       call barrier

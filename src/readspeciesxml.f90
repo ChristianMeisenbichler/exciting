@@ -42,11 +42,11 @@ Subroutine readspeciesxml
 
 #endif
 			 write(spfile_string,*)"./", trim(input%structure%speciesarray(is)%species%speciesfile)
-             If (rank .Eq. 0) Then
+             If (MPIglobal%rank .Eq. 0) Then
                 call system(command)
              endif
 #ifdef MPI
-              Call MPI_barrier (MPI_COMM_WORLD, ierr)
+              Call MPI_barrier (MPI_COMM_WORLD, MPIglobal%ierr)
 #endif
          else
              Write (spfile_string,*)trim (input%structure%speciespath) // "/" &

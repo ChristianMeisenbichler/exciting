@@ -23,10 +23,10 @@ Subroutine writetime (t, fname)
       Write (80,*)
 #ifdef MPI
       Write (80, '("Total time elapsed on all processors")')
-      Write (80, '(" Wall clock seconds : ", es18.10)') procs * t
-      Write (80, '(" Wall clock hours   : ", f14.2)') procs * t / &
+      Write (80, '(" Wall clock seconds : ", es18.10)') MPIglobal%procs * t
+      Write (80, '(" Wall clock hours   : ", f14.2)') MPIglobal%procs * t / &
      & 3600.d0
-      Write (80, '(" Wall clock days    : ", f14.2)') procs * t / &
+      Write (80, '(" Wall clock days    : ", f14.2)') MPIglobal%procs * t / &
      & 3600.d0 / 24.d0
       Write (80,*)
 #endif

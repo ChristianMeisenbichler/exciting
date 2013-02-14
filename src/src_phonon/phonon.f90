@@ -78,17 +78,17 @@ Subroutine phonon
 10    Continue
       natoms (1:nspecies) = natoms0 (1:nspecies)
 ! find a dynamical matrix to calculate
-      if (rank.eq.0) then
+      if (MPIglobal%rank.eq.0) then
         Call dyntask (80, iq, is, ia, ip, status)
         finished=.false.
         if (status .eq. "finished") finished=.true.
       end if
 #ifdef MPI
-      Call MPI_bcast (iq, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
-      Call MPI_bcast (ia, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
-      Call MPI_bcast (is, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
-      Call MPI_bcast (ip, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
-      Call MPI_bcast (finished, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+      Call MPI_bcast (iq, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, MPIglobal%ierr)
+      Call MPI_bcast (ia, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, MPIglobal%ierr)
+      Call MPI_bcast (is, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, MPIglobal%ierr)
+      Call MPI_bcast (ip, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, MPIglobal%ierr)
+      Call MPI_bcast (finished, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, MPIglobal%ierr)
       Call phfext (iq, is, ia, ip, filext)
 #endif
       if (finished) goto 20
@@ -100,13 +100,13 @@ Subroutine phonon
             Do js = 1, nspecies
                Do ja = 1, natoms0 (js)
                   Do jp = 1, 3
-                     if (rank.eq.0) Write (80, '(2G18.10, " : is = ", I4, ", ia = ", I&
+                     if (MPIglobal%rank.eq.0) Write (80, '(2G18.10, " : is = ", I4, ", ia = ", I&
                     &4, ", ip = ", I4)') 0.d0, 0.d0, js, ja, jp
                   End Do
                End Do
             End Do
          End Do
-         if (rank.eq.0) Close (80)
+         if (MPIglobal%rank.eq.0) Close (80)
          Go To 10
       End If
       task = 200
@@ -180,16 +180,16 @@ Subroutine phonon
                b = aimag (dyn(jp, ja, js))
                If (Abs(a) .Lt. 1.d-12) a = 0.d0
                If (Abs(b) .Lt. 1.d-12) b = 0.d0
-               if (rank.eq.0) Write (80, '(2G18.10, " : is = ", I4, ", ia = ", I4, ", &
+               if (MPIglobal%rank.eq.0) Write (80, '(2G18.10, " : is = ", I4, ", ia = ", I4, ", &
               &ip = ", I4)') a, b, js, ja, jp
             End Do
          End Do
       End Do
       Close (80)
 ! write the complex perturbing effective potential to file
-      if (rank.eq.0)  Call writedveff (iq, is, ia, ip, dveffmt, dveffir)
+      if (MPIglobal%rank.eq.0)  Call writedveff (iq, is, ia, ip, dveffmt, dveffir)
 ! delete the non-essential files
-      if (rank.eq.0)  Call phdelete
+      if (MPIglobal%rank.eq.0)  Call phdelete
       Go To 10
 20 continue
 End Subroutine

@@ -33,15 +33,15 @@ Contains
          Call getunit (un)
 #ifdef MPI
          tag = 77
-         If (rank .Ne. 0) Call mpi_send (pm, size(pm), &
-        & MPI_DOUBLE_COMPLEX, 0, tag, MPI_COMM_WORLD, ierr)
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Ne. 0) Call mpi_send (pm, size(pm), &
+        & MPI_DOUBLE_COMPLEX, 0, tag, MPI_COMM_WORLD, MPIglobal%ierr)
+         If (MPIglobal%rank .Eq. 0) Then
             Do iproc = 0, lastproc (ik, nkpt)
                ikr = firstofset (iproc, nkpt) - 1 + ik
                If (iproc .Ne. 0) Then
              ! receive data from slaves
                   Call mpi_recv (pm, size(pm), MPI_DOUBLE_COMPLEX, &
-                 & iproc, tag, MPI_COMM_WORLD, status, ierr)
+                 & iproc, tag, MPI_COMM_WORLD, status, MPIglobal%ierr)
                End If
 #endif
           ! only master is performing I/O

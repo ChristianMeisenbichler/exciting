@@ -17,13 +17,13 @@ Subroutine genparidxran (typ, n)
   ! local variables
       Integer :: np
   ! check if number of processors is greater than set
-      If (procs .Gt. n) Then
+      If (MPIglobal%procs .Gt. n) Then
          Write (*,*)
          Write (*, '("Error(genparidxran): number of processors exceeds&
         & size of set")')
          Write (*, '(" parallelization type : ", a)') typ
          Write (*, '(" size of set	       : ", i6)') n
-         Write (*, '(" number of processors : ", i6)') procs
+         Write (*, '(" number of processors : ", i6)') MPIglobal%procs
          Write (*,*)
          Call terminate
       End If
@@ -40,17 +40,17 @@ Subroutine genparidxran (typ, n)
       pparf = np
       Select Case (typ)
       Case ('w')
-         wpari = firstofset (rank, n)
-         wparf = lastofset (rank, n)
+         wpari = firstofset (MPIglobal%rank, n)
+         wparf = lastofset (MPIglobal%rank, n)
       Case ('q')
-         qpari = firstofset (rank, n)
-         qparf = lastofset (rank, n)
+         qpari = firstofset (MPIglobal%rank, n)
+         qparf = lastofset (MPIglobal%rank, n)
       Case ('k')
-         kpari = firstofset (rank, n)
-         kparf = lastofset (rank, n)
+         kpari = firstofset (MPIglobal%rank, n)
+         kparf = lastofset (MPIglobal%rank, n)
       Case ('p')
-         ppari = firstofset (rank, n)
-         pparf = lastofset (rank, n)
+         ppari = firstofset (MPIglobal%rank, n)
+         pparf = lastofset (MPIglobal%rank, n)
       Case Default
          Write (*,*)
          Write (*, '("Error(genparidxran): unknown parallelization type&

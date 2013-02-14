@@ -70,11 +70,11 @@
 
       self%size = size
 #ifdef MPI
-      self%nrows_loc = NUMROC(self%size, blocksize, myprocrow, 0, nprocrows)
-      self%ncols_loc = NUMROC(self%size, blocksize, myproccol, 0, nproccols)
+      self%nrows_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+      self%ncols_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
       CALL DESCINIT(self%desc, self%size, self%size, &
-                    blocksize, blocksize, 0, 0, &
-                    context, self%nrows_loc, ierr)
+                    MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
+                    MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
 #else
       self%nrows_loc = size
       self%ncols_loc = size
@@ -95,11 +95,11 @@
 
       self%size = size
 #ifdef MPI
-      self%nrows_loc = NUMROC(self%size, blocksize, myprocrow, 0, nprocrows)
-      self%ncols_loc = NUMROC(self%size, blocksize, myproccol, 0, nproccols)
+      self%nrows_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+      self%ncols_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
       CALL DESCINIT(self%desc, self%size, self%size, &
-                    blocksize, blocksize, 0, 0, &
-                    context, self%nrows_loc, ierr)
+                    MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
+                    MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
 #else
       self%nrows_loc = size
       self%ncols_loc = size
@@ -266,8 +266,6 @@
                 )
 
 #endif
-
-
 
     end subroutine HermitianMatrixMatrixNew
 

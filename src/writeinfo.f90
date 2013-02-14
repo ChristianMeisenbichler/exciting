@@ -12,7 +12,7 @@ Subroutine writeinfo (fnum)
 ! !USES:
       Use modinput
       Use modmain
-      use modmpi, only: procs
+      use modmpi, only: MPIglobal
 #ifdef TETRA
       Use modtetra
 #endif
@@ -39,7 +39,7 @@ Subroutine writeinfo (fnum)
       Write (fnum, '("| EXCITING Lithium    (",I2.2,".",I2.2,".",I2.2,") started                     |")') version
       Write (fnum, '("| version hash id: ",a," |")') githash
 #ifdef MPI
-      Write (fnum, '("| MPI version using ",i6," processor(s)                     |")') procs
+      Write (fnum, '("| MPI version using ",i6," processor(s)                     |")') MPIglobal%procs
 #ifndef MPI1
       Write (fnum, '("|  using MPI-2 features                                     |")')
 #endif

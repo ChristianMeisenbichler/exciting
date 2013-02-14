@@ -47,7 +47,7 @@ Subroutine idfgather
                   octu = oct1
                End If
                Do oct2 = octl, octu
-                  Do iproc = 0, procs - 1
+                  Do iproc = 0, MPIglobal%procs - 1
                      wpari = firstofset (iproc, nwdf)
                      wparf = lastofset (iproc, nwdf)
                  ! filename for proc
@@ -55,7 +55,7 @@ Subroutine idfgather
                     & acont=input%xs%tddft%acont, nar= .Not. &
                     & input%xs%tddft%aresdf, nlf=(m == 1), &
                     & fxctype=input%xs%tddft%fxctypenumber, tq0=tq0, &
-                    & oc1=oct1, oc2=oct2, iqmt=iq, procs=procs, &
+                    & oc1=oct1, oc2=oct2, iqmt=iq, procs=MPIglobal%procs, &
                     & rank=iproc, filnam=filnam2)
                      Open (unit1, File=trim(filnam2), Form='unformatted&
                     &', Action='read', Status='old', Access='direct', &
@@ -79,12 +79,12 @@ Subroutine idfgather
                   End Do
                   Close (unit1)
               ! remove partial files
-                  Do iproc = 0, procs - 1
+                  Do iproc = 0, MPIglobal%procs - 1
                      Call genfilname (basename='IDF', bzsampl=bzsampl, &
                     & acont=input%xs%tddft%acont, nar= .Not. &
                     & input%xs%tddft%aresdf, nlf=(m .Eq. 1), &
                     & fxctype=input%xs%tddft%fxctypenumber, tq0=tq0, &
-                    & oc1=oct1, oc2=oct2, iqmt=iq, procs=procs, &
+                    & oc1=oct1, oc2=oct2, iqmt=iq, procs=MPIglobal%procs, &
                     & rank=iproc, filnam=filnam2)
                      Call filedel (trim(filnam2))
                   End Do

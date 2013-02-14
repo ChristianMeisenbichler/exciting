@@ -54,12 +54,12 @@ Subroutine writepmatxs
          fnam = 'PMAT'
          Call genfilname (basename=trim(fnam), appfilext=.True., &
         & filnam=fnpmat)
-         Call genfilname (basename=trim(fnam), procs=procs, rank=rank, &
+         Call genfilname (basename=trim(fnam), procs=MPIglobal%procs, rank=MPIglobal%rank, &
         & appfilext=.True., filnam=fnpmat_t)
       Else
          fnam = 'PMAT_XS'
          Call genfilname (basename=trim(fnam), filnam=fnpmat)
-         Call genfilname (basename=trim(fnam), procs=procs, rank=rank, &
+         Call genfilname (basename=trim(fnam), procs=MPIglobal%procs, rank=MPIglobal%rank, &
         & filnam=fnpmat_t)
       End If
   ! initialise universal variables
@@ -69,8 +69,8 @@ Subroutine writepmatxs
   ! generate index ranges for parallel execution
       Call genparidxran ('k', nkpt)
   ! k-point interval for process
-      kpari = firstofset (rank, nkpt)
-      kparf = lastofset (rank, nkpt)
+      kpari = firstofset (MPIglobal%rank, nkpt)
+      kparf = lastofset (MPIglobal%rank, nkpt)
       Allocate (apwalmt(ngkmax, apwordmax, lmmaxapw, natmtot))
       Allocate (evecfvt(nmatmax, nstfv))
       Allocate (evecsvt(nstsv, nstsv))

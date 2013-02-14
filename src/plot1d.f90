@@ -55,7 +55,7 @@ Subroutine plot1d (labels, nf, lmax, ld, rfmt, rfir, plotdef)
   Type (xmlf_t), Save :: xf
   ! allocatable arrays
   Real (8), Allocatable :: fp (:, :)
-  If (rank .Eq. 0) Then
+  If (MPIglobal%rank .Eq. 0) Then
      If ((nf .Lt. 1) .Or. (nf .Gt. 4)) Then
         Write (*,*)
         Write (*, '("Error(plot1d): invalid number of functions : ", I&

@@ -36,14 +36,14 @@ Subroutine xsgeneigvec
          qf = 0
       End If
   ! write q-points
-      If (rank .Eq. 0) Call writeqpts
+      If (MPIglobal%rank .Eq. 0) Call writeqpts
   ! calculate eigenvectors for each q-point (k+q point set)
       Do iq = qi, qf
          If (.Not. tscreen) Call genfilname (iqmt=Max(0, iq), setfilext=.True.)
          vqlt (:) = 0.d0
          If (iq .Ne. 0) then
             vqlt (:) = vql (:, iq)
-            If (rank .Eq. 0) Call writegqpts (iq, filext)
+            If (MPIglobal%rank .Eq. 0) Call writegqpts (iq, filext)
          End If
      ! write eigenvectors, -values, occupancies and contracted MT coefficients
          Call writeevec (vqlt, qvkloff(1, iq), filext)
@@ -56,7 +56,7 @@ Subroutine xsgeneigvec
            &rs generated for associated(input%xs%screening)/screened in&
            &teraction:'
          End If
-         If (rank .Eq. 0) Then
+         If (MPIglobal%rank .Eq. 0) Then
         ! safely remove unnecessary files
             Call filedel ('EQATOMS'//trim(filext))
             Call filedel ('EVALCORE'//trim(filext))
@@ -82,7 +82,7 @@ Subroutine xsgeneigvec
          End If
      ! end loop over q-points
       End Do
-      If ((rank .Eq. 0) .And. tqgamma(1) .And. ( .Not. tscreen)) Then
+      If ((MPIglobal%rank .Eq. 0) .And. tqgamma(1) .And. ( .Not. tscreen)) Then
          Write (unitout, '("Info(", a, "): first Q-point is Gamma-point&
         & - copying relevant files")') thisnam
      ! write files again one by one

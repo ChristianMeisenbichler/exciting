@@ -24,17 +24,17 @@ Subroutine ematq (iq)
       Call genfilname (basename='EMAT', iqmt=iq, &
      & etype=input%xs%emattype, filnam=fnemat)
       Call genfilname (basename='EMAT', iqmt=iq, &
-     & etype=input%xs%emattype, procs=procs, rank=rank, &
+     & etype=input%xs%emattype, procs=MPIglobal%procs, rank=MPIglobal%rank, &
      & filnam=fnemat_t)
       Call genfilname (nodotpar=.True., basename='EMAT_TIMING', &
-     & iqmt=iq, etype=input%xs%emattype, procs=procs, rank=rank, &
+     & iqmt=iq, etype=input%xs%emattype, procs=MPIglobal%procs, rank=MPIglobal%rank, &
      & filnam=fnetim)
   ! file extension for q-point
       Call genfilname (iqmt=iq, setfilext=.True.)
   ! calculate k+q and G+k+q related variables
       Call init1offs (qvkloff(1, iq))
   ! write G+q-vectors
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Eq. 0) Then
          Call writegqpts (iq, filext)
          Call writekmapkq (iq)
       End If

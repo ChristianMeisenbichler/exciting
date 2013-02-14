@@ -32,9 +32,9 @@ Subroutine putbsemat (fname, zmat, ikkp, iknr, jknr, iq, iqr, n1, n2, &
 #ifdef MPI
       tag = 77
       nkkp = (nkptnr*(nkptnr+1)) / 2
-      If (rank .Ne. 0) Call mpi_send (zmat, size(zmat), &
-     & MPI_DOUBLE_COMPLEX, 0, tag, MPI_COMM_WORLD, ierr)
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Ne. 0) Call mpi_send (zmat, size(zmat), &
+     & MPI_DOUBLE_COMPLEX, 0, tag, MPI_COMM_WORLD, MPIglobal%ierr)
+      If (MPIglobal%rank .Eq. 0) Then
          Do iproc = 0, lastproc (ikkp, nkkp)
             ikkpr = firstofset (iproc, nkkp) - 1 + ikkp
             Call kkpmap (ikkpr, nkptnr, iknrr, jknrr)
@@ -42,7 +42,7 @@ Subroutine putbsemat (fname, zmat, ikkp, iknr, jknr, iq, iqr, n1, n2, &
             If (iproc .Ne. 0) Then
            ! receive data from slaves
                Call mpi_recv (zmat, size(zmat), MPI_DOUBLE_COMPLEX, &
-              & iproc, tag, MPI_COMM_WORLD, status, ierr)
+              & iproc, tag, MPI_COMM_WORLD, status, MPIglobal%ierr)
             End If
 #endif
         ! only the master is performing file I/O

@@ -38,13 +38,13 @@ Subroutine idf
         &ielectric function finished for q - point:', iq
       End Do
       Call barrier
-      If ((procs .Gt. 1) .And. (rank .Eq. 0)) Then
+      If ((MPIglobal%procs .Gt. 1) .And. (MPIglobal%rank .Eq. 0)) Then
          Call idfgather
          Write (unitout, '(a)') 'Info(' // thisnam // '): inverse diele&
         &ctric function gathered for q - point:'
       End If
       Call barrier
-      If (rank .Eq. 0) Then
+      If (MPIglobal%rank .Eq. 0) Then
          Do iq = 1, nqpt
         ! call for q-point
             Call xslinopt (iq)

@@ -113,7 +113,7 @@ Subroutine bse
   ! external functions
       Integer, External :: l2int
   ! routine not yet parallelized
-  if (rank .ne. 0) goto 10
+  if (MPIglobal%rank .ne. 0) goto 10
   !---------------------------!
   !     exciton variables     !   USE this ****************************
   !---------------------------!

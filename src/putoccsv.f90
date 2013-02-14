@@ -22,7 +22,7 @@ Subroutine putoccsv (ik, occsvp)
       Inquire (IoLength=Recl) vkl (:, ik), nstsv, occsvp
 !$OMP CRITICAL
       filetag = 'OCCSV'
-      If (splittfile .Or. (rank .Eq. 0)) Then
+      If (splittfile .Or. (MPIglobal%rank .Eq. 0)) Then
          Open (70, File=outfilenamestring(filetag, ik), Action='WRITE', &
         & Form='UNFORMATTED', Access='DIRECT', Recl=Recl)
          If (splittfile) Then

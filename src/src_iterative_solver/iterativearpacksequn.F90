@@ -229,10 +229,10 @@ Subroutine iterativearpacksecequn (ik, ispn, apwalm, vgpc, evalfv, &
 #ifdef DEBUG
       Close (logfil)
 #endif
-      If (rank .Eq. 0) write (60,*) "k=", ik, "ARPACK iterations", i
-      If (rank .Eq. 0) write (60,*) "matrixsize", n, "time LU", cpu1 - &
+      If (MPIglobal%rank .Eq. 0) write (60,*) "k=", ik, "ARPACK iterations", i
+      If (MPIglobal%rank .Eq. 0) write (60,*) "matrixsize", n, "time LU", cpu1 - &
      & cpu0, "iterations", cpu2 - cpu1
-      If (rank .Eq. 0) write (60,*) "minenergy (inversioncenter)", dble &
+      If (MPIglobal%rank .Eq. 0) write (60,*) "minenergy (inversioncenter)", dble &
      & (sigma)
 !
   !##########################

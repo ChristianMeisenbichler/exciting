@@ -66,7 +66,7 @@ Subroutine plot3d (plotlabels3d, nf, lmax, ld, rfmt, rfir, plotdef)
       Real (8), Allocatable :: fp (:, :)
 !
 !
- If (rank .Eq. 0) Then
+ If (MPIglobal%rank .Eq. 0) Then
       If ((nf .Lt. 1) .Or. (nf .Gt. 4)) Then
          Write (*,*)
          Write (*, '("Error(plot3d): invalid number of functions : ", I&

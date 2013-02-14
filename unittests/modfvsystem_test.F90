@@ -13,25 +13,35 @@ module modfvsystem_test
     contains
 
 #ifdef MPI
-    subroutine setupProcGrid(nprocrows_in, nproccols_in, comm, ierror)
+    subroutine setupProcGrid(nprocrows_sub, nproccols_sub, comm, context, ierror)
       implicit none
 
-      integer, intent(inout) :: nprocrows_in, nproccols_in
-      integer, intent(out)   :: comm, ierror
+      integer, intent(inout) :: nprocrows_sub, nproccols_sub
+      integer, intent(out)   :: comm, context, ierror
       integer :: nprocs, i, world_group, procs_group
 
-      nprocrows = nprocrows_in
-      nproccols = nproccols_in
-      nprocs = nprocrows*nproccols
+      nprocs = nprocrows_sub*nproccols_sub
       CALL MPI_COMM_GROUP(MPI_COMM_WORLD, world_group, ierror)
       CALL MPI_GROUP_INCL(world_group, nprocs, (/(i,i=0,nprocs-1)/), procs_group, ierror)
       CALL MPI_COMM_CREATE(MPI_COMM_WORLD, procs_group, comm, ierror);
 
       CALL BLACS_GET(0, 0, context)
-      CALL BLACS_GRIDINIT(context,'r', nprocrows, nproccols)
+      CALL BLACS_GRIDINIT(context,'r', nprocrows_sub, nproccols_sub)
 
     end subroutine setupProcGrid
 #endif
+
+
+#ifdef MPI
+    subroutine getBlacsGridInfo(MPIdata)
+      implicit none
+      Type(MPIinfo), intent(inout) :: MPIdata
+
+      CALL BLACS_GRIDINFO(MPIdata%context, MPIdata%nprocrows, MPIdata%nproccols, MPIdata%myprocrow, MPIdata%myproccol)
+
+    end subroutine getBlacsGridInfo
+#endif
+
 
 
     subroutine setHermitian(mat, size)
@@ -73,7 +83,7 @@ module modfvsystem_test
     ! extract the local data for the specified process in a grid
     ! no communication!! the global matrix has to be present locally!!
 #ifdef MPI
-    subroutine getBlockDistributedLoc(global, local, n_procs_x, n_procs_y, proc_x, proc_y, blocksize)
+    subroutine getBlockDistributedLoc(global, local, MPIdata)
       implicit none
 
       Integer, External   :: NUMROC
@@ -81,12 +91,19 @@ module modfvsystem_test
       ! arguments
       complex(8), dimension(:,:), intent(in)  :: global
       complex(8), dimension(:,:), intent(out) :: local
-      integer,                    intent(in)  :: n_procs_x, n_procs_y, proc_x, proc_y, blocksize
+      Type(MPIinfo), intent(in)               :: MPIdata
 
       ! local variables
+      integer :: n_procs_x, n_procs_y, proc_x, proc_y, blocksize
       integer :: n_rows_glob, n_cols_glob, n_rows_loc, n_cols_loc, &
-                  n_blocks_x_loc, i_block_x, glob_x_start, glob_x_end, loc_x_start, loc_x_end, &
-                  n_blocks_y_loc, i_block_y, glob_y_start, glob_y_end, loc_y_start, loc_y_end
+                 n_blocks_x_loc, i_block_x, glob_x_start, glob_x_end, loc_x_start, loc_x_end, &
+                 n_blocks_y_loc, i_block_y, glob_y_start, glob_y_end, loc_y_start, loc_y_end
+
+      n_procs_x = MPIdata%nproccols
+      n_procs_y = MPIdata%nprocrows
+      proc_x    = MPIdata%myproccol
+      proc_y    = MPIdata%myprocrow
+      blocksize = MPIdata%blocksize
 
       n_rows_glob = SIZE(global, 1)
       n_cols_glob = SIZE(global, 2)
@@ -154,11 +171,11 @@ module modfvsystem_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nprocrows, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
 
         Call newmatrix (matrix, nmatp)
 
@@ -191,15 +208,15 @@ module modfvsystem_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nprocrows, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
 
         CALL newmatrix (matrix, nmatp)
         
-        select case (rank)
+        select case (MPIglobal%rank)
           case (0)
             nrows_loc = 5
             ncols_loc = 5
@@ -269,11 +286,11 @@ module modfvsystem_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nprocrows, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
 
         Call newsystem (system, nmatp)
 
@@ -312,15 +329,15 @@ module modfvsystem_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nprocrows, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
 
         CALL newsystem (system, nmatp)
         
-        select case (rank)
+        select case (MPIglobal%rank)
           case (0)
             nrows_loc = 5
             ncols_loc = 5
@@ -498,10 +515,11 @@ module modfvsystem_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix (C, nmatp)
         Call newMatrix(A, nmatp)
@@ -551,10 +569,11 @@ module modfvsystem_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix (C, nmatp)
         Call newMatrix(A, nmatp)
@@ -608,10 +627,11 @@ module modfvsystem_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix(C, nmatp)
         C%za(:,1:nmatp-1) = addconst
@@ -664,26 +684,26 @@ module modfvsystem_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nproccols, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix (C, nmatp)
 
         Call setHermitian(A_global, nmatp)
         Call newMatrix(A, nmatp)
-        Call getBlockDistributedLoc(A_global, A%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
 
         Call setIdentity(B_global, nmatp)
         Call newMatrix(B, nmatp)
-        Call getBlockDistributedLoc(B_global, B%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
         Call newmatrix (ref, nmatp)
         ref%za = A%za
 
-        select case (rank)
+        select case (MPIglobal%rank)
           case (0)
             nrows_loc = 5
             ncols_loc = 5
@@ -742,31 +762,31 @@ module modfvsystem_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nproccols, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix (C, nmatp)
 
         Call setHermitian(A_global, nmatp)
         Call newMatrix(A, nmatp)
-        Call getBlockDistributedLoc(A_global, A%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
 
         do row=1,nmatp
           B_global(row, nmatp-row+1) = cmplx(0,1)
         end do
         Call newMatrix(B, nmatp)
-        Call getBlockDistributedLoc(B_global, B%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
         do col=1,nmatp
           ref_global(:,col) = A_global(:,nmatp-col+1)*cmplx(0,1)
         end do
         Call newmatrix (ref, nmatp)
-        Call getBlockDistributedLoc(ref_global, ref%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
 
-        select case (rank)
+        select case (MPIglobal%rank)
           case (0)
             nrows_loc = 5
             ncols_loc = 5
@@ -824,30 +844,30 @@ module modfvsystem_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, comm, ierror_t)
-      blocksize = 2
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
 
-      if (rank < n_procs_test) then
-        CALL BLACS_GRIDINFO(context, nproccols, nproccols, myprocrow, myproccol)
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
       
         C_global(:,1:nmatp-1) = addconst
         Call newmatrix(C, nmatp)
-        Call getBlockDistributedLoc(C_global, C%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(C_global, C%za, MPIglobal)
 
         Call setHermitian(A_global, nmatp)
         Call newMatrix(A, nmatp)
-        Call getBlockDistributedLoc(A_global, A%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
 
         Call setIdentity(B_global, nmatp)
         Call newMatrix(B, nmatp)
-        Call getBlockDistributedLoc(B_global, B%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
         ref_global(:,1:nmatp-1) = A_global(:,1:nmatp-1)+addconst
         ref_global(:,nmatp)     = A_global(:,nmatp)
         Call newmatrix(ref, nmatp)
-        Call getBlockDistributedLoc(ref_global, ref%za, nproccols, nprocrows, myproccol, myprocrow, blocksize)
+        Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
 
-        select case (rank)
+        select case (MPIglobal%rank)
           case (0)
             nrows_loc = 5
             ncols_loc = 5

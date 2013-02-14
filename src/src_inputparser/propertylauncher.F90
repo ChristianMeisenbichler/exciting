@@ -7,18 +7,18 @@ Subroutine propertylauncher
       Use modinput
       Use inputdom
       Use modmain, Only: task
-      Use modmpi, Only: rank
+      Use modmpi, Only: MPIglobal
       Implicit None
 
 ! properties which depend on the ground state only
 
-      If (associated(input%properties%bandstructure) .And. rank .Eq. 0) Then
+      If (associated(input%properties%bandstructure) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          ! tasks are: 20, 21
          task = 20
          Call bandstr
       End If
-      If (associated(input%properties%fermisurfaceplot) .And. rank .Eq. 0) Then
+      If (associated(input%properties%fermisurfaceplot) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          If (input%properties%fermisurfaceplot%separate) Then
             task = 101
@@ -28,20 +28,20 @@ Subroutine propertylauncher
             Call fermisurf
          End If
       End If
-      If (associated(input%properties%dos) .And. rank .Eq. 0) Then
+      If (associated(input%properties%dos) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          task = 10
          Call dos
       End If
-      If (associated(input%properties%wfplot) .And. rank .Eq. 0) Then
+      If (associated(input%properties%wfplot) .And. MPIglobal%rank .Eq. 0) Then
 #define NOTSTM .false.
          Call wfplot (NOTSTM)
       End If
-      If (associated(input%properties%STM) .And. rank .Eq. 0) Then
+      If (associated(input%properties%STM) .And. MPIglobal%rank .Eq. 0) Then
 #define STM .true.
          Call wfplot (STM)
       End If
-      If (associated(input%properties%LSJ) .And. rank .Eq. 0) Then
+      If (associated(input%properties%LSJ) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
 ! read in input again to reset the magnetic moments for proper symmetry after
 ! a possible run of the groundstate
@@ -49,68 +49,68 @@ Subroutine propertylauncher
          if (associated(input%properties%LSJ%kstlist)) task=16
          Call writelsj
       End If
-      If (associated(input%properties%masstensor) .And. rank .Eq. 0) Then
+      If (associated(input%properties%masstensor) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          task=25
          Call effmass
       End If
 
-      If (associated(input%properties%chargedensityplot) .And. rank .Eq. 0) Then
+      If (associated(input%properties%chargedensityplot) .And. MPIglobal%rank .Eq. 0) Then
          Call rhoplot
       End If
-      If (associated(input%properties%exccplot) .And. rank .Eq. 0) Then
+      If (associated(input%properties%exccplot) .And. MPIglobal%rank .Eq. 0) Then
          Call potplot
       End If
-      If (associated(input%properties%elfplot) .And. rank .Eq. 0) Then
+      If (associated(input%properties%elfplot) .And. MPIglobal%rank .Eq. 0) Then
          Call elfplot
       End If
-      If (associated(input%properties%xcmvecfield) .And. rank .Eq. 0) Then
-         If (associated(input%properties%xcmvecfield%plot2d) .And. rank .Eq. 0) Then
+      If (associated(input%properties%xcmvecfield) .And. MPIglobal%rank .Eq. 0) Then
+         If (associated(input%properties%xcmvecfield%plot2d) .And. MPIglobal%rank .Eq. 0) Then
             task = 82
             Call vecplot
          End If
-         If (associated(input%properties%xcmvecfield%plot3d) .And. rank .Eq. 0) Then
+         If (associated(input%properties%xcmvecfield%plot3d) .And. MPIglobal%rank .Eq. 0) Then
             task = 83
             Call vecplot
          End If
       End If
       If (associated(input%properties%mvecfield)) Then
-         If (associated(input%properties%mvecfield%plot2d) .And. rank .Eq. 0) Then
+         If (associated(input%properties%mvecfield%plot2d) .And. MPIglobal%rank .Eq. 0) Then
             task = 72
             Call vecplot
          End If
-         If (associated(input%properties%mvecfield%plot3d) .And. rank .Eq. 0) Then
+         If (associated(input%properties%mvecfield%plot3d) .And. MPIglobal%rank .Eq. 0) Then
             task = 73
             Call vecplot
          End If
       End If
       If (associated(input%properties%electricfield)) Then
-         If (associated(input%properties%electricfield%plot2d) .And. rank .Eq. 0) Then
+         If (associated(input%properties%electricfield%plot2d) .And. MPIglobal%rank .Eq. 0) Then
             task = 142
             Call vecplot
          End If
-         If (associated(input%properties%electricfield%plot3d) .And. rank .Eq. 0) Then
+         If (associated(input%properties%electricfield%plot3d) .And. MPIglobal%rank .Eq. 0) Then
             task = 143
             Call vecplot
          End If
       End If
-      If (associated(input%properties%gradmvecfield) .And. rank .Eq. 0) Then
+      If (associated(input%properties%gradmvecfield) .And. MPIglobal%rank .Eq. 0) Then
          Call dbxcplot
       End If
-      If (associated(input%properties%EFG) .And. rank .Eq. 0) Then
+      If (associated(input%properties%EFG) .And. MPIglobal%rank .Eq. 0) Then
          Call writeefg
       End If
-      If (associated(input%properties%mossbauer) .And. rank .Eq. 0) Then
+      If (associated(input%properties%mossbauer) .And. MPIglobal%rank .Eq. 0) Then
          Call mossbauer
       End If
-      If (associated(input%properties%expiqr) .And. rank .Eq. 0) Then
+      If (associated(input%properties%expiqr) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          Call writeexpiqr
       End If
-      If (associated(input%properties%elnes) .And. rank .Eq. 0) Then
+      If (associated(input%properties%elnes) .And. MPIglobal%rank .Eq. 0) Then
          Call elnes
       End If
-      If (associated(input%properties%momentummatrix) .And. rank .Eq. 0) Then
+      If (associated(input%properties%momentummatrix) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          task = 120
          Call writepmatxs
@@ -118,7 +118,7 @@ Subroutine propertylauncher
 
 ! properties which depend on the ground state and/or on the outputs of other properties
 
-      If (associated(input%properties%dielectric) .And. rank .Eq. 0) Then
+      If (associated(input%properties%dielectric) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          ! set the default values if dos element not present
          if (.not.associated(input%properties%dos)) &
@@ -128,7 +128,7 @@ Subroutine propertylauncher
          task = 121
          Call dielectric
       End If
-      If (associated(input%properties%moke) .And. rank .Eq. 0) Then
+      If (associated(input%properties%moke) .And. MPIglobal%rank .Eq. 0) Then
          call rereadinput
          ! set the default values if dos element not present
          if (.not.associated(input%properties%dos)) &
@@ -140,7 +140,7 @@ Subroutine propertylauncher
          ! "input%properties%momentummatrix"
          Call moke
       End If
-      If (associated(input%properties%eliashberg) .And. rank .Eq. 0) Then
+      If (associated(input%properties%eliashberg) .And. MPIglobal%rank .Eq. 0) Then
          ! this task depends on the results triggered by
          ! "input%properties%phonon"
          ! set the default values if dos element not present

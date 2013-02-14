@@ -49,19 +49,19 @@ Contains
 #ifdef MPI
             tag1 = 77
             tag2 = 78
-            If (rank .Ne. 0) Call mpi_send (x12, size(x12), &
-           & MPI_DOUBLE_COMPLEX, 0, tag1, MPI_COMM_WORLD, ierr)
-            If (rank .Ne. 0) Call mpi_send (x34, size(x34), &
-           & MPI_DOUBLE_COMPLEX, 0, tag2, MPI_COMM_WORLD, ierr)
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Ne. 0) Call mpi_send (x12, size(x12), &
+           & MPI_DOUBLE_COMPLEX, 0, tag1, MPI_COMM_WORLD, MPIglobal%ierr)
+            If (MPIglobal%rank .Ne. 0) Call mpi_send (x34, size(x34), &
+           & MPI_DOUBLE_COMPLEX, 0, tag2, MPI_COMM_WORLD, MPIglobal%ierr)
+            If (MPIglobal%rank .Eq. 0) Then
                Do iproc = 0, lastproc (ik, nkpt)
                   ikr = firstofset (iproc, nkpt) - 1 + ik
                   If (iproc .Ne. 0) Then
                 ! receive data from slaves
                      Call mpi_recv (x12, size(x12), MPI_DOUBLE_COMPLEX, &
-                    & iproc, tag1, MPI_COMM_WORLD, status, ierr)
+                    & iproc, tag1, MPI_COMM_WORLD, status, MPIglobal%ierr)
                      Call mpi_recv (x34, size(x34), MPI_DOUBLE_COMPLEX, &
-                    & iproc, tag2, MPI_COMM_WORLD, status, ierr)
+                    & iproc, tag2, MPI_COMM_WORLD, status, MPIglobal%ierr)
                   End If
 #endif
              ! I/O record length
@@ -79,15 +79,15 @@ Contains
          Else
 #ifdef MPI
             tag1 = 77
-            If (rank .Ne. 0) Call mpi_send (x12, size(x12), &
-           & MPI_DOUBLE_COMPLEX, 0, tag1, MPI_COMM_WORLD, ierr)
-            If (rank .Eq. 0) Then
+            If (MPIglobal%rank .Ne. 0) Call mpi_send (x12, size(x12), &
+           & MPI_DOUBLE_COMPLEX, 0, tag1, MPI_COMM_WORLD, MPIglobal%ierr)
+            If (MPIglobal%rank .Eq. 0) Then
                Do iproc = 0, lastproc (ik, nkpt)
                   ikr = firstofset (iproc, nkpt) - 1 + ik
                   If (iproc .Ne. 0) Then
                 ! receive data from slaves
                      Call mpi_recv (x12, size(x12), MPI_DOUBLE_COMPLEX, &
-                    & iproc, tag1, MPI_COMM_WORLD, status, ierr)
+                    & iproc, tag1, MPI_COMM_WORLD, status, MPIglobal%ierr)
                   End If
 #endif
              ! I/O record length

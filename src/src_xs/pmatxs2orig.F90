@@ -17,7 +17,7 @@ Subroutine pmatxs2orig
       Character (*), Parameter :: thisnam = 'pmatxs2orig'
       Complex (8), Allocatable :: pm (:, :, :)
       Integer :: un, ik, recl
-      If (rank == 0) Then
+      If (MPIglobal%rank == 0) Then
          Call init0
          Call init1
          Call init2
