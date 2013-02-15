@@ -487,11 +487,11 @@ module modfvsystem_test
     end subroutine testHermitianMatrixMatrixSerial_AxB
 
 !------------------------------------------------------------------------------
-! test testNewComplexMatrixserial_AxB_stability
+! test testNewComplexMatrixserial_AxB_square
 ! testing multiplication C=AxB with 
-! A=B^dagger
+! general matrices and A=B^dagger
 !------------------------------------------------------------------------------
-    subroutine testHermitianMatrixMatrixSerial_AxB_stability
+    subroutine testHermitianMatrixMatrixSerial_AxB_square
       implicit none
 
       integer, parameter :: nmatp = 9
@@ -501,9 +501,9 @@ module modfvsystem_test
       Type (HermitianMatrix) :: C, ref
       Type (ComplexMatrix)   :: A, B
 
-      Call newmatrix (C, nmatp)
-      Call newMatrix(A, nmatp)
-      Call newMatrix(B, nmatp)
+      Call newmatrix(C, nmatp)
+      Call newMatrix(A, nmatp, nmatp)
+      Call newMatrix(B, nmatp, nmatp)
 
       do row=1,nmatp
        do col=1,nmatp
@@ -530,7 +530,7 @@ module modfvsystem_test
       CALL deletematrix(B)
       CALL deletematrix(C)
       CALL deletematrix(ref)
-    end subroutine testHermitianMatrixMatrixSerial_AxB_stability
+    end subroutine testHermitianMatrixMatrixSerial_AxB_square
 
 
 !------------------------------------------------------------------------------
@@ -700,12 +700,12 @@ module modfvsystem_test
 #endif
 
 !------------------------------------------------------------------------------
-! test testHermitianMatrixMatrix1Proc_AxB_stability
+! test testHermitianMatrixMatrix1Proc_AxB_square
 ! testing multiplication C=AxB   in MPI mode with 1 proc
-! A=B^dagger
+! general matrices and A=B^dagger
 !------------------------------------------------------------------------------
 #ifdef MPI
-    subroutine testHermitianMatrixMatrix1Proc_AxB_stability
+    subroutine testHermitianMatrixMatrix1Proc_AxB_square
       implicit none
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -728,15 +728,15 @@ module modfvsystem_test
         Call getBlacsGridInfo(MPIglobal)
 
         Call newmatrix (C, nmatp)
-        Call newMatrix(A, nmatp)
-        Call setHermitian(A%za, nmatp)
-        Call newMatrix(B, nmatp)
 
+        Call newMatrix(A, nmatp, nmatp)
         do row=1,nmatp
          do col=1,nmatp
           A%za(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi))
          enddo
         end do
+
+        Call newMatrix(B, nmatp, nmatp)
         B%za=A%za
 
         Call newmatrix (ref, nmatp)
@@ -760,7 +760,7 @@ module modfvsystem_test
         CALL deletematrix(ref)
       end if
 
-    end subroutine testHermitianMatrixMatrix1Proc_AxB_stability
+    end subroutine testHermitianMatrixMatrix1Proc_AxB_square
 #endif
 
 
@@ -992,12 +992,12 @@ module modfvsystem_test
 #endif
 
 !------------------------------------------------------------------------------
-! test testHermitianMatrixMatrix4Proc_AxB
+! test testHermitianMatrixMatrix4Proc_AxB_square
 ! testing multiplication C=AxB   in MPI mode with 4 procs
-! A=B^dagger
+! general matrices and A=B^dagger
 !------------------------------------------------------------------------------
 #ifdef MPI
-    subroutine testHermitianMatrixMatrix4Proc_AxB_stability
+    subroutine testHermitianMatrixMatrix4Proc_AxB_square
       implicit none
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -1034,12 +1034,12 @@ module modfvsystem_test
 
         Call getBlacsGridInfo(MPIglobal)
 
-        Call newmatrix (C, nmatp)
+        Call newmatrix(C, nmatp)
 
-        Call newMatrix(A, nmatp)
+        Call newMatrix(A, nmatp, nmatp)
         Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
 
-        Call newMatrix(B, nmatp)
+        Call newMatrix(B, nmatp, nmatp)
         Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
         Call newmatrix (ref, nmatp)
@@ -1060,9 +1060,7 @@ module modfvsystem_test
             ncols_loc = 4
         end select
 
-
         Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
-
 
         CALL assert_equals(nmatp, C%size, 'checking result rank')
         CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
@@ -1078,7 +1076,7 @@ module modfvsystem_test
         CALL deletematrix(ref)
       end if
 
-    end subroutine testHermitianMatrixMatrix4Proc_AxB_stability
+    end subroutine testHermitianMatrixMatrix4Proc_AxB_square
 #endif
 
 !------------------------------------------------------------------------------
