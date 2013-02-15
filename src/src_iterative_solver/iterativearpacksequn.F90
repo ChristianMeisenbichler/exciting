@@ -244,7 +244,7 @@ Subroutine iterativearpacksecequn (ik, ispn, apwalm, vgpc, evalfv, &
          evecfv (1:n, j, ispn) = v (1:n, idx(j))
          evalfv (j, ispn) = rd (idx(j))
       End Do
-      Call deleteystem (system)
+      Call deletesystem (system)
       Deallocate (workd, resid, v, workev, workl, d)
       Deallocate (rwork, rd, idx)
       Return

@@ -61,7 +61,7 @@
          !$OMP CRITICAL
 !         timefv = timefv + ts1 - ts0
          !$OMP END CRITICAL
-         Call deleteystem (system)
+         Call deletesystem (system)
          Deallocate (iwork, ifail, w, rwork, v, work)
          Call timesec (ts1)
          timefv = timefv + ts1 - ts0

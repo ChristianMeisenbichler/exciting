@@ -27,12 +27,16 @@ program testsuite
     CALL testHermitianMatrixMatrix1Proc_AxI
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 1 proc')
     CALL testHermitianMatrixMatrix1Proc_AxB
+    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 1 proc - is it stable?')
+    CALL testHermitianMatrixMatrix1Proc_AxB_stability
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxIpC on 1 proc')
     CALL testHermitianMatrixMatrix1Proc_AxIpC
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxI on 4 procs')
     CALL testHermitianMatrixMatrix4Proc_AxI
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 4 procs')
     CALL testHermitianMatrixMatrix4Proc_AxB
+    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 4 procs - is it stable?')
+    CALL testHermitianMatrixMatrix4Proc_AxB_stability
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxIpC on 4 procs')
     CALL testHermitianMatrixMatrix4Proc_AxIpC
 #else
@@ -46,6 +50,8 @@ program testsuite
     CALL testHermitianMatrixMatrixSerial_AxI
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB serial')
     CALL testHermitianMatrixMatrixSerial_AxB
+    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB serial - is it stable?')
+    CALL testHermitianMatrixMatrixSerial_AxB_stability
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxI+C serial')
     CALL testHermitianMatrixMatrixSerial_AxIpC
 #endif
