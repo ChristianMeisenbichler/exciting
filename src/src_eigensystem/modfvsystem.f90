@@ -1,14 +1,24 @@
- 
-  ! Copyright (C) 2005-2010 C. Meisenbichler and C. Ambrosch-Draxl.
-  ! This file is distributed under the terms of the GNU General Public License.
-  ! See the file COPYING for license details.
-
-  ! Module for setting up the eigensystem
-  ! it is designed in a way that all other subroutines
-  ! dealing with setting up and solving the system can acsess the
-  ! data transparently allowing to choose from different datatypes
-  ! more easily
+! Copyright (C) 2005-2010 C. Meisenbichler and C. Ambrosch-Draxl.
+! This file is distributed under the terms of the GNU General Public License.
+! See the file COPYING for license details
+!
+! !MODULE:  modfvsystem
+! !DESCRIPTION:
+! Module for setting up the eigensystem
+! it is designed in a way that all other subroutines
+! dealing with setting up and solving the system can acsess the
+! data transparently allowing to choose from different datatypes
+! more easily
+!
+!
+! !REVISION HISTORY:
+!   Created ??
+!   Parallelized, Feb 2013 (G. Huhs - BSC)
+!
+!
+!
   Module modfvsystem
+! !USES:
 #ifdef MPI
     use modmpi
 #endif
@@ -17,7 +27,7 @@
     !
     Type ComplexMatrix
        !
-       Integer :: size   !TODO: in the end we should be able to get rid of this variable. 
+       Integer :: nrows, ncols 
        Integer :: nrows_loc, ncols_loc
        Complex (8), Pointer :: za (:, :)
 #ifdef MPI
@@ -33,7 +43,7 @@
        Integer, Pointer :: ipiv (:)
        Complex (8), Pointer :: za (:, :)
 #ifdef MPI
-       Integer, Dimension(9)    :: desc
+       Integer, Dimension(9) :: desc
 #endif
 
     End Type HermitianMatrix
@@ -61,23 +71,24 @@
   Contains
     !
     !
-    Subroutine newComplexMatrix (self,  size)
+    Subroutine newComplexMatrix (self, nrows, ncols)
       Implicit None
       type (ComplexMatrix), Intent (Inout) :: self
-      Integer, Intent (In) :: size
+      Integer, Intent (In) :: nrows, ncols
 
       Integer, External   :: NUMROC
 
-      self%size = size
+      self%nrows = nrows
+      self%ncols = ncols
 #ifdef MPI
-      self%nrows_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-      self%ncols_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-      CALL DESCINIT(self%desc, self%size, self%size, &
+      self%nrows_loc = NUMROC(self%nrows, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+      self%ncols_loc = NUMROC(self%ncols, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+      CALL DESCINIT(self%desc, self%nrows, self%ncols, &
                     MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
                     MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
 #else
-      self%nrows_loc = size
-      self%ncols_loc = size
+      self%nrows_loc = nrows
+      self%ncols_loc = ncols
 #endif
       Allocate (self%za(self%nrows_loc, self%ncols_loc))
       self%za = 0.0
@@ -217,13 +228,36 @@
 
 
 
-    ! wrapper defining the new interface
     subroutine HermitianMatrixMatrixNew(self,zm1,zm2,ldzm,naa,ngp)
+! !INPUT/OUTPUT PARAMETERS:
+!   self   : Result matrix, hermitian, dimension(ngp,ngp). 
+!            The result of the matrix-matrix multiplication 
+!            of the other matrices is ADDED to self
+!   zm1    : First factor, complex matrix, dimension(naa,ngp)
+!   zm2    : Second factor, complex matrix, dimension(naa,ngp)
+!   ldzm   : leading dimension of zm1 and zm2
+!   naa    : number of rows of zm1 and zm2
+!   ngp    : dimension of self
+! !DESCRIPTION:
+!   Performs the matrix-matrix multiplication
+!   self = zm1**H * zm2 + za
+!   matrices have dimensions
+!     zm1(naa,ngp)
+!     zm2(naa,ngp)
+!     self%za(ngp,ngp)
+!
+! !REVISION HISTORY:
+!   Created February 2013 (G. Huhs - BSC)
+!EOP
+!BOC
       Implicit None
+!
+! arguments
       Type (HermitianMatrix),intent(inout) :: self
       Type (ComplexMatrix),intent(in) :: zm1,zm2
       integer,intent(in)::ldzm,ngp,naa
-     
+!
+! local variables
       complex(8)::zone=(1.0,0.0)
 
 #ifdef MPI
@@ -242,7 +276,7 @@
                      1, &             ! JB,
                      zm2%desc, &      ! DESCB,
                      zone, &          ! beta
-                     self%za(1,1), &  ! C,
+                     self%za, &       ! C,
                      1, &             ! IC,
                      1, &             ! JC,
                      self%desc &      ! DESCC
@@ -261,7 +295,7 @@
                  zm2%za, &        ! B
                  ldzm, &          ! LDB ... leading dimension of B
                  zone, &          ! beta
-                 self%za(1,1), &  ! C
+                 self%za, &       ! C
                  self%size &      ! LDC ... leading dimension of C
                 )
 

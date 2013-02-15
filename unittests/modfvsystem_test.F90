@@ -21,12 +21,12 @@ module modfvsystem_test
       integer :: nprocs, i, world_group, procs_group
 
       nprocs = nprocrows_sub*nproccols_sub
-      CALL MPI_COMM_GROUP(MPI_COMM_WORLD, world_group, ierror)
-      CALL MPI_GROUP_INCL(world_group, nprocs, (/(i,i=0,nprocs-1)/), procs_group, ierror)
-      CALL MPI_COMM_CREATE(MPI_COMM_WORLD, procs_group, comm, ierror);
+      Call MPI_COMM_GROUP(MPI_COMM_WORLD, world_group, ierror)
+      Call MPI_GROUP_INCL(world_group, nprocs, (/(i,i=0,nprocs-1)/), procs_group, ierror)
+      Call MPI_COMM_CREATE(MPI_COMM_WORLD, procs_group, comm, ierror);
 
-      CALL BLACS_GET(0, 0, context)
-      CALL BLACS_GRIDINIT(context,'r', nprocrows_sub, nproccols_sub)
+      Call BLACS_GET(0, 0, context)
+      Call BLACS_GRIDINIT(context,'r', nprocrows_sub, nproccols_sub)
 
     end subroutine setupProcGrid
 #endif
@@ -37,14 +37,28 @@ module modfvsystem_test
       implicit none
       Type(MPIinfo), intent(inout) :: MPIdata
 
-      CALL BLACS_GRIDINFO(MPIdata%context, MPIdata%nprocrows, MPIdata%nproccols, MPIdata%myprocrow, MPIdata%myproccol)
+      Call BLACS_GRIDINFO(MPIdata%context, MPIdata%nprocrows, MPIdata%nproccols, MPIdata%myprocrow, MPIdata%myproccol)
 
     end subroutine getBlacsGridInfo
 #endif
 
 
+    subroutine fillIdentity(mat, size)
+      implicit none
 
-    subroutine setHermitian(mat, size)
+      complex(8), dimension(:,:), intent(out) :: mat
+      integer, intent(in)                     :: size
+
+      integer :: row
+      mat = 0
+      do row=1,size
+        mat(row, row) = cmplx(1.0D0, 0.0D0)
+      end do
+
+    end subroutine fillIdentity
+
+
+    subroutine fillHermitian(mat, size)
       implicit none
 
       complex(8), dimension(:,:), intent(out) :: mat
@@ -54,30 +68,34 @@ module modfvsystem_test
 
       do row=1,size
         do col=1,row  
-          mat(row, col) = cmplx(row,col)
           if (row .ne. col) then 
-            mat(col, row) = cmplx(row, -col)
+            mat(row, col) = cmplx(row, col)
+            mat(col, row) = cmplx(row,-col)
           else
             mat(col, row) = cmplx(row, 0.0D0)
           end if
         end do
       end do
-    end subroutine setHermitian
+    end subroutine fillHermitian
 
 
-    subroutine setIdentity(mat, size)
+    subroutine fillComplex(mat, nrows, ncols)
       implicit none
 
       complex(8), dimension(:,:), intent(out) :: mat
-      integer, intent(in)                     :: size
+      integer, intent(in)                     :: nrows, ncols
 
-      integer :: row
-      mat = 0
-      do row=1,size
-        mat(row, row) = 1
+      integer :: row, col
+
+      do row=1,nrows
+        do col=1,ncols  
+          mat(row, col) = cmplx(row,col+10)
+        end do
       end do
+    end subroutine fillComplex
 
-    end subroutine setIdentity
+
+
 
     
     ! extract the local data for the specified process in a grid
@@ -140,18 +158,19 @@ module modfvsystem_test
     subroutine testNewComplexMatrixSerial
       implicit none
 
-      integer, parameter :: nmatp = 9
+      integer, parameter   :: nrows = 9, ncols = 10
 
       Type (ComplexMatrix) :: matrix
       
-      Call newmatrix (matrix, nmatp)
+        Call newmatrix (matrix, nrows, ncols)
 
-      CALL assert_equals(nmatp, matrix%size, 'checking newmatrix rank')
-      CALL assert_equals(nmatp, size(matrix%za,1), 'checking newmatrix size rows')
-      CALL assert_equals(nmatp, size(matrix%za,2), 'checking newmatrix size cols')
-      CALL assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+        Call assert_equals(nrows, matrix%nrows, 'checking newmatrix nrows')
+        Call assert_equals(ncols, matrix%ncols, 'checking newmatrix ncols')
+        Call assert_equals(nrows, size(matrix%za,1), 'checking newmatrix size rows')
+        Call assert_equals(ncols, size(matrix%za,2), 'checking newmatrix size cols')
+        Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
 
-      CALL deletematrix(matrix)
+      Call deletematrix(matrix)
 
     end subroutine testNewComplexMatrixSerial
 
@@ -165,7 +184,7 @@ module modfvsystem_test
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter   :: nmatp = 9
+      integer, parameter   :: nrows = 9, ncols = 10
       Type (ComplexMatrix) :: matrix
       
       n_proc_rows_test = 1
@@ -177,14 +196,15 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
 
-        Call newmatrix (matrix, nmatp)
+        Call newmatrix (matrix, nrows, ncols)
 
-        CALL assert_equals(nmatp, matrix%size, 'checking newmatrix H rank')
-        CALL assert_equals(nmatp, size(matrix%za,1), 'checking newmatrix H size rows')
-        CALL assert_equals(nmatp, size(matrix%za,2), 'checking newmatrix H size cols')
-        CALL assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix H=0')
+        Call assert_equals(nrows, matrix%nrows, 'checking newmatrix nrows')
+        Call assert_equals(ncols, matrix%ncols, 'checking newmatrix ncols')
+        Call assert_equals(nrows, size(matrix%za,1), 'checking newmatrix size rows')
+        Call assert_equals(ncols, size(matrix%za,2), 'checking newmatrix size cols')
+        Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
 
-        CALL deletematrix(matrix)
+        Call deletematrix(matrix)
       endif
 
     end subroutine testNewComplexMatrix1proc
@@ -200,7 +220,7 @@ module modfvsystem_test
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter   :: nmatp = 9
+      integer, parameter   :: nrows = 9, ncols = 10
       Type (ComplexMatrix) :: matrix
 
       integer              :: nrows_loc, ncols_loc
@@ -214,31 +234,32 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
 
-        CALL newmatrix (matrix, nmatp)
+        Call newmatrix (matrix, nrows, ncols)
         
         select case (MPIglobal%rank)
           case (0)
             nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 6
           case (1)
             nrows_loc = 5
             ncols_loc = 4
           case (2)
             nrows_loc = 4
-            ncols_loc = 5
+            ncols_loc = 6
           case (3)
             nrows_loc = 4
             ncols_loc = 4
         end select
 
-        CALL assert_equals(nmatp, matrix%size, 'checking newmatrix rank')
-        CALL assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
-        CALL assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
-        CALL assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
-        CALL assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
-        CALL assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+        Call assert_equals(nrows, matrix%nrows, 'checking newmatrix nrows')
+        Call assert_equals(ncols, matrix%ncols, 'checking newmatrix ncols')
+        Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
+        Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
+        Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
+        Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
+        Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
 
-        CALL deletematrix(matrix)
+        Call deletematrix(matrix)
       end if
 
     end subroutine testNewComplexMatrix4proc
@@ -256,19 +277,19 @@ module modfvsystem_test
       
       Call newsystem (system, nmatp)
 
-      CALL assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
-      CALL assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
-      CALL assert_equals(nmatp, size(system%hamilton%za,1), 'checking newsystem H size rows')
-      CALL assert_equals(nmatp, size(system%hamilton%za,2), 'checking newsystem H size cols')
-      CALL assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
+      Call assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking newsystem H size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking newsystem H size cols')
+      Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
 
-      CALL assert_equals(nmatp, system%overlap%size,  'checking newsystem S rank')
-      CALL assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
-      CALL assert_equals(nmatp, size(system%overlap%za,1), 'checking newsystem S size rows')
-      CALL assert_equals(nmatp, size(system%overlap%za,2), 'checking newsystem S size cols')
-      CALL assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
+      Call assert_equals(nmatp, system%overlap%size,  'checking newsystem S rank')
+      Call assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
+      Call assert_equals(nmatp, size(system%overlap%za,1), 'checking newsystem S size rows')
+      Call assert_equals(nmatp, size(system%overlap%za,2), 'checking newsystem S size cols')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
 
-      CALL deletesystem(system)
+      Call deletesystem(system)
     end subroutine testNewSystemSerial
 
 !------------------------------------------------------------------------------
@@ -294,19 +315,19 @@ module modfvsystem_test
 
         Call newsystem (system, nmatp)
 
-        CALL assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
-        CALL assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
-        CALL assert_equals(nmatp, size(system%hamilton%za,1), 'checking newsystem H size rows')
-        CALL assert_equals(nmatp, size(system%hamilton%za,2), 'checking newsystem H size cols')
-        CALL assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
+        Call assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking newsystem H size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking newsystem H size cols')
+        Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
 
-        CALL assert_equals(nmatp, system%overlap%size,  'checking newsystem S rank')
-        CALL assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
-        CALL assert_equals(nmatp, size(system%overlap%za,1), 'checking newsystem S size rows')
-        CALL assert_equals(nmatp, size(system%overlap%za,2), 'checking newsystem S size cols')
-        CALL assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
+        Call assert_equals(nmatp, system%overlap%size,  'checking newsystem S rank')
+        Call assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
+        Call assert_equals(nmatp, size(system%overlap%za,1), 'checking newsystem S size rows')
+        Call assert_equals(nmatp, size(system%overlap%za,2), 'checking newsystem S size cols')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
 
-        CALL deletesystem(system)
+        Call deletesystem(system)
       endif
 
     end subroutine testNewSystem1proc
@@ -335,7 +356,7 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
 
-        CALL newsystem (system, nmatp)
+        Call newsystem (system, nmatp)
         
         select case (MPIglobal%rank)
           case (0)
@@ -352,23 +373,23 @@ module modfvsystem_test
             ncols_loc = 4
         end select
 
-        CALL assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
-        CALL assert_equals(nrows_loc, system%hamilton%nrows_loc, 'checking newsystem H nrows_loc')
-        CALL assert_equals(ncols_loc, system%hamilton%ncols_loc, 'checking newsystem H ncols_loc')
-        CALL assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
-        CALL assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking newsystem H size rows')
-        CALL assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking newsystem H size cols')
-        CALL assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
+        Call assert_equals(nrows_loc, system%hamilton%nrows_loc, 'checking newsystem H nrows_loc')
+        Call assert_equals(ncols_loc, system%hamilton%ncols_loc, 'checking newsystem H ncols_loc')
+        Call assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking newsystem H size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking newsystem H size cols')
+        Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
 
-        CALL assert_equals(nmatp, system%overlap%size, 'checking newsystem S rank')
-        CALL assert_equals(nrows_loc, system%overlap%nrows_loc, 'checking newsystem S nrows_loc')
-        CALL assert_equals(ncols_loc, system%overlap%ncols_loc, 'checking newsystem S ncols_loc')
-        CALL assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
-        CALL assert_equals(nrows_loc, size(system%overlap%za,1), 'checking newsystem S size rows')
-        CALL assert_equals(ncols_loc, size(system%overlap%za,2), 'checking newsystem S size cols')
-        CALL assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
+        Call assert_equals(nmatp, system%overlap%size, 'checking newsystem S rank')
+        Call assert_equals(nrows_loc, system%overlap%nrows_loc, 'checking newsystem S nrows_loc')
+        Call assert_equals(ncols_loc, system%overlap%ncols_loc, 'checking newsystem S ncols_loc')
+        Call assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
+        Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking newsystem S size rows')
+        Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking newsystem S size cols')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
 
-        CALL deletesystem(system)
+        Call deletesystem(system)
       end if
 
     end subroutine testNewSystem4proc
@@ -377,38 +398,40 @@ module modfvsystem_test
 
 !------------------------------------------------------------------------------
 ! test testNewComplexMatrixserial_AxI
-! testing multiplication C=AxI   (I=identity)
-! hermitian A
+! testing multiplication C=(A**H)xI   
+! I is a rectangular matrix, upper square part filled with identity
+! general A
 !------------------------------------------------------------------------------
     subroutine testHermitianMatrixMatrixSerial_AxI
       implicit none
 
-      integer, parameter :: nmatp = 9
+      integer, parameter :: nmatp = 9, nrowsf = 10
 
       Type (HermitianMatrix) :: C, ref
       Type (ComplexMatrix)   :: A, B
-      
-      Call newmatrix (C, nmatp)
-      Call newMatrix(A, nmatp)
-      Call setHermitian(A%za, nmatp)
-      Call newMatrix(B, nmatp)
-      Call setIdentity(B%za, nmatp)
+
+      Call newmatrix(C, nmatp)
+      Call newMatrix(A, nrowsf, nmatp)
+      Call fillComplex(A%za, nrowsf, nmatp)
+      Call newMatrix(B, nrowsf, nmatp)
+      Call fillIdentity(B%za, nmatp)
 
       Call newmatrix (ref, nmatp)
-      ref%za = A%za
+      ref%za= conjg(transpose(A%za(1:nmatp,:)))
 
-      Call HermitianMatrixMatrixNew(C,A,B,nmatp,nmatp,nmatp)
+      Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
-      CALL assert_equals(nmatp, C%size, 'checking result rank')
-      CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-      CALL assert_equals(nmatp, size(C%za,1), 'checking result size rows')
-      CALL assert_equals(nmatp, size(C%za,2), 'checking result size cols')
-      CALL assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, C%size, 'checking result rank')
+      Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+      Call assert_equals(nmatp, size(C%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(C%za,2), 'checking result size cols')
+      Call assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
 
-      CALL deletematrix(A)
-      CALL deletematrix(B)
-      CALL deletematrix(C)
-      CALL deletematrix(ref)
+      Call deletematrix(A)
+      Call deletematrix(B)
+      Call deletematrix(C)
+      Call deletematrix(ref)
+
     end subroutine testHermitianMatrixMatrixSerial_AxI
 
 
@@ -420,85 +443,98 @@ module modfvsystem_test
     subroutine testHermitianMatrixMatrixSerial_AxB
       implicit none
 
-      integer, parameter :: nmatp = 9
+      integer, parameter :: nmatp = 9, nrowsf = 10
       integer            :: row, col
 
       Type (HermitianMatrix) :: C, ref
       Type (ComplexMatrix)   :: A, B
       
       Call newmatrix (C, nmatp)
-      Call newMatrix(A, nmatp)
-      Call setHermitian(A%za, nmatp)
-      Call newMatrix(B, nmatp)
+
+      Call newMatrix(A, nrowsf, nmatp)
+      Call fillComplex(A%za, nrowsf, nmatp)
+
+      ! create matrix of type
+      !        /  0  0  i  \
+      !       |   0  i  0  |
+      !       |   i  0  0  |
+      !       |   0  0  0  |
+      !        \  0  0  i /   -> one additional entry in last row
+      Call newMatrix(B, nrowsf, nmatp)
       do row=1,nmatp
         B%za(row, nmatp-row+1) = cmplx(0,1)
       end do
+      B%za(nrowsf,nmatp) = cmplx(0,1)
 
-      Call newmatrix (ref, nmatp)
+      Call newmatrix(ref, nmatp)
       do col=1,nmatp
-        ref%za(:,col) = A%za(:,nmatp-col+1)*cmplx(0,1)
+        ref%za(:,col) = conjg(A%za(nmatp-col+1,:))*cmplx(0,1)
       end do
+      ref%za(:,nmatp) = ref%za(:,nmatp) + conjg(A%za(nrowsf,:))*cmplx(0,1)
 
-      Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
+      Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
-      CALL assert_equals(nmatp, C%size, 'checking result rank')
-      CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-      CALL assert_equals(nmatp, size(C%za,1), 'checking result size rows')
-      CALL assert_equals(nmatp, size(C%za,2), 'checking result size cols')
-      CALL assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, C%size, 'checking result rank')
+      Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+      Call assert_equals(nmatp, size(C%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(C%za,2), 'checking result size cols')
+      Call assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
 
-      CALL deletematrix(A)
-      CALL deletematrix(B)
-      CALL deletematrix(C)
-      CALL deletematrix(ref)
+      Call deletematrix(A)
+      Call deletematrix(B)
+      Call deletematrix(C)
+      Call deletematrix(ref)
     end subroutine testHermitianMatrixMatrixSerial_AxB
 
 
 !------------------------------------------------------------------------------
-! test testNewComplexMatrixserial_AxIpc
-! testing multiplication C=AxI+C   
-! hermitian A
-! setting C to a constant, except the last col which is 0
+! test testNewComplexMatrixserial_IxIpC
+! testing multiplication C=IxI+C   
+! I is a rectangular matrix, upper square part filled with identity
+! complex C
 !------------------------------------------------------------------------------
-    subroutine testHermitianMatrixMatrixSerial_AxIpC
+    subroutine testHermitianMatrixMatrixSerial_IxIpC
       implicit none
 
-      integer, parameter :: nmatp = 9
-      complex, parameter :: addconst = (-1,1)
+      integer, parameter :: nmatp = 9, nrowsf = 10
 
       Type (HermitianMatrix) :: C, ref
       Type (ComplexMatrix)   :: A, B
+      integer :: i
       
-      Call newmatrix (C, nmatp)
-      C%za(:,1:nmatp-1) = addconst
-      Call newMatrix(A, nmatp)
-      Call setHermitian(A%za, nmatp)
-      Call newMatrix(B, nmatp)
-      Call setIdentity(B%za, nmatp)
+      Call newmatrix(C, nmatp)
+      Call fillHermitian(C%za, nmatp)
+      Call newMatrix(A, nrowsf, nmatp)
+      Call fillIdentity(A%za, nmatp)
+      Call newMatrix(B, nrowsf, nmatp)
+      Call fillIdentity(B%za, nmatp)
 
       Call newmatrix (ref, nmatp)
-      ref%za(:,1:nmatp-1) = A%za(:,1:nmatp-1)+addconst
-      ref%za(:,nmatp)     = A%za(:,nmatp)
+      ref%za = C%za
+      do i=1,nmatp
+        ref%za(i,i) = ref%za(i,i)+cmplx(1,0)
+      end do
 
-      Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
+      Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
-      CALL assert_equals(nmatp, C%size, 'checking result rank')
-      CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-      CALL assert_equals(nmatp, size(C%za,1), 'checking result size rows')
-      CALL assert_equals(nmatp, size(C%za,2), 'checking result size cols')
-      CALL assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, C%size, 'checking result rank')
+      Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+      Call assert_equals(nmatp, size(C%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(C%za,2), 'checking result size cols')
+      Call assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
 
-      CALL deletematrix(A)
-      CALL deletematrix(B)
-      CALL deletematrix(C)
-      CALL deletematrix(ref)
-    end subroutine testHermitianMatrixMatrixSerial_AxIpC
+      Call deletematrix(A)
+      Call deletematrix(B)
+      Call deletematrix(C)
+      Call deletematrix(ref)
+    end subroutine testHermitianMatrixMatrixSerial_IxIpC
 
 
 !------------------------------------------------------------------------------
 ! test testHermitianMatrixMatrix1Proc_AxI
-! testing multiplication C=AxI   (I=identity) in MPI mode with 1 proc
-! hermitian A
+! testing multiplication C=(A**H)xI   in MPI mode with 1 proc
+! I is a rectangular matrix, upper square part filled with identity
+! general A
 !------------------------------------------------------------------------------
 #ifdef MPI
     subroutine testHermitianMatrixMatrix1Proc_AxI
@@ -506,7 +542,7 @@ module modfvsystem_test
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter :: nmatp = 9
+      integer, parameter :: nmatp = 9, nrowsf = 10
 
       Type (HermitianMatrix) :: C, ref
       Type (ComplexMatrix)   :: A, B
@@ -522,26 +558,28 @@ module modfvsystem_test
         Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix (C, nmatp)
-        Call newMatrix(A, nmatp)
-        Call setHermitian(A%za, nmatp)
-        Call newMatrix(B, nmatp)
-        Call setIdentity(B%za, nmatp)
+
+        Call newMatrix(A, nrowsf, nmatp)
+        Call fillComplex(A%za, nrowsf, nmatp)
+
+        Call newMatrix(B, nrowsf, nmatp)
+        Call fillIdentity(B%za, nmatp)
 
         Call newmatrix (ref, nmatp)
-        ref%za = A%za
+        ref%za= conjg(transpose(A%za(1:nmatp,:)))
 
-        Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
-        CALL assert_equals(nmatp, C%size, 'checking result rank')
-        CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-        CALL assert_equals(nmatp, size(C%za,1), 'checking result size rows')
-        CALL assert_equals(nmatp, size(C%za,2), 'checking result size cols')
-        CALL assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, C%size, 'checking result rank')
+        Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nmatp, size(C%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(C%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
 
-        CALL deletematrix(A)
-        CALL deletematrix(B)
-        CALL deletematrix(C)
-        CALL deletematrix(ref)
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
       end if
 
     end subroutine testHermitianMatrixMatrix1Proc_AxI
@@ -559,7 +597,7 @@ module modfvsystem_test
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter :: nmatp = 9
+      integer, parameter :: nmatp = 9, nrowsf = 10
       integer            :: row, col
 
       Type (HermitianMatrix) :: C, ref
@@ -576,30 +614,40 @@ module modfvsystem_test
         Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix (C, nmatp)
-        Call newMatrix(A, nmatp)
-        Call setHermitian(A%za, nmatp)
-        Call newMatrix(B, nmatp)
+
+        Call newMatrix(A, nrowsf, nmatp)
+        Call fillComplex(A%za, nrowsf, nmatp)
+
+        ! create matrix of type
+        !        /  0  0  i  \
+        !       |   0  i  0  |
+        !       |   i  0  0  |
+        !       |   0  0  0  |
+        !        \  0  0  i /   -> one additional entry in last row
+        Call newMatrix(B, nrowsf, nmatp)
         do row=1,nmatp
           B%za(row, nmatp-row+1) = cmplx(0,1)
         end do
+        B%za(nrowsf,nmatp) = cmplx(0,1)
 
         Call newmatrix (ref, nmatp)
         do col=1,nmatp
-          ref%za(:,col) = A%za(:,nmatp-col+1)*cmplx(0,1)
+          ref%za(:,col) = conjg(A%za(nmatp-col+1,:))*cmplx(0,1)
         end do
+        ref%za(:,nmatp) = ref%za(:,nmatp) + conjg(A%za(nrowsf,:))*cmplx(0,1)
 
-        Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
-        CALL assert_equals(nmatp, C%size, 'checking result rank')
-        CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-        CALL assert_equals(nmatp, size(C%za,1), 'checking result size rows')
-        CALL assert_equals(nmatp, size(C%za,2), 'checking result size cols')
-        CALL assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, C%size, 'checking result rank')
+        Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nmatp, size(C%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(C%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
 
-        CALL deletematrix(A)
-        CALL deletematrix(B)
-        CALL deletematrix(C)
-        CALL deletematrix(ref)
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
       end if
 
     end subroutine testHermitianMatrixMatrix1Proc_AxB
@@ -607,22 +655,22 @@ module modfvsystem_test
 
 
 !------------------------------------------------------------------------------
-! test testHermitianMatrixMatrix1Proc_AxIpc
+! test testHermitianMatrixMatrix1Proc_IxIpC
 ! testing multiplication C=AxI+C   
 ! hermitian A
 ! setting C to a constant, except the last col which is 0
 !------------------------------------------------------------------------------
 #ifdef MPI
-    subroutine testHermitianMatrixMatrix1Proc_AxIpC
+    subroutine testHermitianMatrixMatrix1Proc_IxIpC
       implicit none
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter :: nmatp = 9
-      complex, parameter :: addconst = (-1,1)
+      integer, parameter :: nmatp = 9, nrowsf = 10
 
       Type (HermitianMatrix) :: C, ref
       Type (ComplexMatrix)   :: A, B
+      integer                :: i
 
       n_proc_rows_test = 1
       n_proc_cols_test = 1
@@ -634,31 +682,33 @@ module modfvsystem_test
         Call getBlacsGridInfo(MPIglobal)
       
         Call newmatrix(C, nmatp)
-        C%za(:,1:nmatp-1) = addconst
-        Call newMatrix(A, nmatp)
-        Call setHermitian(A%za, nmatp)
-        Call newMatrix(B, nmatp)
-        Call setIdentity(B%za, nmatp)
+        Call fillHermitian(C%za, nmatp)
+        Call newMatrix(A, nrowsf, nmatp)
+        Call fillIdentity(A%za, nmatp)
+        Call newMatrix(B, nrowsf, nmatp)
+        Call fillIdentity(B%za, nmatp)
 
         Call newmatrix (ref, nmatp)
-        ref%za(:,1:nmatp-1) = A%za(:,1:nmatp-1)+addconst
-        ref%za(:,nmatp)     = A%za(:,nmatp)
+        ref%za = C%za
+        do i=1,nmatp
+          ref%za(i,i) = ref%za(i,i)+cmplx(1,0)
+        end do
 
         Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
 
-        CALL assert_equals(nmatp, C%size, 'checking result rank')
-        CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-        CALL assert_equals(nmatp, size(C%za,1), 'checking result size rows')
-        CALL assert_equals(nmatp, size(C%za,2), 'checking result size cols')
-        CALL assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, C%size, 'checking result rank')
+        Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nmatp, size(C%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(C%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, C%za, nmatp, nmatp, tol, 'checking result numbers')
 
-        CALL deletematrix(A)
-        CALL deletematrix(B)
-        CALL deletematrix(C)
-        CALL deletematrix(ref)
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
       end if
 
-    end subroutine testHermitianMatrixMatrix1Proc_AxIpC
+    end subroutine testHermitianMatrixMatrix1Proc_IxIpC
 #endif
 
 
@@ -673,90 +723,13 @@ module modfvsystem_test
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter :: nmatp = 9
+      integer, parameter :: nmatp = 9, nrowsf = 10
 
-      Type (HermitianMatrix)             :: C, ref
-      Type (ComplexMatrix)               :: A, B
-      complex(8), dimension(nmatp,nmatp) :: A_global, B_global
-      integer                            :: nrows_loc, ncols_loc
-
-
-      n_proc_rows_test = 2
-      n_proc_cols_test = 2
-      n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
-
-      if (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-      
-        Call newmatrix (C, nmatp)
-
-        Call setHermitian(A_global, nmatp)
-        Call newMatrix(A, nmatp)
-        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
-
-        Call setIdentity(B_global, nmatp)
-        Call newMatrix(B, nmatp)
-        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
-
-        Call newmatrix (ref, nmatp)
-        ref%za = A%za
-
-        select case (MPIglobal%rank)
-          case (0)
-            nrows_loc = 5
-            ncols_loc = 5
-          case (1)
-            nrows_loc = 5
-            ncols_loc = 4
-          case (2)
-            nrows_loc = 4
-            ncols_loc = 5
-          case (3)
-            nrows_loc = 4
-            ncols_loc = 4
-        end select
-
-        Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
-
-
-        CALL assert_equals(nmatp, C%size, 'checking result rank')
-        CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-        CALL assert_equals(nrows_loc, C%nrows_loc, 'checking result nrows_loc')
-        CALL assert_equals(ncols_loc, C%ncols_loc, 'checking result ncols_loc')
-        CALL assert_equals(nrows_loc, size(C%za,1), 'checking result size rows')
-        CALL assert_equals(ncols_loc, size(C%za,2), 'checking result size cols')
-        CALL assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
-
-        CALL deletematrix(A)
-        CALL deletematrix(B)
-        CALL deletematrix(C)
-        CALL deletematrix(ref)
-      end if
-
-    end subroutine testHermitianMatrixMatrix4Proc_AxI
-#endif
-
-
-!------------------------------------------------------------------------------
-! test testHermitianMatrixMatrix1Proc_AxI
-! testing multiplication C=AxB   in MPI mode with 4 procs
-! hermitian A, complex B
-!------------------------------------------------------------------------------
-#ifdef MPI
-    subroutine testHermitianMatrixMatrix4Proc_AxB
-      implicit none
-
-      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-
-      integer, parameter :: nmatp = 9
-      integer            :: row, col
-
-      Type (HermitianMatrix)             :: C, ref
-      Type (ComplexMatrix)               :: A, B
-      complex(8), dimension(nmatp,nmatp) :: A_global, B_global, ref_global
-      integer                            :: nrows_loc, ncols_loc
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      complex(8), dimension(nrowsf,nmatp) :: A_global, B_global
+      complex(8), dimension(nmatp,nmatp)  :: ref_global
+      integer                             :: nrows_loc, ncols_loc
 
 
       n_proc_rows_test = 2
@@ -768,21 +741,17 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
       
-        Call newmatrix (C, nmatp)
+        Call newmatrix(C, nmatp)
 
-        Call setHermitian(A_global, nmatp)
-        Call newMatrix(A, nmatp)
+        Call fillComplex(A_global, nrowsf, nmatp)
+        Call newmatrix(A, nrowsf, nmatp)
         Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
 
-        do row=1,nmatp
-          B_global(row, nmatp-row+1) = cmplx(0,1)
-        end do
-        Call newMatrix(B, nmatp)
+        Call fillIdentity(B_global, nmatp)
+        Call newMatrix(B, nrowsf, nmatp)
         Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
-        do col=1,nmatp
-          ref_global(:,col) = A_global(:,nmatp-col+1)*cmplx(0,1)
-        end do
+        ref_global = conjg(transpose(A_global(1:nmatp,:)))
         Call newmatrix (ref, nmatp)
         Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
 
@@ -801,21 +770,112 @@ module modfvsystem_test
             ncols_loc = 4
         end select
 
-        Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
 
-        CALL assert_equals(nmatp, C%size, 'checking result rank')
-        CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-        CALL assert_equals(nrows_loc, C%nrows_loc, 'checking result nrows_loc')
-        CALL assert_equals(ncols_loc, C%ncols_loc, 'checking result ncols_loc')
-        CALL assert_equals(nrows_loc, size(C%za,1), 'checking result size rows')
-        CALL assert_equals(ncols_loc, size(C%za,2), 'checking result size cols')
-        CALL assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, C%size, 'checking result rank')
+        Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nrows_loc, C%nrows_loc, 'checking result nrows_loc')
+        Call assert_equals(ncols_loc, C%ncols_loc, 'checking result ncols_loc')
+        Call assert_equals(nrows_loc, size(C%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(C%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
 
-        CALL deletematrix(A)
-        CALL deletematrix(B)
-        CALL deletematrix(C)
-        CALL deletematrix(ref)
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
+      end if
+
+    end subroutine testHermitianMatrixMatrix4Proc_AxI
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHermitianMatrixMatrix4Proc_AxB
+! testing multiplication C=AxB   in MPI mode with 4 procs
+! complex A, complex B
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianMatrixMatrix4Proc_AxB
+      implicit none
+
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      integer, parameter :: nmatp = 9, nrowsf = 10
+      integer            :: row, col
+
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      complex(8), dimension(nrowsf,nmatp) :: A_global, B_global
+      complex(8), dimension(nmatp,nmatp)  :: ref_global
+      integer                             :: nrows_loc, ncols_loc
+
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+      
+        Call newmatrix (C, nmatp)
+
+        Call fillComplex(A_global, nrowsf, nmatp)
+        Call newMatrix(A, nrowsf, nmatp)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
+
+        ! create matrix of type
+        !        /  0  0  i  \
+        !       |   0  i  0  |
+        !       |   i  0  0  |
+        !       |   0  0  0  |
+        !        \  0  0  i /   -> one additional entry in last row
+        do row=1,nmatp
+          B_global(row, nmatp-row+1) = cmplx(0,1)
+        end do
+        B_global(nrowsf,nmatp) = cmplx(0,1)
+        Call newMatrix(B, nrowsf, nmatp)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
+
+        do col=1,nmatp
+          ref_global(:,col) = conjg(A_global(nmatp-col+1,:))*cmplx(0,1)
+        end do
+        ref_global(:,nmatp) = ref_global(:,nmatp) + conjg(A_global(nrowsf,:))*cmplx(0,1)
+        Call newmatrix(ref, nmatp)
+        Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
+
+        select case (MPIglobal%rank)
+          case (0)
+            nrows_loc = 5
+            ncols_loc = 5
+          case (1)
+            nrows_loc = 5
+            ncols_loc = 4
+          case (2)
+            nrows_loc = 4
+            ncols_loc = 5
+          case (3)
+            nrows_loc = 4
+            ncols_loc = 4
+        end select
+
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
+
+        Call assert_equals(nmatp, C%size, 'checking result rank')
+        Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nrows_loc, C%nrows_loc, 'checking result nrows_loc')
+        Call assert_equals(ncols_loc, C%ncols_loc, 'checking result ncols_loc')
+        Call assert_equals(nrows_loc, size(C%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(C%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
       end if
 
     end subroutine testHermitianMatrixMatrix4Proc_AxB
@@ -823,12 +883,12 @@ module modfvsystem_test
 
 
 !------------------------------------------------------------------------------
-! test testHermitianMatrixMatrix4Proc_AxIpC
+! test testHermitianMatrixMatrix4Proc_IxIpC
 ! testing multiplication C=AxI   (I=identity) in MPI mode with 4 procs
 ! hermitian A
 !------------------------------------------------------------------------------
 #ifdef MPI
-    subroutine testHermitianMatrixMatrix4Proc_AxIpC
+    subroutine testHermitianMatrixMatrix4Proc_IxIpC
       implicit none
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -840,6 +900,7 @@ module modfvsystem_test
       Type (ComplexMatrix)               :: A, B
       complex(8), dimension(nmatp,nmatp) :: A_global, B_global, C_global, ref_global
       integer                            :: nrows_loc, ncols_loc
+      integer                            :: i
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -850,20 +911,22 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
       
-        C_global(:,1:nmatp-1) = addconst
+        Call fillHermitian(C_global, nmatp)
         Call newmatrix(C, nmatp)
         Call getBlockDistributedLoc(C_global, C%za, MPIglobal)
 
-        Call setHermitian(A_global, nmatp)
-        Call newMatrix(A, nmatp)
+        Call fillIdentity(A_global, nmatp)
+        Call newMatrix(A, nmatp, nmatp)
         Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
 
-        Call setIdentity(B_global, nmatp)
-        Call newMatrix(B, nmatp)
+        Call fillIdentity(B_global, nmatp)
+        Call newMatrix(B, nmatp, nmatp)
         Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
-        ref_global(:,1:nmatp-1) = A_global(:,1:nmatp-1)+addconst
-        ref_global(:,nmatp)     = A_global(:,nmatp)
+        ref_global = C_global
+        do i=1,nmatp
+          ref_global(i,i) = ref_global(i,i)+cmplx(1,0)
+        end do
         Call newmatrix(ref, nmatp)
         Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
 
@@ -885,21 +948,21 @@ module modfvsystem_test
         Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
 
 
-        CALL assert_equals(nmatp, C%size, 'checking result rank')
-        CALL assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
-        CALL assert_equals(nrows_loc, C%nrows_loc, 'checking result nrows_loc')
-        CALL assert_equals(ncols_loc, C%ncols_loc, 'checking result ncols_loc')
-        CALL assert_equals(nrows_loc, size(C%za,1), 'checking result size rows')
-        CALL assert_equals(ncols_loc, size(C%za,2), 'checking result size cols')
-        CALL assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, C%size, 'checking result rank')
+        Call assert_true(.not. C%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nrows_loc, C%nrows_loc, 'checking result nrows_loc')
+        Call assert_equals(ncols_loc, C%ncols_loc, 'checking result ncols_loc')
+        Call assert_equals(nrows_loc, size(C%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(C%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
 
-        CALL deletematrix(A)
-        CALL deletematrix(B)
-        CALL deletematrix(C)
-        CALL deletematrix(ref)
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
       end if
 
-    end subroutine testHermitianMatrixMatrix4Proc_AxIpC
+    end subroutine testHermitianMatrixMatrix4Proc_IxIpC
 #endif
 
 
