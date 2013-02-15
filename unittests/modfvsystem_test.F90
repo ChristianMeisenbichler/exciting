@@ -7,7 +7,7 @@ module modfvsystem_test
 
     implicit none
 
-    real(8), parameter :: tol  = 5E-7
+    real(8), parameter :: tol  = 1E-13
     real(8), parameter :: zero = 0.0D0
 
     contains
@@ -52,7 +52,7 @@ module modfvsystem_test
       integer :: row
       mat = 0
       do row=1,size
-        mat(row, row) = cmplx(1.0D0, 0.0D0)
+        mat(row, row) = cmplx(1.0D0, 0.0D0,8)
       end do
 
     end subroutine fillIdentity
@@ -69,10 +69,10 @@ module modfvsystem_test
       do row=1,size
         do col=1,row  
           if (row .ne. col) then 
-            mat(row, col) = cmplx(row, col)
-            mat(col, row) = cmplx(row,-col)
+            mat(row, col) = cmplx(row, col,8)
+            mat(col, row) = cmplx(row,-col,8)
           else
-            mat(col, row) = cmplx(row, 0.0D0)
+            mat(col, row) = cmplx(row, 0.0D0,8)
           end if
         end do
       end do
@@ -89,7 +89,7 @@ module modfvsystem_test
 
       do row=1,nrows
         do col=1,ncols  
-          mat(row, col) = cmplx(row,col+10)
+          mat(row, col) = cmplx(row,col+10,8)
         end do
       end do
     end subroutine fillComplex
@@ -462,15 +462,15 @@ module modfvsystem_test
       !        \  0  0  i /   -> one additional entry in last row
       Call newMatrix(B, nrowsf, nmatp)
       do row=1,nmatp
-        B%za(row, nmatp-row+1) = cmplx(0,1)
+        B%za(row, nmatp-row+1) = cmplx(0,1,8)
       end do
-      B%za(nrowsf,nmatp) = cmplx(0,1)
+      B%za(nrowsf,nmatp) = cmplx(0,1,8)
 
       Call newmatrix(ref, nmatp)
       do col=1,nmatp
-        ref%za(:,col) = conjg(A%za(nmatp-col+1,:))*cmplx(0,1)
+        ref%za(:,col) = conjg(A%za(nmatp-col+1,:))*cmplx(0,1,8)
       end do
-      ref%za(:,nmatp) = ref%za(:,nmatp) + conjg(A%za(nrowsf,:))*cmplx(0,1)
+      ref%za(:,nmatp) = ref%za(:,nmatp) + conjg(A%za(nrowsf,:))*cmplx(0,1,8)
 
       Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
@@ -507,15 +507,15 @@ module modfvsystem_test
 
       do row=1,nmatp
        do col=1,nmatp
-        A%za(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi))
+        A%za(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi),8)
        enddo
       end do
       B%za=A%za
 
       Call newmatrix (ref, nmatp)
-      ref%za(:,:)=cmplx(0d0,0d0)
+      ref%za(:,:)=cmplx(0d0,0d0,8)
       do row=1,nmatp
-        ref%za(row,row) = cmplx(dble(nmatp),0d0)
+        ref%za(row,row) = cmplx(dble(nmatp),0d0,8)
       end do
       Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
 !     write(*,*) A%za
@@ -558,7 +558,7 @@ module modfvsystem_test
       Call newmatrix (ref, nmatp)
       ref%za = C%za
       do i=1,nmatp
-        ref%za(i,i) = ref%za(i,i)+cmplx(1,0)
+        ref%za(i,i) = ref%za(i,i)+cmplx(1,0,8)
       end do
 
       Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
@@ -672,15 +672,15 @@ module modfvsystem_test
         !        \  0  0  i /   -> one additional entry in last row
         Call newMatrix(B, nrowsf, nmatp)
         do row=1,nmatp
-          B%za(row, nmatp-row+1) = cmplx(0,1)
+          B%za(row, nmatp-row+1) = cmplx(0,1,8)
         end do
-        B%za(nrowsf,nmatp) = cmplx(0,1)
+        B%za(nrowsf,nmatp) = cmplx(0,1,8)
 
         Call newmatrix (ref, nmatp)
         do col=1,nmatp
-          ref%za(:,col) = conjg(A%za(nmatp-col+1,:))*cmplx(0,1)
+          ref%za(:,col) = conjg(A%za(nmatp-col+1,:))*cmplx(0,1,8)
         end do
-        ref%za(:,nmatp) = ref%za(:,nmatp) + conjg(A%za(nrowsf,:))*cmplx(0,1)
+        ref%za(:,nmatp) = ref%za(:,nmatp) + conjg(A%za(nrowsf,:))*cmplx(0,1,8)
 
         Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
 
@@ -732,7 +732,7 @@ module modfvsystem_test
         Call newMatrix(A, nmatp, nmatp)
         do row=1,nmatp
          do col=1,nmatp
-          A%za(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi))
+          A%za(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi),8)
          enddo
         end do
 
@@ -740,9 +740,9 @@ module modfvsystem_test
         B%za=A%za
 
         Call newmatrix (ref, nmatp)
-        ref%za(:,:)=cmplx(0d0,0d0)
+        ref%za(:,:)=cmplx(0d0,0d0,8)
         do row=1,nmatp
-         ref%za(row,row) = cmplx(dble(nmatp),0d0)
+         ref%za(row,row) = cmplx(dble(nmatp),0d0,8)
         end do
 
 
@@ -801,7 +801,7 @@ module modfvsystem_test
         Call newmatrix (ref, nmatp)
         ref%za = C%za
         do i=1,nmatp
-          ref%za(i,i) = ref%za(i,i)+cmplx(1,0)
+          ref%za(i,i) = ref%za(i,i)+cmplx(1,0,8)
         end do
 
         Call HermitianMatrixMatrix(C,A,B,nmatp,nmatp,nmatp)
@@ -944,16 +944,16 @@ module modfvsystem_test
         !       |   0  0  0  |
         !        \  0  0  i /   -> one additional entry in last row
         do row=1,nmatp
-          B_global(row, nmatp-row+1) = cmplx(0,1)
+          B_global(row, nmatp-row+1) = cmplx(0,1,8)
         end do
-        B_global(nrowsf,nmatp) = cmplx(0,1)
+        B_global(nrowsf,nmatp) = cmplx(0,1,8)
         Call newMatrix(B, nrowsf, nmatp)
         Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
 
         do col=1,nmatp
-          ref_global(:,col) = conjg(A_global(nmatp-col+1,:))*cmplx(0,1)
+          ref_global(:,col) = conjg(A_global(nmatp-col+1,:))*cmplx(0,1,8)
         end do
-        ref_global(:,nmatp) = ref_global(:,nmatp) + conjg(A_global(nrowsf,:))*cmplx(0,1)
+        ref_global(:,nmatp) = ref_global(:,nmatp) + conjg(A_global(nrowsf,:))*cmplx(0,1,8)
         Call newmatrix(ref, nmatp)
         Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
 
@@ -1022,14 +1022,14 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         do row=1,nmatp
          do col=1,nmatp
-          A_global(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi))
+          A_global(row, col) = cmplx(cos(-dble(2*row*(col-1))/dble(nmatp)*pi),sin(-dble(2*row*(col-1))/dble(nmatp)*pi),8)
          enddo
         end do
         B_global=A_global
 
-        ref_global(:,:)=cmplx(0d0,0d0)
+        ref_global(:,:)=cmplx(0d0,0d0,8)
         do row=1,nmatp
-         ref_global(row,row) = cmplx(dble(nmatp),0d0)
+         ref_global(row,row) = cmplx(dble(nmatp),0d0,8)
         end do
 
         Call getBlacsGridInfo(MPIglobal)
@@ -1122,7 +1122,7 @@ module modfvsystem_test
 
         ref_global = C_global
         do i=1,nmatp
-          ref_global(i,i) = ref_global(i,i)+cmplx(1,0)
+          ref_global(i,i) = ref_global(i,i)+cmplx(1,0,8)
         end do
         Call newmatrix(ref, nmatp)
         Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
