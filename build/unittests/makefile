@@ -16,10 +16,10 @@ export SUFFIX=_unittests
 
 all: make.inc Make.common libraries.inc tests_mpi tests_serial
 
-tests_mpi: 
+tests_mpi: make.inc Make.common libraries.inc
 	cd mpi && $(MAKE)
     
-tests_serial: 
+tests_serial: make.inc Make.common libraries.inc
 	cd serial && $(MAKE)
     
 
