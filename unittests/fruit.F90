@@ -338,15 +338,27 @@ module fruit
 contains
 
   subroutine init_fruit
+#ifdef MPI
+    use mpi
+    integer :: proc, ierr
+    Call MPI_comm_rank (mpi_comm_world, proc, ierr)
+#endif
+
     successful_assert_count = 0
     failed_assert_count = 0
     message_index = 1
     message_index_from = 1
-    write (stdout,*)
-    write (stdout,*) "Test module initialized"
-    write (stdout,*)
-    write (stdout,*) "   . : successful assert,   F : failed assert "
-    write (stdout,*)
+#ifdef MPI
+    if (proc == 0) then 
+#endif
+      write (stdout,*)
+      write (stdout,*) "Test module initialized"
+      write (stdout,*)
+      write (stdout,*) "   . : successful assert,   F : failed assert "
+      write (stdout,*)
+#ifdef MPI
+    end if 
+#endif
     if ( .not. allocated(message_array) ) then
       allocate(message_array(MSG_ARRAY_INCREMENT))
     end if

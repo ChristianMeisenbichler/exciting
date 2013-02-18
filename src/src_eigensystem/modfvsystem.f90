@@ -71,21 +71,59 @@
   Contains
     !
     !
+#ifdef MPI
+    Subroutine newComplexMatrix (self, nrows, ncols, distribute)
+#else
     Subroutine newComplexMatrix (self, nrows, ncols)
+#endif
       Implicit None
       type (ComplexMatrix), Intent (Inout) :: self
       Integer, Intent (In) :: nrows, ncols
+#ifdef MPI
+      Integer, Intent (In) :: distribute
+#endif
 
       Integer, External   :: NUMROC
+
+!      Integer :: distribute
 
       self%nrows = nrows
       self%ncols = ncols
 #ifdef MPI
-      self%nrows_loc = NUMROC(self%nrows, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-      self%ncols_loc = NUMROC(self%ncols, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-      CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-                    MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
-                    MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
+!       if (present(distr)) then
+!        distribute = distr
+! write (*,*) 'distr specified!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+!       else
+!         distribute = DISTRIBUTE_BOTH
+!       end if
+
+
+
+      if (distribute .eq. DISTRIBUTE_2D) then
+        self%nrows_loc = NUMROC(self%nrows, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+        self%ncols_loc = NUMROC(self%ncols, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+        CALL DESCINIT(self%desc, self%nrows, self%ncols, &
+                      MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
+                      MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
+ 
+      else if (distribute .eq. DISTRIBUTE_ROWS) then
+        self%nrows_loc = NUMROC(self%nrows, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+        self%ncols_loc = self%ncols
+        CALL DESCINIT(self%desc, self%nrows, self%ncols, &
+                      MPIglobal_1D%blocksize, MPIglobal_1D%blocksize, 0, 0, &
+                      MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+
+       else if (distribute .eq. DISTRIBUTE_COLS) then
+         self%nrows_loc = self%nrows
+         self%ncols_loc = NUMROC(self%ncols, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        CALL DESCINIT(self%desc, self%nrows, self%ncols, &
+                      self%nrows, MPIglobal_1D%blocksize, 0, 0, &
+                      MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+      end if 
+
+!       CALL DESCINIT(self%desc, self%nrows, self%ncols, &
+!                     MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
+!                     MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
 #else
       self%nrows_loc = nrows
       self%ncols_loc = ncols

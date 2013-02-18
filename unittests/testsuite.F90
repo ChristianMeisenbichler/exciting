@@ -4,19 +4,21 @@ program testsuite
     use modfvsystem_test
 #ifdef MPI
     use modmpi
+
+    call initMPI
 #endif
    
     CALL init_fruit
 
 #ifdef MPI
-    call initMPI
-#endif
-
-#ifdef MPI
-    CALL set_unit_name ('modfvsystem - creating new complex matrix on 1 proc')
-    CALL testNewComplexMatrix1proc
+!     CALL set_unit_name ('modfvsystem - creating new complex matrix on 1 proc')
+!     CALL testNewComplexMatrix1proc
     CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs')
     CALL testNewComplexMatrix4proc
+    CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs, distribute rows')
+    CALL testNewComplexMatrix4procDistRows
+    CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs, distribute cols')
+    CALL testNewComplexMatrix4procDistCols
 
     CALL set_unit_name ('modfvsystem - creating new system on 1 proc')
     CALL testNewSystem1proc
@@ -39,6 +41,8 @@ program testsuite
     CALL testHermitianMatrixMatrix4Proc_AxB_square
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication IxI+C on 4 procs')
     CALL testHermitianMatrixMatrix4Proc_IxIpC
+    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C with col distribution on 4 procs')
+    CALL testHermitianMatrixMatrix4Proc_AxBpC_coldist
 #else
     CALL set_unit_name ('modfvsystem - creating new complex matrix serial')
     CALL testNewComplexMatrixSerial

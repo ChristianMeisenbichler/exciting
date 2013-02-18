@@ -42,7 +42,7 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Integer, Intent (In) :: ia
       Integer, Intent (In) :: ngp
       Complex (8), Intent (In) :: apwalm (ngkmax, apwordmax, lmmaxapw, &
-     & natmtot)
+     & natmtot)   !SPLIT first dimension over procs
       Complex (8) :: x (ngp)
 !      Complex (8) :: y (ngp)
 !
@@ -53,13 +53,12 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Complex (8) zt1, zsum
       complex(8),allocatable::zm1(:,:),zm2(:,:)
 ! automatic arrays
-      Complex (8) zv (ngp)
+      Complex (8) zv (ngp) !SPLIT over procs
 
 ! external functions
 !      Real (8) :: polynom
 !      Complex (8) zdotc
 !      External polynom, zdotc
-
       allocate(zm1(lmmaxapw*apwordmax,ngp))
       allocate(zm2(lmmaxapw*apwordmax,ngp))
       zm1=zzero
@@ -105,15 +104,20 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                      End If
                   End Do
                End Do
+
                naa=naa+1
-              zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
-              zm2(naa,:)=zv(:)
+               zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
+               zm2(naa,:)=zv(:)
 
             End Do
          End Do
       End Do
-       call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
-       call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
+write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
+write (*,*) 'naa', naa
+write (*,*) 'ngp', ngp
+      stop
+      call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
+      call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
 
 
 ! kinetic surface contribution

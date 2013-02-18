@@ -33,8 +33,14 @@ implicit none
 
       End Type MPIinfo
 
-      Logical :: splittfile
+      Integer, Parameter :: DISTRIBUTE_ROWS = 1
+      Integer, Parameter :: DISTRIBUTE_COLS = 2
+      Integer, Parameter :: DISTRIBUTE_2D   = 3
+
+      Logical       :: splittfile
       Type(MPIinfo) :: MPIglobal
+      Type(MPIinfo) :: MPIglobal_1D
+
 !
 !!$  character(256)::filename
 Contains
@@ -42,13 +48,22 @@ Contains
 #ifdef MPI
     !        mpi init
          Call mpi_init (MPIglobal%ierr)
+
          MPIglobal%comm = mpi_comm_world
          Call mpi_comm_size (mpi_comm_world, MPIglobal%procs, MPIglobal%ierr)
-         Call mpi_comm_rank (mpi_comm_world, MPIglobal%rank, MPIglobal%ierr)
+         Call mpi_comm_rank (mpi_comm_world, MPIglobal%rank,  MPIglobal%ierr)
+
+         MPIglobal_1D%comm  = mpi_comm_world
+         MPIglobal_1D%procs = MPIglobal%procs
+         MPIglobal_1D%rank  = MPIglobal%rank
+
          splittfile = .True.
+
 !TODO: decent processor grid initialization
          MPIglobal%nprocrows = 1
          MPIglobal%nproccols = 1
+         MPIglobal_1D%nprocrows = 1
+         MPIglobal_1D%nproccols = 1
 #endif
 #ifndef MPI
          MPIglobal%comm  = 0
