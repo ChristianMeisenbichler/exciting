@@ -103,7 +103,7 @@ module modHmlaan_test
 ! initialisation is finished
      
 ! 1st test 
-! The surface part of the kinetic energy (line 4 in Eq. 24) is under inspection.
+! The surface part of the kinetic energy (line 3 in Eq. 24) is under inspection.
 ! The matching coefficients apwalm contain a dependence on the plane-wave index g1 and the orbital momentum l1.
 ! The radial functions apwfr and apwdfr contain a dependence on the orbital momentum l1.
 
@@ -144,7 +144,7 @@ module modHmlaan_test
 ! 1st test ends here
 
 ! 2nd test
-! The surface part of the kinetic energy (line 4 in Eq. 24) is under inspection.
+! The surface part of the kinetic energy (line 3 in Eq. 24) is under inspection.
 ! The matching coefficients apwalm contain a dependence on the plane-wave index g1, the orbital momentum l1 and the magnetic quantum number m1.
 ! The radial functions apwfr and apwdfr are constant.
 
