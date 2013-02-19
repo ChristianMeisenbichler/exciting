@@ -3,8 +3,8 @@ include ../../make.inc
 testsrc = ../../../unittests
 excsrc  = ../../../src
 includes = -I ../../mpi/
-objects = modfvsystem_test.o \
-          fruit_util.o fruit.o testsuite.o 
+objects = modfvsystem_test.o hmlaan_test.o \
+          fruit_util.o fruit.o test_helpers.o testsuite.o
 cmd = $(F90)
 opts = $(F90_OPTS)
 
@@ -27,7 +27,10 @@ libexciting.a:
 
 # unit tests ##############################################
 	
-modfvsystem_test.o: $(testsrc)/modfvsystem_test.F90 fruit.o
+hmlaan_test.o: $(testsrc)/hmlaan_test.F90 test_helpers.o fruit.o
+	$(F90) $(F90_OPTS_UT_SERIAL) $(includes) -c $(testsrc)/hmlaan_test.F90
+
+modfvsystem_test.o: $(testsrc)/modfvsystem_test.F90 test_helpers.o fruit.o
 	$(F90) $(F90_OPTS_UT_SERIAL) -c $(testsrc)/modfvsystem_test.F90
 	
 fruit_util.o: $(testsrc)/fruit_util.f90
@@ -36,7 +39,10 @@ fruit_util.o: $(testsrc)/fruit_util.f90
 fruit.o: $(testsrc)/fruit.F90 fruit_util.o
 	$(F90) $(F90_OPTS_UT_SERIAL) -c $(testsrc)/fruit.F90
 
-testsuite.o: $(testsrc)/testsuite.F90 modfvsystem_test.o fruit.o 
+test_helpers.o: $(testsrc)/test_helpers.F90
+	$(F90) $(F90_OPTS_UT_SERIAL) $(includes) -c $(testsrc)/test_helpers.F90
+
+testsuite.o: $(testsrc)/testsuite.F90 modfvsystem_test.o hmlaan_test.o fruit.o 
 	$(F90) $(F90_OPTS_UT_SERIAL) -c $(testsrc)/testsuite.F90
 	
 

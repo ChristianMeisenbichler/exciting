@@ -12,21 +12,22 @@
 !
 Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
 ! !USES:
-      Use modinput
-      Use modmain
-      Use modfvsystem
+      Use modinput,        Only: input
+      Use mod_muffin_tin,  Only: idxlm, lmmaxapw, rmt, nrmt
+      Use mod_APW_LO,      Only: apword, apwordmax, apwfr, apwdfr
+      Use mod_Gkvector,    Only: ngkmax
+      Use mod_atoms,       Only: natmtot, idxas
+      Use mod_eigensystem, Only: gntyry, haa
+      Use mod_constants,   Only: zzero
+      Use modfvsystem,     Only: HermitianMatrix, HermitianMatrixMatrix
+!
 ! !INPUT/OUTPUT PARAMETERS:
-!   tapp   : .true. if the Hamiltonian is to be applied to the input vector,
-!            .false. if the full matrix is to be calculated (in,logical)
 !   is     : species number (in,integer)
 !   ia     : atom number (in,integer)
 !   ngp    : number of G+p-vectors (in,integer)
 !   apwalm : APW matching coefficients
 !            (in,complex(ngkmax,apwordmax,lmmaxapw,natmtot))
-!   v      : input vector to which H is applied if tapp is .true., otherwise
-!            not referenced (in,complex(nmatmax))
-!   h      : H applied to v if tapp is .true., otherwise it is the Hamiltonian
-!            matrix in packed form (inout,complex(npmatmax))
+!
 ! !DESCRIPTION:
 !   Calculates the APW-APW contribution to the Hamiltonian matrix.
 !
@@ -43,8 +44,7 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Integer, Intent (In) :: ngp
       Complex (8), Intent (In) :: apwalm (ngkmax, apwordmax, lmmaxapw, &
      & natmtot)   !SPLIT first dimension over procs
-      Complex (8) :: x (ngp)
-!      Complex (8) :: y (ngp)
+!      Complex (8) :: x (ngp)
 !
 ! local variables
       Integer :: ias, io1, io2
@@ -56,9 +56,6 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Complex (8) zv (ngp) !SPLIT over procs
 
 ! external functions
-!      Real (8) :: polynom
-!      Complex (8) zdotc
-!      External polynom, zdotc
       allocate(zm1(lmmaxapw*apwordmax,ngp))
       allocate(zm2(lmmaxapw*apwordmax,ngp))
       zm1=zzero
@@ -112,10 +109,10 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
             End Do
          End Do
       End Do
-write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
-write (*,*) 'naa', naa
-write (*,*) 'ngp', ngp
-      stop
+! write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
+! write (*,*) 'naa', naa
+! write (*,*) 'ngp', ngp
+!       stop
       call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
       call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
 
@@ -134,7 +131,7 @@ write (*,*) 'ngp', ngp
                   naa=naa+1
                   zm1(naa,:) = apwalm(1:ngp, io1, lm1, ias)
                   zm2(naa,:) = zt1*apwalm(1:ngp, io1, lm1, ias)
-                  x          = apwalm(1:ngp, io1, lm1, ias)
+!                  x          = apwalm(1:ngp, io1, lm1, ias)
                End Do
             End Do
          End Do

@@ -72,7 +72,7 @@
     !
     !
 #ifdef MPI
-    Subroutine newComplexMatrix (self, nrows, ncols, distribute)
+    Subroutine newComplexMatrix (self, nrows, ncols, distr)
 #else
     Subroutine newComplexMatrix (self, nrows, ncols)
 #endif
@@ -80,22 +80,22 @@
       type (ComplexMatrix), Intent (Inout) :: self
       Integer, Intent (In) :: nrows, ncols
 #ifdef MPI
-      Integer, Intent (In) :: distribute
+      Integer, Intent (In), Optional :: distr
 #endif
 
       Integer, External   :: NUMROC
 
-!      Integer :: distribute
+      Integer :: distribute
 
       self%nrows = nrows
       self%ncols = ncols
 #ifdef MPI
-!       if (present(distr)) then
-!        distribute = distr
-! write (*,*) 'distr specified!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-!       else
-!         distribute = DISTRIBUTE_BOTH
-!       end if
+      if (present(distr)) then
+       distribute = distr
+!write (*,*) 'distr specified!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      else
+        distribute = DISTRIBUTE_2D
+      end if
 
 
 
@@ -285,7 +285,8 @@
 !     self%za(ngp,ngp)
 !
 ! !REVISION HISTORY:
-!   Created February 2013 (G. Huhs - BSC)
+!   Parallelized and with new matrix types February 2013 (G. Huhs - BSC)
+!   Created ?? (CHM)
 !EOP
 !BOC
       Implicit None

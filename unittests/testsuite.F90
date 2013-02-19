@@ -2,6 +2,7 @@
 program testsuite
     use fruit
     use modfvsystem_test
+    use modHmlaan_test
 #ifdef MPI
     use modmpi
 
@@ -11,8 +12,8 @@ program testsuite
     CALL init_fruit
 
 #ifdef MPI
-!     CALL set_unit_name ('modfvsystem - creating new complex matrix on 1 proc')
-!     CALL testNewComplexMatrix1proc
+    CALL set_unit_name ('modfvsystem - creating new complex matrix on 1 proc')
+    CALL testNewComplexMatrix1proc
     CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs')
     CALL testNewComplexMatrix4proc
     CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs, distribute rows')
