@@ -59,6 +59,8 @@ program testsuite
     CALL testHermitianMatrixMatrixSerial_AxB_square
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication IxI+C serial')
     CALL testHermitianMatrixMatrixSerial_IxIpC
+
+    CALL testHmlaanSerial
 #endif
 
 #ifdef MPI

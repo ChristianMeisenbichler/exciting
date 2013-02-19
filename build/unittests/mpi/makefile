@@ -2,7 +2,7 @@ include ../../make.inc
 
 testsrc = ../../../unittests
 excsrc  = ../../../src
-includes = -I ../../mpi/
+includes = -I. -I../../../src/FoX/dom/ -I../../../src/FoX/fsys/ 
 objects = modfvsystem_test.o hmlaan_test.o \
           fruit_util.o fruit.o test_helpers.o testsuite.o
 cmd = $(MPIF90)
