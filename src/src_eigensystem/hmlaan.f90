@@ -116,7 +116,6 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
       call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
 
-
 ! kinetic surface contribution
       t1 = 0.25d0 * rmt (is) ** 2
       zm1=zzero

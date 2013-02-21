@@ -70,6 +70,9 @@ program testsuite
     CALL testHermitianMatrixMatrixSerial_IxIpC
     CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C big hamiltonian serial')
     CALL testHermitianMatrixMatrixSerial_AxBpC_bighamiltonian
+
+    CALL set_unit_name ('modfvsystem - Hamiltonian matrix setup (hmlaan) test')
+    CALL testHmlaanSerial
 #endif
 
 #ifdef MPI
