@@ -5,7 +5,7 @@ module test_helpers
 
     implicit none
 
-    real(8), parameter :: tol  = 1E-13
+    real(8), parameter :: tol  = 1E-12
     real(8), parameter :: zero = 0.0D0
 
     contains
