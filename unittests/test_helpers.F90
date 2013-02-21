@@ -142,21 +142,74 @@ module test_helpers
       n_blocks_y_loc = CEILING(FLOAT(n_rows_loc)/blocksize)
 
       do i_block_x=0,n_blocks_x_loc-1
-          glob_x_start = (proc_x + i_block_x*n_procs_x)*blocksize + 1
-          glob_x_end   = MIN(glob_x_start + blocksize - 1, n_cols_glob)
-          loc_x_start  = i_block_x*blocksize + 1
-          loc_x_end    = MIN(loc_x_start + blocksize - 1, n_cols_loc)
+        glob_x_start = (proc_x + i_block_x*n_procs_x)*blocksize + 1
+        glob_x_end   = MIN(glob_x_start + blocksize - 1, n_cols_glob)
+        loc_x_start  = i_block_x*blocksize + 1
+        loc_x_end    = MIN(loc_x_start + blocksize - 1, n_cols_loc)
 
-          do i_block_y=0,n_blocks_y_loc-1
-              glob_y_start = (proc_y + i_block_y*n_procs_y)*blocksize + 1
-              glob_y_end   = MIN(glob_y_start + blocksize - 1, n_rows_glob)
-              loc_y_start  = i_block_y*blocksize + 1
-              loc_y_end    = MIN(loc_y_start + blocksize - 1, n_rows_loc)
-              local(loc_y_start:loc_y_end,loc_x_start:loc_x_end) = global(glob_y_start:glob_y_end,glob_x_start:glob_x_end)
-          end do
+        do i_block_y=0,n_blocks_y_loc-1
+          glob_y_start = (proc_y + i_block_y*n_procs_y)*blocksize + 1
+          glob_y_end   = MIN(glob_y_start + blocksize - 1, n_rows_glob)
+          loc_y_start  = i_block_y*blocksize + 1
+          loc_y_end    = MIN(loc_y_start + blocksize - 1, n_rows_loc)
+          local(loc_y_start:loc_y_end,loc_x_start:loc_x_end) = global(glob_y_start:glob_y_end,glob_x_start:glob_x_end)
+        end do
       end do
 
     end subroutine getBlockDistributedLoc
 #endif
+
+
+#ifdef MPI
+    subroutine getLocalIndices(n_rows_glob, n_cols_glob, idx_rows, idx_cols, MPIdata)
+      implicit none
+
+      Integer, External   :: NUMROC
+
+      ! arguments
+      integer,               intent(in)  :: n_rows_glob, n_cols_glob
+      integer, dimension(:), intent(out) :: idx_rows, idx_cols
+      Type(MPIinfo),         intent(in)  :: MPIdata
+
+      ! local variables
+      integer :: n_procs_x, n_procs_y, proc_x, proc_y, blocksize, i
+      integer :: n_rows_loc, n_cols_loc, &
+                 n_blocks_x_loc, i_block_x, glob_x_start, glob_x_end, loc_x_start, loc_x_end, &
+                 n_blocks_y_loc, i_block_y, glob_y_start, glob_y_end, loc_y_start, loc_y_end
+
+      n_procs_x = MPIdata%nproccols
+      n_procs_y = MPIdata%nprocrows
+      proc_x    = MPIdata%myproccol
+      proc_y    = MPIdata%myprocrow
+      blocksize = MPIdata%blocksize
+
+      n_rows_loc = NUMROC(n_rows_glob, blocksize, proc_y, 0, n_procs_y)
+      n_cols_loc = NUMROC(n_cols_glob, blocksize, proc_x, 0, n_procs_x)
+
+      n_blocks_x_loc = CEILING(FLOAT(n_cols_loc)/blocksize)
+      n_blocks_y_loc = CEILING(FLOAT(n_rows_loc)/blocksize)
+
+      do i_block_x=0,n_blocks_x_loc-1
+        glob_x_start = (proc_x + i_block_x*n_procs_x)*blocksize + 1
+        glob_x_end   = MIN(glob_x_start + blocksize - 1, n_cols_glob)
+        loc_x_start  = i_block_x*blocksize + 1
+        loc_x_end    = MIN(loc_x_start + blocksize - 1, n_cols_loc)
+
+        idx_cols(loc_x_start:loc_x_end) = (/(i,i=glob_x_start,glob_x_end)/)
+      end do
+
+      do i_block_y=0,n_blocks_y_loc-1
+        glob_y_start = (proc_y + i_block_y*n_procs_y)*blocksize + 1
+        glob_y_end   = MIN(glob_y_start + blocksize - 1, n_rows_glob)
+        loc_y_start  = i_block_y*blocksize + 1
+        loc_y_end    = MIN(loc_y_start + blocksize - 1, n_rows_loc)
+          
+        idx_rows(loc_y_start:loc_y_end) = (/(i,i=glob_y_start,glob_y_end)/)
+      end do
+
+    end subroutine getLocalIndices
+#endif
+
+
 
 end module test_helpers

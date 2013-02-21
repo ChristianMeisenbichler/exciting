@@ -30,7 +30,7 @@ module fruit
   character (len = *), parameter :: xml_filename     = "result.xml"
   character (len = *), parameter :: xml_filename_work = "result_tmp.xml"
 
-  integer, parameter :: MSG_LENGTH = 256
+  integer, parameter :: MSG_LENGTH = 512
   integer, parameter :: MAX_MSG_STACK_SIZE = 2000
   integer, parameter :: MSG_ARRAY_INCREMENT = 50
   integer, parameter :: MAX_MARKS_PER_LINE = 78

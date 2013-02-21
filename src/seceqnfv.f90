@@ -12,9 +12,13 @@
 !
 Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   ! !USES:
-      Use modinput
-      Use modmain
-      Use modfvsystem
+      Use modfvsystem,     Only: evsystem
+      Use mod_muffin_tin,  Only: lmmaxapw
+      Use mod_APW_LO,      Only: apwordmax
+      Use mod_Gkvector,    Only: ngkmax
+      Use mod_atoms,       Only: natmtot
+      Use mod_eigenvalue_occupancy, Only: nstfv
+      Use mod_eigensystem, Only: nmatmax
 !
   ! !INPUT/OUTPUT PARAMETERS:
   !   nmatp  : order of overlap and Hamiltonian matrices (in,integer)
@@ -46,7 +50,6 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
       Complex (8), Intent (Out) :: evecfv (nmatmax, nstfv)
   ! local variables
       Type (evsystem) :: system
-      Logical :: packed
 
   ! allocatable arrays
 
@@ -56,7 +59,7 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   !----------------------------------------!
 !
 
-
+!distribute the relevant part of apwalm (only first ngp lines)
 
 
       Call newsystem (system,   nmatp)

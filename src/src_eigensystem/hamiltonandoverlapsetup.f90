@@ -3,32 +3,48 @@
 ! C. Ambrosch-Draxl.
 ! This file is distributed under the terms of the GNU General Public License.
 ! See the file COPYING for license details.
-
-Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
-      Use modfvsystem
-      Use modinput
-      Use mod_eigensystem
-      Use mod_atoms
-      Use mod_timing
-      Use mod_muffin_tin
-      Use mod_APW_LO
-      Use mod_gkvector
 !
+!BOP
+! !ROUTINE: hmlaa
+! !INTERFACE:
+!
+!
+Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
+! !USES:
+      Use modfvsystem, Only: evsystem
+      Use mod_atoms,   Only: nspecies, natoms, natmtot
+      Use mod_timing,  Only: time_hmlaan, time_hmlalon, time_hmllolon, & 
+                             time_olpaan, time_olpalon, time_olplolon, &
+                             time_hmlistln, time_olpistln, timemat
+      Use mod_muffin_tin, Only: lmmaxapw  !only needed for shape declaration of apwalm
+      Use mod_APW_LO,     Only: apwordmax !only needed for shape declaration of apwalm
+      Use mod_gkvector,   Only: ngkmax    !only needed for shape declaration of apwalm
+!
+! !INPUT/OUTPUT PARAMETERS:
+!   system : 
+!   ngp    : number of G+k-vectors for augmented plane waves (in,integer)
+!   apwalm : APW matching coefficients
+!            (in,complex(ngkmax,apwordmax,lmmaxapw,natmtot))
+!   igpig  : index from G+k-vectors to G-vectors (in,integer(ngkmax))
+!   vgpc   : G+k-vectors in Cartesian coordinates (in,real(3,ngkmax))
+! !DESCRIPTION:
+!   Sets up the Hamiltonian and overlap matrices
+!
+! !REVISION HISTORY:
+!   Created March 2004 (JKD)
+!EOP
+!BOC
       Implicit None
-      Type (evsystem) :: system
-      Integer, Intent (In) :: ngp
+! arguments
+      Type (evsystem)          :: system
+      Integer, Intent (In)     :: ngp
       Complex (8), Intent (In) :: apwalm (ngkmax, apwordmax, lmmaxapw, &
      & natmtot)
-      Integer, Intent (In) :: igpig (ngkmax)
-      Real (8), Intent (In) :: vgpc (3, ngkmax)
-      Integer :: n
-      Character (256) :: prefix
-!local variables
-      Integer, Save :: ikc
-      Real (8), Save :: cputot
-      Real (8) :: cpuaa, cpualo, cpulolo, cpui, cpu00, cpu01,ts0,ts1
-      Integer :: i, is, ia
-      Complex (8) v (1)
+      Integer, Intent (In)     :: igpig (ngkmax)
+      Real (8), Intent (In)    :: vgpc (3, ngkmax)
+! local variables
+      Real (8) :: ts0, ts1
+      Integer  :: is, ia
       Real (8) :: cpu0, cpu1
       Real (8) :: threshold
 !----------------------------------------!

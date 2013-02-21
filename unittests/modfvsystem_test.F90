@@ -545,6 +545,57 @@ module modfvsystem_test
 
 
 !------------------------------------------------------------------------------
+! test testHermitianMatrixMatrixSerial_AxBpC_bighamiltonian
+! testing multiplication C=AxB+C   
+! C is bigger than AxB, so the multiplication should work on a submatrix of C
+!------------------------------------------------------------------------------
+    subroutine testHermitianMatrixMatrixSerial_AxBpC_bighamiltonian
+      implicit none
+
+      integer, parameter :: nmatp = 10, ngp = 8, nrowsf = 4
+
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      integer                             :: i
+      
+      ! fill only the submatrix with the hermitian stuff, the rest set to 1
+      Call newmatrix(C, nmatp)
+      C%za = cmplx(1,0,8)
+      Call fillHermitian(C%za, ngp)
+
+      Call newMatrix(A, nrowsf, ngp)
+      Call fillComplex(A%za, nrowsf, ngp)
+
+      ! create matrix 
+      !        /  1  0  0  0  i  0  0  0  \
+      !        /  0  1  0  0  0  i  0  0  \
+      !        /  0  0  1  0  0  0  i  0  \
+      !        \  0  0  0  1  0  0  0  i /   
+      Call newMatrix(B, nrowsf, ngp)
+      do i=1,nrowsf
+        B%za(i,i)   = cmplx(1,0,8)
+        B%za(i,i+4) = cmplx(0,1,8)
+      end do
+
+      ! the product affects only the submatrix, the rest has to be unchanged
+      Call newmatrix(ref, nmatp)
+      ref%za(1:8,1:4) = conjg(transpose(A%za))
+      ref%za(1:8,5:8) = conjg(transpose(A%za))*cmplx(0,1,8)
+      ref%za          = ref%za + C%za
+
+      Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,ngp)
+
+      Call assert_equals(ref%za, C%za, ngp, ngp, tol, 'checking result numbers')
+
+      Call deletematrix(A)
+      Call deletematrix(B)
+      Call deletematrix(C)
+      Call deletematrix(ref)
+
+    end subroutine testHermitianMatrixMatrixSerial_AxBpC_bighamiltonian
+
+
+!------------------------------------------------------------------------------
 ! test testHermitianMatrixMatrix1Proc_AxI
 ! testing multiplication C=(A**H)xI   in MPI mode with 1 proc
 ! I is a rectangular matrix, upper square part filled with identity
@@ -792,6 +843,77 @@ module modfvsystem_test
 
     end subroutine testHermitianMatrixMatrix1Proc_IxIpC
 #endif
+
+
+!------------------------------------------------------------------------------
+! test testHermitianMatrixMatrix1Proc_AxBpC_bighamiltonian
+! testing multiplication C=AxB+C   in MPI mode with 1 proc
+! C is bigger than AxB, so the multiplication should work on a submatrix of C
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianMatrixMatrix1Proc_AxBpC_bighamiltonian
+      implicit none
+
+      integer :: n_procs_test, ierror_t
+
+      integer, parameter :: nmatp = 10, ngp = 8, nrowsf = 4
+
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      integer                             :: nrows_loc, ncols_loc
+      integer                             :: i
+
+      n_procs_test = 1
+      call setupProcGrid(1, 1, MPIglobal%comm,    MPIglobal%context,    ierror_t)
+      MPIglobal%blocksize    = 2
+      MPIglobal_1D%blocksize = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+      
+        ! fill only the submatrix with the hermitian stuff, the rest set to 1
+        Call newmatrix(C, nmatp)
+        C%za = cmplx(1,0,8)
+        Call fillHermitian(C%za, ngp)
+
+        Call newMatrix(A, nrowsf, ngp, DISTRIBUTE_2D)
+        Call fillComplex(A%za, nrowsf, ngp)
+
+        ! create matrix 
+        !        /  1  0  0  0  i  0  0  0  \
+        !        /  0  1  0  0  0  i  0  0  \
+        !        /  0  0  1  0  0  0  i  0  \
+        !        \  0  0  0  1  0  0  0  i /   
+        Call newMatrix(B, nrowsf, ngp, DISTRIBUTE_2D)
+        do i=1,nrowsf
+          B%za(i,i)   = cmplx(1,0,8)
+          B%za(i,i+4) = cmplx(0,1,8)
+        end do
+
+        ! the product affects only the submatrix, the rest has to be unchanged
+        Call newmatrix(ref, nmatp)
+        ref%za(1:8,1:4) = conjg(transpose(A%za))
+        ref%za(1:8,5:8) = conjg(transpose(A%za))*cmplx(0,1,8)
+        ref%za          = ref%za + C%za
+
+        nrows_loc = nmatp
+        ncols_loc = nmatp
+
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,ngp)
+
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      end if
+
+    end subroutine testHermitianMatrixMatrix1Proc_AxBpC_bighamiltonian
+#endif
+
+
 
 
 !------------------------------------------------------------------------------
@@ -1052,6 +1174,7 @@ module modfvsystem_test
     end subroutine testHermitianMatrixMatrix4Proc_AxB_square
 #endif
 
+
 !------------------------------------------------------------------------------
 ! test testHermitianMatrixMatrix4Proc_IxIpC
 ! testing multiplication C=IxI+C   (I=identity) in MPI mode with 4 procs
@@ -1140,7 +1263,7 @@ module modfvsystem_test
 !------------------------------------------------------------------------------
 ! test testHermitianMatrixMatrix4Proc_AxBpC_coldist
 ! testing multiplication C=AxB+C   in MPI mode with 4 procs
-! A and B are row-distributed, C in both dimensions
+! A and B are col-distributed, C in both dimensions
 !------------------------------------------------------------------------------
 #ifdef MPI
     subroutine testHermitianMatrixMatrix4Proc_AxBpC_coldist
@@ -1172,8 +1295,8 @@ module modfvsystem_test
         Call getBlockDistributedLoc(C_global, C%za, MPIglobal)
 
         Call fillComplex(A_global, nrowsf, nmatp)
-        Call newMatrix(A, nrowsf, nmatp, DISTRIBUTE_2D)
-        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
+        Call newMatrix(A, nrowsf, nmatp, DISTRIBUTE_COLS)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal_1D)
 
         ! create matrix 
         !        /  1  0  0  0  i  0  0  0  \
@@ -1181,14 +1304,14 @@ module modfvsystem_test
         !        /  0  0  1  0  0  0  i  0  \
         !        \  0  0  0  1  0  0  0  i /   
         do i=1,nrowsf
-          B_global(i,i)   = dcmplx(1,0)
-          B_global(i,i+4) = dcmplx(0,1)
+          B_global(i,i)   = cmplx(1,0,8)
+          B_global(i,i+4) = cmplx(0,1,8)
         end do
-        Call newMatrix(B, nrowsf, nmatp, DISTRIBUTE_2D)
-        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
+        Call newMatrix(B, nrowsf, nmatp, DISTRIBUTE_COLS)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal_1D)
 
         ref_global(:,1:4) = conjg(transpose(A_global))
-        ref_global(:,5:8) = conjg(transpose(A_global))*dcmplx(0,1)
+        ref_global(:,5:8) = conjg(transpose(A_global))*cmplx(0,1,8)
         ref_global        = ref_global + C_global
         Call newmatrix(ref, nmatp)
         Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
@@ -1205,11 +1328,263 @@ module modfvsystem_test
         Call deletematrix(C)
         Call deletematrix(ref)
         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       end if
 
     end subroutine testHermitianMatrixMatrix4Proc_AxBpC_coldist
 #endif
 
+
+!------------------------------------------------------------------------------
+! test testHermitianMatrixMatrix4Proc_AxBpC_rowdist
+! testing multiplication C=AxB+C   in MPI mode with 4 procs
+! A and B are row-distributed, C in both dimensions
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianMatrixMatrix4Proc_AxBpC_rowdist
+      implicit none
+
+      integer :: n_procs_test, ierror_t
+
+      integer, parameter :: nmatp = 8, nrowsf = 4
+
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      complex(8), dimension(nrowsf,nmatp) :: A_global, B_global
+      complex(8), dimension(nmatp,nmatp)  :: C_global, ref_global
+      integer                             :: nrows_loc, ncols_loc
+      integer                             :: i
+
+      n_procs_test = 4
+      call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
+      call setupProcGrid(4, 1, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize    = 2
+      MPIglobal_1D%blocksize = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+      
+        Call fillHermitian(C_global, nmatp)
+        Call newmatrix(C, nmatp)
+        Call getBlockDistributedLoc(C_global, C%za, MPIglobal)
+
+        Call fillComplex(A_global, nrowsf, nmatp)
+        Call newMatrix(A, nrowsf, nmatp, DISTRIBUTE_ROWS)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal_1D)
+
+        ! create matrix 
+        !        /  1  0  0  0  i  0  0  0  \
+        !        /  0  1  0  0  0  i  0  0  \
+        !        /  0  0  1  0  0  0  i  0  \
+        !        \  0  0  0  1  0  0  0  i /   
+        do i=1,nrowsf
+          B_global(i,i)   = cmplx(1,0,8)
+          B_global(i,i+4) = cmplx(0,1,8)
+        end do
+        Call newMatrix(B, nrowsf, nmatp, DISTRIBUTE_ROWS)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal_1D)
+
+        ref_global(:,1:4) = conjg(transpose(A_global))
+        ref_global(:,5:8) = conjg(transpose(A_global))*cmplx(0,1,8)
+        ref_global        = ref_global + C_global
+        Call newmatrix(ref, nmatp)
+        Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
+
+        nrows_loc = 4
+        ncols_loc = 4
+
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,nmatp)
+
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      end if
+
+    end subroutine testHermitianMatrixMatrix4Proc_AxBpC_rowdist
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHermitianMatrixMatrix4Proc_AxBpC_bighamiltonian
+! testing multiplication C=AxB+C   in MPI mode with 4 procs
+! C is bigger than AxB, so the multiplication should work on a submatrix of C
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianMatrixMatrix4Proc_AxBpC_bighamiltonian
+      implicit none
+
+      integer :: n_procs_test, ierror_t
+
+      integer, parameter :: nmatp = 10, ngp = 8, nrowsf = 4
+
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      complex(8), dimension(nrowsf,ngp)   :: A_global, B_global
+      complex(8), dimension(nmatp,nmatp)  :: C_global, ref_global
+      integer                             :: nrows_loc, ncols_loc
+      integer                             :: i
+
+      n_procs_test = 4
+      call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
+      MPIglobal%blocksize    = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+      
+        ! fill only the submatrix with the hermitian stuff, the rest set to 1
+        C_global = cmplx(1,0,8)
+        Call fillHermitian(C_global, ngp)
+        Call newmatrix(C, nmatp)
+        Call getBlockDistributedLoc(C_global, C%za, MPIglobal)
+
+        Call fillComplex(A_global, nrowsf, ngp)
+        Call newMatrix(A, nrowsf, ngp, DISTRIBUTE_2D)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal)
+
+        ! create matrix 
+        !        /  1  0  0  0  i  0  0  0  \
+        !        /  0  1  0  0  0  i  0  0  \
+        !        /  0  0  1  0  0  0  i  0  \
+        !        \  0  0  0  1  0  0  0  i /   
+        do i=1,nrowsf
+          B_global(i,i)   = cmplx(1,0,8)
+          B_global(i,i+4) = cmplx(0,1,8)
+        end do
+        Call newMatrix(B, nrowsf, ngp, DISTRIBUTE_2D)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal)
+
+        ! the product affects only the submatrix, the rest has to be unchanged
+        ref_global(1:8,1:4) = conjg(transpose(A_global))
+        ref_global(1:8,5:8) = conjg(transpose(A_global))*cmplx(0,1,8)
+        ref_global          = ref_global + C_global
+        Call newmatrix(ref, nmatp)
+        Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
+
+        select case (MPIglobal%rank)
+          case (0)
+            nrows_loc = 6
+            ncols_loc = 6
+          case (1)
+            nrows_loc = 6
+            ncols_loc = 4
+          case (2)
+            nrows_loc = 4
+            ncols_loc = 6
+          case (3)
+            nrows_loc = 4
+            ncols_loc = 4
+        end select
+
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,ngp)
+
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      end if
+
+    end subroutine testHermitianMatrixMatrix4Proc_AxBpC_bighamiltonian
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHermitianMatrixMatrix4Proc_AxBpC_coldist_bighamiltonian
+! testing multiplication C=AxB+C   in MPI mode with 4 procs
+! A and B are col-distributed, C in both dimensions
+! C is bigger than AxB, so the multiplication should work on a submatrix of C
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianMatrixMatrix4Proc_AxBpC_coldist_bighamiltonian
+      implicit none
+
+      integer :: n_procs_test, ierror_t
+
+      integer, parameter :: nmatp = 10, ngp = 8, nrowsf = 4
+
+      Type (HermitianMatrix)              :: C, ref
+      Type (ComplexMatrix)                :: A, B
+      complex(8), dimension(nrowsf,ngp)   :: A_global, B_global
+      complex(8), dimension(nmatp,nmatp)  :: C_global, ref_global
+      integer                             :: nrows_loc, ncols_loc
+      integer                             :: i
+
+      n_procs_test = 4
+      call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
+      call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize    = 2
+      MPIglobal_1D%blocksize = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+      
+        ! fill only the submatrix with the hermitian stuff, the rest set to 1
+        C_global = cmplx(1,0,8)
+        Call fillHermitian(C_global, ngp)
+        Call newmatrix(C, nmatp)
+        Call getBlockDistributedLoc(C_global, C%za, MPIglobal)
+
+        Call fillComplex(A_global, nrowsf, ngp)
+        Call newMatrix(A, nrowsf, ngp, DISTRIBUTE_COLS)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal_1D)
+
+        ! create matrix 
+        !        /  1  0  0  0  i  0  0  0  \
+        !        /  0  1  0  0  0  i  0  0  \
+        !        /  0  0  1  0  0  0  i  0  \
+        !        \  0  0  0  1  0  0  0  i /   
+        do i=1,nrowsf
+          B_global(i,i)   = cmplx(1,0,8)
+          B_global(i,i+4) = cmplx(0,1,8)
+        end do
+        Call newMatrix(B, nrowsf, ngp, DISTRIBUTE_COLS)
+        Call getBlockDistributedLoc(B_global, B%za, MPIglobal_1D)
+
+        ! the product affects only the submatrix, the rest has to be unchanged
+        ref_global(1:8,1:4) = conjg(transpose(A_global))
+        ref_global(1:8,5:8) = conjg(transpose(A_global))*cmplx(0,1,8)
+        ref_global          = ref_global + C_global
+        Call newmatrix(ref, nmatp)
+        Call getBlockDistributedLoc(ref_global, ref%za, MPIglobal)
+
+        select case (MPIglobal%rank)
+          case (0)
+            nrows_loc = 6
+            ncols_loc = 6
+          case (1)
+            nrows_loc = 6
+            ncols_loc = 4
+          case (2)
+            nrows_loc = 4
+            ncols_loc = 6
+          case (3)
+            nrows_loc = 4
+            ncols_loc = 4
+        end select
+
+        Call HermitianMatrixMatrix(C,A,B,nrowsf,nrowsf,ngp)
+
+        Call assert_equals(ref%za, C%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+        Call deletematrix(A)
+        Call deletematrix(B)
+        Call deletematrix(C)
+        Call deletematrix(ref)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      end if
+
+    end subroutine testHermitianMatrixMatrix4Proc_AxBpC_coldist_bighamiltonian
+#endif
 
 
 end module modfvsystem_test
