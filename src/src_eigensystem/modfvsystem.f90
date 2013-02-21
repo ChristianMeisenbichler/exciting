@@ -109,15 +109,15 @@
           self%nrows_loc = NUMROC(self%nrows, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
           self%ncols_loc = self%ncols
           CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-                        MPIglobal_1D%blocksize, MPIglobal_1D%blocksize, 0, 0, &
+                        MPIglobal_1D%blocksize, self%ncols, 0, 0, &
                         MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
 
         case (DISTRIBUTE_COLS) 
           self%nrows_loc = self%nrows
           self%ncols_loc = NUMROC(self%ncols, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-                      self%nrows, MPIglobal_1D%blocksize, 0, 0, &
-                      MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+          CALL DESCINIT(self%desc, self%nrows, self%ncols, &
+                        self%nrows, MPIglobal_1D%blocksize, 0, 0, &
+                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
       end select 
 
 #else

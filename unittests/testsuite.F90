@@ -12,67 +12,15 @@ program testsuite
     CALL init_fruit
 
 #ifdef MPI
-    CALL set_unit_name ('modfvsystem - creating new complex matrix on 1 proc')
-    CALL testNewComplexMatrix1proc
-    CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs')
-    CALL testNewComplexMatrix4proc
-    CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs, distribute rows')
-    CALL testNewComplexMatrix4procDistRows
-    CALL set_unit_name ('modfvsystem - creating new complex matrix on 4 procs, distribute cols')
-    CALL testNewComplexMatrix4procDistCols
+    Call runtestcase(testcaseSystem1Proc, 'modfvsystem - System construction on 1 proc')
+    Call runtestcase(testcaseSystem4Proc, 'modfvsystem - System construction on 4 procs')
 
-    CALL set_unit_name ('modfvsystem - creating new system on 1 proc')
-    CALL testNewSystem1proc
-    CALL set_unit_name ('modfvsystem - creating new system on 4 procs')
-    CALL testNewSystem4proc
-
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxI on 1 proc')
-    CALL testHermitianMatrixMatrix1Proc_AxI
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 1 proc')
-    CALL testHermitianMatrixMatrix1Proc_AxB
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 1 proc, square matrices')
-    CALL testHermitianMatrixMatrix1Proc_AxB_square
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication IxI+C on 1 proc')
-    CALL testHermitianMatrixMatrix1Proc_IxIpC
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C with col distribution and big hamiltonian on 1 proc')
-    CALL testHermitianMatrixMatrix1Proc_AxBpC_bighamiltonian
-
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxI on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_AxI
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_AxB
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB on 4 procs, square matrices')
-    CALL testHermitianMatrixMatrix4Proc_AxB_square
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication IxI+C on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_IxIpC
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C with col distribution on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_AxBpC_coldist
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C with row distribution on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_AxBpC_rowdist
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C with big hamiltonian on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_AxBpC_bighamiltonian
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C with col distribution and big hamiltonian on 4 procs')
-    CALL testHermitianMatrixMatrix4Proc_AxBpC_coldist_bighamiltonian
+    Call runtestcase(testcaseHermitianMatrixMatrix1Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 1 proc')
+    Call runtestcase(testcaseHermitianMatrixMatrix4Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 4 procs')
 #else
-    CALL set_unit_name ('modfvsystem - creating new complex matrix serial')
-    CALL testNewComplexMatrixSerial
-
-    CALL set_unit_name ('modfvsystem - creating new system serial')
-    CALL testNewSystemSerial
-
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxI serial')
-    CALL testHermitianMatrixMatrixSerial_AxI
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB serial')
-    CALL testHermitianMatrixMatrixSerial_AxB
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB serial, square general matrices')
-    CALL testHermitianMatrixMatrixSerial_AxB_square
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication IxI+C serial')
-    CALL testHermitianMatrixMatrixSerial_IxIpC
-    CALL set_unit_name ('modfvsystem - hermitian matrix-matrix-multiplication AxB+C big hamiltonian serial')
-    CALL testHermitianMatrixMatrixSerial_AxBpC_bighamiltonian
-
-    CALL set_unit_name ('modfvsystem - Hamiltonian matrix setup (hmlaan) test')
-    CALL testHmlaanSerial
+    Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
+    Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
+    Call runtestcase(testcaseHmlaanSerial, 'modfvsystem - Hamiltonian matrix setup (hmlaan) serial')
 #endif
 
 #ifdef MPI

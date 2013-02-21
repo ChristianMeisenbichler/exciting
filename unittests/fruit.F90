@@ -48,6 +48,7 @@ module fruit
   character (len = MSG_LENGTH), private, allocatable :: message_array(:)
   character (len = MSG_LENGTH), private, save :: msg = '[unit name not set from set_name]: '
   character (len = MSG_LENGTH), private, save :: case_name  = DEFAULT_CASE_NAME
+  character (len = MSG_LENGTH), private, save :: test_name  = DEFAULT_CASE_NAME
 
   integer, private, save :: successful_case_count = 0
   integer, private, save :: failed_case_count = 0
@@ -68,6 +69,7 @@ module fruit
 
     character (len = MSG_LENGTH), pointer :: message_array(:)
     character (len = MSG_LENGTH) :: case_name !  = DEFAULT_CASE_NAME
+    character (len = MSG_LENGTH) :: test_name !  = DEFAULT_CASE_NAME
 
     integer :: successful_case_count
     integer :: failed_case_count
@@ -96,6 +98,7 @@ module fruit
     addFail, add_fail, &
     set_unit_name, get_unit_name, &
     set_case_name, get_case_name, &
+    set_test_name, &
     failed_assert_action, get_total_count, getTotalCount, &
     get_failed_count, getFailedCount, is_all_successful, isAllSuccessful, &
     run_test_case, runTestCase
@@ -323,6 +326,9 @@ module fruit
   end interface
   interface set_case_name
     module procedure set_case_name_
+  end interface
+  interface set_test_name
+    module procedure set_test_name_
   end interface
 
   interface get_unit_name
@@ -795,6 +801,11 @@ contains
     call failed_mark_
   end subroutine failed_assert_action
 
+  subroutine set_test_name_(value)
+    character(*), intent(in) :: value
+    test_name = strip(value, MSG_LENGTH)
+  end subroutine set_test_name_
+
   subroutine set_case_name_(value)
     character(*), intent(in) :: value
     case_name = strip(value, MSG_LENGTH)
@@ -808,7 +819,7 @@ contains
   subroutine make_error_msg_ (var1, var2, message)
     character(*), intent(in) :: var1, var2
     character(*), intent(in), optional :: message
-    msg = '[' // trim(strip(case_name)) // ']: Expected [' // trim(strip(var1)) &
+    msg = 'Case [' // trim(strip(case_name)) // '] - Test [' // trim(strip(test_name)) // ']: Expected [' // trim(strip(var1)) &
           // '], Got [' // trim(strip(var2)) // ']'
     if (present(message)) then
        msg = trim(msg) // '; User message: [' // message // ']'
@@ -861,6 +872,8 @@ contains
                   testCaseIndex = 1
     stashed_suite%case_name = case_name
                   case_name = DEFAULT_CASE_NAME
+    stashed_suite%test_name = test_name
+                  test_name = DEFAULT_CASE_NAME
 
     stashed_suite%last_passed = last_passed
                   last_passed = .false.
@@ -891,6 +904,7 @@ contains
     testCaseIndex         = stashed_suite%testCaseIndex
 
     case_name          = stashed_suite%case_name
+    test_name          = stashed_suite%test_name
     last_passed        = stashed_suite%last_passed
     case_passed        = stashed_suite%case_passed
     case_time_from     = stashed_suite%case_time_from

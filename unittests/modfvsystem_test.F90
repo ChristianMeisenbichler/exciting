@@ -10,6 +10,114 @@ module modfvsystem_test
 
     contains
 
+    subroutine testcaseSystemSerial
+      Implicit None
+
+      CALL set_test_name ('new complex matrix')
+      CALL testNewComplexMatrixSerial
+
+      CALL set_test_name ('new system')
+      CALL testNewSystemSerial
+
+    end subroutine testcaseSystemSerial
+
+
+#ifdef MPI
+    subroutine testcaseSystem1Proc
+      Implicit None
+
+      CALL set_test_name ('new complex matrix')
+      CALL testNewComplexMatrix1proc
+
+      CALL set_test_name ('new system')
+      CALL testNewSystem1proc
+
+    end subroutine testcaseSystem1Proc
+#endif
+
+
+#ifdef MPI
+    subroutine testcaseSystem4Proc
+      Implicit None
+
+      CALL set_test_name ('new complex matrix')
+      CALL testNewComplexMatrix4proc
+      CALL set_test_name ('new complex matrix, distribute rows')
+      CALL testNewComplexMatrix4procDistRows
+      CALL set_test_name ('new complex matrix, distribute cols')
+      CALL testNewComplexMatrix4procDistCols
+
+      CALL set_test_name ('new system')
+      CALL testNewSystem4proc
+
+    end subroutine testcaseSystem4Proc
+#endif
+
+
+    subroutine testcaseHermitianMatrixMatrixSerial
+      Implicit None
+
+      CALL set_test_name ('AxI')
+      CALL testHermitianMatrixMatrixSerial_AxI
+      CALL set_test_name ('AxB')
+      CALL testHermitianMatrixMatrixSerial_AxB
+      CALL set_test_name ('AxB, square general matrices')
+      CALL testHermitianMatrixMatrixSerial_AxB_square
+      CALL set_test_name ('IxI+C')
+      CALL testHermitianMatrixMatrixSerial_IxIpC
+
+      CALL set_test_name ('AxB+C big hamiltonian')
+      CALL testHermitianMatrixMatrixSerial_AxBpC_bighamiltonian
+
+    end subroutine testcaseHermitianMatrixMatrixSerial
+
+
+#ifdef MPI
+    subroutine testcaseHermitianMatrixMatrix1Proc
+      Implicit None
+
+      CALL set_test_name ('AxI')
+      CALL testHermitianMatrixMatrix1Proc_AxI
+      CALL set_test_name ('AxB')
+      CALL testHermitianMatrixMatrix1Proc_AxB
+      CALL set_test_name ('AxB square matrices')
+      CALL testHermitianMatrixMatrix1Proc_AxB_square
+      CALL set_test_name ('IxI+C')
+      CALL testHermitianMatrixMatrix1Proc_IxIpC
+
+      CALL set_test_name ('AxB+C big hamiltonian')
+      CALL testHermitianMatrixMatrix1Proc_AxBpC_bighamiltonian
+
+    end subroutine testcaseHermitianMatrixMatrix1Proc
+#endif
+
+
+#ifdef MPI
+    subroutine testcaseHermitianMatrixMatrix4Proc
+      Implicit None
+
+      CALL set_test_name ('AxI')
+      CALL testHermitianMatrixMatrix4Proc_AxI
+      CALL set_test_name ('AxB')
+      CALL testHermitianMatrixMatrix4Proc_AxB
+      CALL set_test_name ('AxB, square matrices')
+      CALL testHermitianMatrixMatrix4Proc_AxB_square
+      CALL set_test_name ('IxI+C')
+      CALL testHermitianMatrixMatrix4Proc_IxIpC
+      CALL set_test_name ('AxB+C with col distribution')
+      CALL testHermitianMatrixMatrix4Proc_AxBpC_coldist
+      CALL set_test_name ('AxB+C with row distribution')
+      CALL testHermitianMatrixMatrix4Proc_AxBpC_rowdist
+
+      CALL set_test_name ('AxB+C with big hamiltonian')
+      CALL testHermitianMatrixMatrix4Proc_AxBpC_bighamiltonian
+      CALL set_test_name ('AxB+C with col distribution and big hamiltonian')
+      CALL testHermitianMatrixMatrix4Proc_AxBpC_coldist_bighamiltonian
+
+    end subroutine testcaseHermitianMatrixMatrix4Proc
+#endif
+
+
 
 !------------------------------------------------------------------------------
 ! test testNewComplexMatrixserial
@@ -1359,7 +1467,7 @@ module modfvsystem_test
       call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
       call setupProcGrid(4, 1, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal%blocksize    = 2
-      MPIglobal_1D%blocksize = 2
+      MPIglobal_1D%blocksize = 1
 
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
