@@ -10,7 +10,7 @@
 ! !INTERFACE:
 !
 !
-Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
+Subroutine hmlaan (hamilton, is, ia, ngp, apwalm, ngp_loc)
 ! !USES:
       Use modinput,        Only: input
       Use mod_muffin_tin,  Only: idxlm, lmmaxapw, rmt, nrmt
@@ -19,7 +19,12 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Use mod_atoms,       Only: natmtot, idxas
       Use mod_eigensystem, Only: gntyry, haa
       Use mod_constants,   Only: zzero
-      Use modfvsystem,     Only: HermitianMatrix, HermitianMatrixMatrix
+      Use modfvsystem,     Only: HermitianMatrix, ComplexMatrix, &
+                                 newmatrix, deletematrix, &
+                                 HermitianMatrixMatrix
+#ifdef MPI
+     Use modmpi,           Only: DISTRIBUTE_COLS
+#endif
 !
 ! !INPUT/OUTPUT PARAMETERS:
 !   is     : species number (in,integer)
@@ -42,24 +47,32 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Integer, Intent (In) :: is
       Integer, Intent (In) :: ia
       Integer, Intent (In) :: ngp
-      Complex (8), Intent (In) :: apwalm (ngkmax, apwordmax, lmmaxapw, &
+      Complex (8), Intent (In) :: apwalm (ngp_loc, apwordmax, lmmaxapw, &
      & natmtot)   !SPLIT first dimension over procs
-!      Complex (8) :: x (ngp)
+!       Complex (8), Dimension(:, :, :, :), Intent(In) :: apwalm 
+      Integer, Intent (In) :: ngp_loc
 !
 ! local variables
+!      Integer :: ngp_loc
       Integer :: ias, io1, io2
       Integer :: l1, l2, l3, m1, m2, m3, lm1, lm2, lm3, naa
       Real (8) :: t1
-      Complex (8) zt1, zsum
-      complex(8),allocatable::zm1(:,:),zm2(:,:)
+      Complex(8) :: zt1, zsum
+      Type(ComplexMatrix) :: zm1, zm2
 ! automatic arrays
-      Complex (8) zv (ngp) !SPLIT over procs
+      Complex(8), Dimension(:), Allocatable :: zv !SPLIT over procs
 
 ! external functions
-      allocate(zm1(lmmaxapw*apwordmax,ngp))
-      allocate(zm2(lmmaxapw*apwordmax,ngp))
-      zm1=zzero
-      zm2=zzero
+
+#ifdef MPI
+      Call newmatrix(zm1, lmmaxapw*apwordmax,ngp, DISTRIBUTE_COLS)
+      Call newmatrix(zm2, lmmaxapw*apwordmax,ngp, DISTRIBUTE_COLS)
+#else
+      Call newmatrix(zm1, lmmaxapw*apwordmax,ngp)
+      Call newmatrix(zm2, lmmaxapw*apwordmax,ngp)
+#endif
+!      ngp_loc = zm1%ncols_loc
+      allocate(zv(ngp_loc))
       naa=0
       ias = idxas (ia, is)
       Do l1 = 0, input%groundstate%lmaxmat
@@ -94,7 +107,7 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                            If (lm1 .Eq. lm3) zsum = zsum * 0.5d0
                            If (Abs(dble(zsum))+Abs(aimag(zsum)) .Gt. &
                           & 1.d-20) Then
-                              Call zaxpy (ngp, zsum, apwalm(1, io2, &
+                              Call zaxpy (ngp_loc, zsum, apwalm(1, io2, &
                              & lm3, ias), 1, zv, 1)
                            End If
                         End Do
@@ -103,14 +116,16 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                End Do
 
                naa=naa+1
-               zm1(naa,:)=apwalm(1:ngp, io1, lm1, ias)
-               zm2(naa,:)=zv(:)
+               zm1%za(naa,:) = apwalm(1:ngp_loc, io1, lm1, ias)
+               zm2%za(naa,:) = zv(:)
 
             End Do
          End Do
       End Do
-! write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
-! write (*,*) 'naa', naa
+      
+      deallocate(zv)
+!  write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
+!  write (*,*) 'naa', naa
 ! write (*,*) 'ngp', ngp
 !       stop
       call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
@@ -118,7 +133,7 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
 
 ! kinetic surface contribution
       t1 = 0.25d0 * rmt (is) ** 2
-      zm1=zzero
+      zm1%za=zzero
       naa=0
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
@@ -128,17 +143,19 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
                   zt1 = t1 * apwfr (nrmt(is), 1, io1, l1, ias) * apwdfr &
                  & (io2, l1, ias)
                   naa=naa+1
-                  zm1(naa,:) = apwalm(1:ngp, io1, lm1, ias)
-                  zm2(naa,:) = zt1*apwalm(1:ngp, io1, lm1, ias)
-!                  x          = apwalm(1:ngp, io1, lm1, ias)
+                  zm1%za(naa,:) = apwalm(1:ngp_loc, io1, lm1, ias)
+                  zm2%za(naa,:) = zt1*apwalm(1:ngp_loc, io1, lm1, ias)
                End Do
             End Do
          End Do
       End Do
+!  write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
+!  write (*,*) 'naa', naa
       call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxapw,naa,ngp)
       call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxapw,naa,ngp)
 
-      deallocate(zm1,zm2)
+      Call deletematrix(zm1)
+      Call deletematrix(zm2)
       Return
 End Subroutine
 !EOC

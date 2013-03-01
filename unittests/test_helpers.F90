@@ -14,9 +14,10 @@ module test_helpers
     subroutine setupProcGrid(nprocrows_sub, nproccols_sub, comm_sub, context_sub, ierror)
       implicit none
 
-      integer, intent(in) :: nprocrows_sub, nproccols_sub
-      integer, intent(out)   :: comm_sub, context_sub, ierror
-      integer :: nprocs, i, world_group, procs_group
+      integer, intent(in)  :: nprocrows_sub, nproccols_sub
+      integer, intent(out) :: comm_sub, context_sub, ierror
+
+      integer              :: nprocs, i, world_group, procs_group
 
       nprocs = nprocrows_sub*nproccols_sub
       Call MPI_COMM_GROUP(MPI_COMM_WORLD, world_group, ierror)
@@ -50,6 +51,7 @@ module test_helpers
       Type(MPIinfo), intent(inout) :: MPIdata
 
       Call BLACS_GRIDINFO(MPIdata%context, MPIdata%nprocrows, MPIdata%nproccols, MPIdata%myprocrow, MPIdata%myproccol)
+      MPIdata%procs = MPIdata%nprocrows * MPIdata%nproccols
 
     end subroutine getBlacsGridInfo
 #endif
@@ -210,6 +212,55 @@ module test_helpers
     end subroutine getLocalIndices
 #endif
 
+#ifdef MPI
+    subroutine printLocalMatrix(matrix, n_rows, name, MPIdata)
+      implicit none
 
+      ! arguments
+      real(8), dimension(:,:), Intent(in)  :: matrix
+      integer,                 Intent(in)  :: n_rows
+      Character(len=*),        Intent(in)  :: name
+      Type(MPIinfo),           Intent(in)  :: MPIdata
+
+      ! local variables
+      Integer :: i
+      Complex :: dummyv
+
+      Do i=1,50000*MPIdata%rank
+        dummyv=dummyv*3.33D0
+      End Do
+
+      write (*,*) ' '
+      write (*,*) name
+      write (*,*) 'local matrix at proc ', MPIdata%rank
+      Do i=1,n_rows
+        write (*,"(100f8.1)") matrix(i,:)
+      End Do
+
+    end subroutine printLocalMatrix
+#endif
+
+#ifdef MPI
+    subroutine printGlobalMatrix(matrix, n_rows, name, MPIdata)
+      implicit none
+
+      ! arguments
+      real(8), dimension(:,:), Intent(in)  :: matrix
+      integer,                 Intent(in)  :: n_rows
+      Character(len=*),        Intent(in)  :: name
+      Type(MPIinfo),           Intent(in)  :: MPIdata
+
+      ! local variables
+      Integer :: i
+
+      If (MPIdata%rank == 0) then
+        write (*,*) 'global matrix', name
+        Do i=1,n_rows
+          write (*,"(100f8.1)") matrix(i,:)
+        End Do
+      End If
+
+    end subroutine printGlobalMatrix
+#endif
 
 end module test_helpers

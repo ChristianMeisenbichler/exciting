@@ -59,7 +59,7 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
       Do is = 1, nspecies
          Do ia = 1, natoms (is)
              Call timesec (ts0)
-            Call hmlaan (system%hamilton, is, ia, ngp, apwalm)
+            Call hmlaan (system%hamilton, is, ia, ngp, apwalm, ngp)
              Call timesec (ts1)
              time_hmlaan=ts1-ts0+time_hmlaan
              Call timesec (ts0)

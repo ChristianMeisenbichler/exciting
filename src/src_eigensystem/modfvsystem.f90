@@ -275,7 +275,7 @@
 ! !DESCRIPTION:
 !   Performs the matrix-matrix multiplication
 !   self = zm1**H * zm2 + za
-!   matrices have dimensions
+!   global matrices have dimensions
 !     zm1(naa,ngp)
 !     zm2(naa,ngp)
 !     self%za(ngp,ngp)
@@ -299,27 +299,32 @@
       complex(8), dimension(:,:), pointer :: A, B
       integer, dimension(:), pointer      :: descA, descB
       Type (ComplexMatrix)                :: tmp1, tmp2
-      logical                             :: redistribute
+      logical                             :: redistributeA, redistributeB
 
-      redistribute = (MPIglobal%procs .gt. 1) .and. (zm1%distribute .ne. DISTRIBUTE_2D) 
+      ! self is given in 2D block cyclic distribution, while zm1 and zm2 are only 1D distributed. 
+      ! PBLAS can't deal with differing processor configurations (contexts)
+      ! so the factos also get 2D distributed
+      ! (compared to 1D distribution of self: better performance of 2D MM-multiplication, usually less memory overhead, no back-distribution)
+      redistributeA = (zm1%distribute .ne. DISTRIBUTE_2D)
+      redistributeB = (zm2%distribute .ne. DISTRIBUTE_2D)
 
-      if (redistribute) then 
-        ! self is given in 2D block cyclic distribution, while zm1 and zm2 are only 1D distributed. 
-        ! PBLAS can't deal with differing processor configurations
-        ! so the factos also get 2D distributed
-        ! (compared to 1D distribution of self: better performance of 2D MM-multiplication, usually less memory overhead, no back-distribution)
+      if (redistributeA) then 
         Call newmatrix(tmp1, zm1%nrows, zm1%ncols, DISTRIBUTE_2D)
-        Call newmatrix(tmp2, zm2%nrows, zm2%ncols, DISTRIBUTE_2D)
         Call PZGEMR2D(zm1%nrows, zm1%ncols, zm1%za, 1, 1, zm1%desc, tmp1%za, 1, 1, tmp1%desc, MPIglobal%context)
-        Call PZGEMR2D(zm2%nrows, zm2%ncols, zm2%za, 1, 1, zm2%desc, tmp2%za, 1, 1, tmp2%desc, MPIglobal%context)
         A => tmp1%za
-        B => tmp2%za
         descA => tmp1%desc
-        descB => tmp2%desc
       else 
         A => zm1%za
-        B => zm2%za
         descA => zm1%desc
+      end if
+
+      if (redistributeB) then 
+        Call newmatrix(tmp2, zm2%nrows, zm2%ncols, DISTRIBUTE_2D)
+        Call PZGEMR2D(zm2%nrows, zm2%ncols, zm2%za, 1, 1, zm2%desc, tmp2%za, 1, 1, tmp2%desc, MPIglobal%context)
+        B => tmp2%za
+        descB => tmp2%desc
+      else 
+        B => zm2%za
         descB => zm2%desc
       end if
 
@@ -344,8 +349,10 @@
                    self%desc &      ! DESCC
                    )
 
-      if (redistribute) then 
+      if (redistributeA) then 
         Call deletematrix(tmp1)
+      end if
+      if (redistributeB) then 
         Call deletematrix(tmp2)
       end if
 #else
