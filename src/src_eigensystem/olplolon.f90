@@ -22,21 +22,20 @@ Subroutine olplolon (overlap, is, ia, ngp)
       Integer :: ias, ilo1, ilo2, l, m, lm, i, j, k
       ias = idxas (ia, is)
       Do ilo1 = 1, nlorb (is)
-         l = lorbl (ilo1, is)
-         Do ilo2 = 1, nlorb (is)
-            If (lorbl(ilo2, is) .Eq. l) Then
-               Do m = - l, l
-                  lm = idxlm (l, m)
-                  i = ngp + idxlo (lm, ilo1, ias)
-                  j = ngp + idxlo (lm, ilo2, ias)
-                  If (i .Le. j) Then
-                     zt = dcmplx (ololo(ilo1, ilo2, ias), 0.0)
-                     Call Hermitianmatrix_indexedupdate (overlap, j, i, &
-                    & zt)
-                  End If
-               End Do
-            End If
-         End Do
+        l = lorbl (ilo1, is)
+        Do ilo2 = 1, nlorb (is)
+          If (lorbl(ilo2, is) .Eq. l) Then
+            Do m = - l, l
+              lm = idxlm (l, m)
+              i = ngp + idxlo (lm, ilo1, ias)
+              j = ngp + idxlo (lm, ilo2, ias)
+              If (i .Le. j) Then
+                zt = dcmplx (ololo(ilo1, ilo2, ias), 0.0)
+                Call Hermitianmatrix_indexedupdate (overlap, j, i, zt)
+              End If
+            End Do
+          End If
+        End Do
       End Do
       Return
 End Subroutine

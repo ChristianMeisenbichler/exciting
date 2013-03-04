@@ -24,26 +24,22 @@ Subroutine olpalon (overlap, is, ia, ngp, apwalm)
       Complex (8) zsum
       ias = idxas (ia, is)
       Do ilo = 1, nlorb (is)
-         l = lorbl (ilo, is)
-         Do m = - l, l
-            lm = idxlm (l, m)
-            j = ngp + idxlo (lm, ilo, ias)
+        l = lorbl (ilo, is)
+        Do m = - l, l
+          lm = idxlm (l, m)
+          j = ngp + idxlo (lm, ilo, ias)
 !
 ! calculate the matrix elements
-      !k=((j-1)*j)/2
-            Do i = 1, ngp
-       ! k=k+1
-               zsum = 0.d0
-               Do io = 1, apword (l, is)
-                  zsum = zsum + conjg (apwalm(i, io, lm, ias)) * oalo &
-                 & (io, ilo, ias)
-               End Do
-        !o(k)=o(k)+zsum
-!
-               Call Hermitianmatrix_indexedupdate (overlap, j, i, zsum)
+          Do i = 1, ngp
+            zsum = 0.d0
+            Do io = 1, apword (l, is)
+              zsum = zsum + conjg (apwalm(i, io, lm, ias)) * oalo &
+              & (io, ilo, ias)
             End Do
-!
-         End Do
+            Call Hermitianmatrix_indexedupdate (overlap, j, i, zsum)
+          End Do
+        End Do
       End Do
+
       Return
 End Subroutine

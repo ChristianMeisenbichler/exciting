@@ -25,11 +25,11 @@ implicit none
 
       Type MPIinfo
 
-        Integer :: rank, myprocrow, myproccol
-        Integer :: procs, nprocrows, nproccols
-        Integer :: blocksize = 64
-        Integer :: ierr
-        Integer :: comm, context
+         Integer :: rank, myprocrow, myproccol
+         Integer :: procs, nprocrows, nproccols
+         Integer :: blocksize = 64
+         Integer :: ierr
+         Integer :: comm, context
 
       End Type MPIinfo
 
@@ -41,8 +41,6 @@ implicit none
       Type(MPIinfo) :: MPIglobal
       Type(MPIinfo) :: MPIglobal_1D
 
-!
-!!$  character(256)::filename
 Contains
       Subroutine initMPI
 #ifdef MPI
@@ -60,12 +58,19 @@ Contains
          splittfile = .True.
 
 !TODO: decent processor grid initialization
+         ! now just init 1x1 procgrid
          MPIglobal%nprocrows = 1
          MPIglobal%nproccols = 1
+         Call BLACS_GET(0, 0, MPIglobal%context)
+         Call BLACS_GRIDINIT(MPIglobal%context,'r', MPIglobal%nprocrows, MPIglobal%nproccols) 
+         Call BLACS_GRIDINFO(MPIglobal%context, MPIglobal%nprocrows, MPIglobal%nproccols, MPIglobal%myprocrow, MPIglobal%myproccol)
+
          MPIglobal_1D%nprocrows = 1
          MPIglobal_1D%nproccols = 1
-#endif
-#ifndef MPI
+         Call BLACS_GET(0, 0, MPIglobal_1D%context)
+         Call BLACS_GRIDINIT(MPIglobal_1D%context,'r', MPIglobal_1D%nprocrows, MPIglobal_1D%nproccols) 
+         Call BLACS_GRIDINFO(MPIglobal_1D%context, MPIglobal_1D%nprocrows, MPIglobal_1D%nproccols, MPIglobal_1D%myprocrow, MPIglobal_1D%myproccol)
+#else
          MPIglobal%comm  = 0
          MPIglobal%procs = 1
          MPIglobal%rank  = 0
@@ -75,7 +80,9 @@ Contains
 !
       Subroutine finitMPI
 #ifdef MPI
-         Call MPI_Finalize (MPIglobal%ierr)
+         Call BLACS_GRIDEXIT(MPIglobal%context)
+         Call BLACS_GRIDEXIT(MPIglobal_1D%context)
+         Call MPI_Finalize(MPIglobal%ierr)
 #endif
       End Subroutine finitMPI
 !

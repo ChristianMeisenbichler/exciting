@@ -28,21 +28,21 @@ Subroutine olpaan (overlap, is, ia, ngp, apwalm)
 !      External zdotu
       ias = idxas (ia, is)
       naa=0
-     allocate(zm1(apwordmax*lmmaxapw,ngp))
-	 zm1=zzero
-	 naa=0
+      allocate(zm1(apwordmax*lmmaxapw,ngp))
+      zm1=zzero
+      naa=0
       Do l = 0, input%groundstate%lmaxmat
-         Do m = - l, l
-            lm = idxlm (l, m)
-            Do io = 1, apword (l, is)
-              naa=naa+1
-              zm1(naa,:)=apwalm(1:ngp, io, lm, ias)
-            End Do
-         End Do
+        Do m = - l, l
+          lm = idxlm (l, m)
+          Do io = 1, apword (l, is)
+            naa=naa+1
+            zm1(naa,:)=apwalm(1:ngp, io, lm, ias)
+          End Do
+        End Do
       End Do
       call HermitianMatrixMatrix(overlap,zm1,zm1,apwordmax*lmmaxapw,naa,ngp)
 
-     deallocate(zm1)
+      deallocate(zm1)
 
-	 Return
+      Return
 End Subroutine

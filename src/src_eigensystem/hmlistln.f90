@@ -56,20 +56,16 @@ Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
 !#$omp shared(h) private(iv,ig,t1,i,j)
 !#$omp do
       Do j = 1, ngp
-    !k=((j-1)*j)/2
-         Do i = 1, j
-      !k=k+1
-            iv (:) = ivg (:, igpig(i)) - ivg (:, igpig(j))
-            ig = ivgig (iv(1), iv(2), iv(3))
-            If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
-               t1 = 0.5d0 * dot_product (vgpc(:, i), vgpc(:, j))
-       !h(k)=h(k)+veffig(ig)+t1*cfunig(ig)
-               zt = veffig (ig) + t1 * cfunig (ig)
-         !  h(k)=h(k)+zt
-!
-               Call Hermitianmatrix_indexedupdate (hamilton, j, i, zt)
-            End If
-         End Do
+        Do i = 1, j
+          iv (:) = ivg (:, igpig(i)) - ivg (:, igpig(j))
+          ig = ivgig (iv(1), iv(2), iv(3))
+          If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
+            t1 = 0.5d0 * dot_product (vgpc(:, i), vgpc(:, j))
+            zt = veffig (ig) + t1 * cfunig (ig)
+
+            Call Hermitianmatrix_indexedupdate (hamilton, j, i, zt)
+          End If
+        End Do
       End Do
 !#$omp end do
 !#$omp end parallel
