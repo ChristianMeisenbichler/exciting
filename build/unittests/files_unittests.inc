@@ -1,3 +1,9 @@
+hmlalon_test.o: $(testsrc)/hmlalon_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/hmlalon_test.F90
+
+olpaan_test.o: $(testsrc)/olpaan_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/olpaan_test.F90
+
 hmlaan_test.o: $(testsrc)/hmlaan_test.F90 test_helpers.o fruit.o
 	$(cmd) $(opts) $(includes) -c $(testsrc)/hmlaan_test.F90
 

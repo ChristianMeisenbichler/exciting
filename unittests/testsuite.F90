@@ -3,6 +3,8 @@ program testsuite
     use fruit
     use modfvsystem_test
     use modHmlaan_test
+    use modOlpaan_test
+    use modHmlalon_test
 #ifdef MPI
     use modmpi
 
@@ -20,10 +22,18 @@ program testsuite
 
     Call runtestcase(testcaseHmlaan1Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 1 proc')
     Call runtestcase(testcaseHmlaan4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 4 pros')
+
+    Call runtestcase(testcaseOlpaan1Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 1 proc')
+    Call runtestcase(testcaseOlpaan4Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 4 pros')
+
+    Call runtestcase(testcaseHmlalon1Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 1 proc')
+    Call runtestcase(testcaseHmlalon4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 4 pros')
 #else
     Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
     Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
     Call runtestcase(testcaseHmlaanSerial, 'modfvsystem - Hamiltonian matrix setup (hmlaan) serial')
+    Call runtestcase(testcaseOlpaanSerial, 'modfvsystem - Overlap matrix setup (olpaan) serial')
+    Call runtestcase(testcaseHmlalonSerial, 'modfvsystem - Hamiltonian matrix setup (hmlalon) serial')
 #endif
 
 #ifdef MPI
