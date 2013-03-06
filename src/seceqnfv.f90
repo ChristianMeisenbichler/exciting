@@ -12,7 +12,7 @@
 !
 Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   ! !USES:
-      Use modfvsystem,     Only: evsystem
+      Use modfvsystem,     Only: evsystem, newsystem
       Use mod_muffin_tin,  Only: lmmaxapw
       Use mod_APW_LO,      Only: apwordmax
       Use mod_Gkvector,    Only: ngkmax
@@ -59,7 +59,7 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   !----------------------------------------!
 !
 
-!distribute the relevant part of apwalm (only first ngp lines)
+!distribute the relevant part of apwalm 
 
 
       Call newsystem (system,   nmatp)

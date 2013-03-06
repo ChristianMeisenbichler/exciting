@@ -9,6 +9,7 @@ program testsuite
     use modmpi
 
     call initMPI
+!    Call mpi_init (MPIglobal%ierr)
 #endif
    
     CALL init_fruit
@@ -38,7 +39,8 @@ program testsuite
 
 #ifdef MPI
     CALL fruit_summary_MPI(MPI_COMM_WORLD)
-    call finitMPI
+    Call MPI_Finalize(MPIglobal%ierr)
+!    call finitMPI
 #else
     CALL fruit_summary
 #endif

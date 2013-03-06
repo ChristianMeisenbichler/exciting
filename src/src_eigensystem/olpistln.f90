@@ -41,23 +41,19 @@ Subroutine olpistln (overlap, ngp, igpig)
 !
 ! local variables
       Integer :: i, j, k, iv (3), ig
-      Complex (8) zt1
 !
 ! calculate the matrix elements
 !$omp parallel default(shared) &
 !$omp  private(iv,ig,i,j)
 !$omp do
       Do j = 1, ngp
-    !k=((j-1)*j)/2
-         Do i = 1, j
-      !k=k+1
-            iv (:) = ivg (:, igpig(i)) - ivg (:, igpig(j))
-            ig = ivgig (iv(1), iv(2), iv(3))
-            If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
-               Call Hermitianmatrix_indexedupdate (overlap, j, i, &
-              & cfunig(ig))
-            End If
-         End Do
+        Do i = 1, j
+          iv (:) = ivg (:, igpig(i)) - ivg (:, igpig(j))
+          ig = ivgig (iv(1), iv(2), iv(3))
+          If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
+            Call Hermitianmatrix_indexedupdate (overlap, j, i, cfunig(ig))
+          End If
+        End Do
       End Do
 !$omp end do
 !$omp end parallel
