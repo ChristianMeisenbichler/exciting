@@ -6,7 +6,7 @@
 ! See the file COPYING for license details.
 !
 !BOP
-! !ROUTINE: hmlaa
+! !ROUTINE: hmlaan
 ! !INTERFACE:
 !
 !
@@ -27,16 +27,21 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm, ngp_loc)
 #endif
 !
 ! !INPUT/OUTPUT PARAMETERS:
-!   is     : species number (in,integer)
-!   ia     : atom number (in,integer)
-!   ngp    : number of G+p-vectors (in,integer)
-!   apwalm : APW matching coefficients
-!            (in,complex(ngkmax,apwordmax,lmmaxapw,natmtot))
+!   hamilton : Hamiltonian to update (inout,HermitianMatrix)
+!   is       : species number (in,integer)
+!   ia       : atom number (in,integer)
+!   ngp      : number of G+p-vectors (in,integer)
+!   apwalm   : APW matching coefficients
+!              (in,complex(ngkmax,apwordmax,lmmaxapw,natmtot))
+!              when using MPI it is distributed along the first dimension
+!   ngp_loc  : size (1st dimension) of local part of apwalm
 !
 ! !DESCRIPTION:
 !   Calculates the APW-APW contribution to the Hamiltonian matrix.
+!   When MPI is used the Hamiltonian is expected to have distributed columns
 !
 ! !REVISION HISTORY:
+!   Parallelized and with new matrix types February 2013 (G. Huhs - BSC)
 !   Created October 2002 (JKD)
 !EOP
 !BOC
@@ -64,11 +69,11 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm, ngp_loc)
 ! external functions
 
 #ifdef MPI
-      Call newmatrix(zm1, lmmaxmat*apwordmax,ngp, DISTRIBUTE_COLS)
-      Call newmatrix(zm2, lmmaxmat*apwordmax,ngp, DISTRIBUTE_COLS)
+      Call newmatrix(zm1, lmmaxmat*apwordmax, ngp, DISTRIBUTE_COLS)
+      Call newmatrix(zm2, lmmaxmat*apwordmax, ngp, DISTRIBUTE_COLS)
 #else
-      Call newmatrix(zm1, lmmaxmat*apwordmax,ngp)
-      Call newmatrix(zm2, lmmaxmat*apwordmax,ngp)
+      Call newmatrix(zm1, lmmaxmat*apwordmax, ngp)
+      Call newmatrix(zm2, lmmaxmat*apwordmax, ngp)
 #endif
       allocate(zv(ngp_loc))
       naa=0
