@@ -3,7 +3,7 @@ include ../../make.inc
 testsrc = ../../../unittests
 excsrc  = ../../../src
 includes = -I. -I../../../src/FoX/dom/ -I../../../src/FoX/fsys/ 
-objects = modfvsystem_test.o hmlaan_test.o olpaan_test.o hmlalon_test.o\
+objects = modfvsystem_test.o hmlaan_test.o olpaan_test.o hmlalon_test.o hmllolon_test.o hmlistln_test.o\
           fruit_util.o fruit.o test_helpers.o testsuite.o
 cmd = $(MPIF90)
 opts = $(F90_OPTS_UT_MPI)

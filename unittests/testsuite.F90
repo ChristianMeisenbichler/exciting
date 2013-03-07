@@ -5,6 +5,8 @@ program testsuite
     use modHmlaan_test
     use modOlpaan_test
     use modHmlalon_test
+    use modHmllolon_test
+    use modHmlistln_test
 #ifdef MPI
     use modmpi
 
@@ -21,20 +23,28 @@ program testsuite
     Call runtestcase(testcaseHermitianMatrixMatrix1Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 1 proc')
     Call runtestcase(testcaseHermitianMatrixMatrix4Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 4 procs')
 
-    Call runtestcase(testcaseHmlaan1Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 1 proc')
-    Call runtestcase(testcaseHmlaan4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 4 pros')
+    Call runtestcase(testcaseHmlaan1Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) on 1 proc')
+    Call runtestcase(testcaseHmlaan4Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) on 4 procs')
 
-    Call runtestcase(testcaseOlpaan1Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 1 proc')
-    Call runtestcase(testcaseOlpaan4Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 4 pros')
+    Call runtestcase(testcaseOlpaan1Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / olpaan) on 1 proc')
+    Call runtestcase(testcaseOlpaan4Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / olpaan) on 4 procs')
 
-    Call runtestcase(testcaseHmlalon1Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 1 proc')
-    Call runtestcase(testcaseHmlalon4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 4 pros')
+    Call runtestcase(testcaseHmlalon1Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-LO part / hmlalon) on 1 proc')
+    Call runtestcase(testcaseHmlalon4Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-LO part / hmlalon) on 4 procs')
+
+    Call runtestcase(testcaseHmllolon1Proc, 'modfvsystem - Hamiltonian matrix setup (the LO-LO part / hmllolon) on 1 proc')
+    Call runtestcase(testcaseHmllolon4Proc, 'modfvsystem - Hamiltonian matrix setup (the LO-LO part / hmllolon) on 4 procs')
+
+    Call runtestcase(testcaseHmlistln1Proc, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / hmlistln) on 1 proc')
+    Call runtestcase(testcaseHmlistln4Proc, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / hmlistln) on 4 procs')
 #else
     Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
     Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
-    Call runtestcase(testcaseHmlaanSerial, 'modfvsystem - Hamiltonian matrix setup (hmlaan) serial')
-    Call runtestcase(testcaseOlpaanSerial, 'modfvsystem - Overlap matrix setup (olpaan) serial')
-    Call runtestcase(testcaseHmlalonSerial, 'modfvsystem - Hamiltonian matrix setup (hmlalon) serial')
+    Call runtestcase(testcaseHmlaanSerial, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) serial')
+    Call runtestcase(testcaseOlpaanSerial, 'modfvsystem - Overlap matrix setup (the APW-APW part / olpaan) serial')
+    Call runtestcase(testcaseHmlalonSerial, 'modfvsystem - Hamiltonian matrix setup (the APW-LO part / hmlalon) serial')
+    Call runtestcase(testcaseHmllolonSerial, 'modfvsystem - Hamiltonian matrix setup (the LO-LO part / hmllolon) serial')
+    Call runtestcase(testcaseHmlistlnSerial, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / hmlistln) serial')
 #endif
 
 #ifdef MPI

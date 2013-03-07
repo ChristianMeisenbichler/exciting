@@ -96,8 +96,8 @@ module modHmlalon_test
      & lmmaxvr, natmtot))
       
       lolmmax=25
-      nlorb(1)=3
-      lorbl(1:3,1)=(/0,1,2/)
+      nlorb(1)=4
+      lorbl(1:4,1)=(/1,0,1,2/)
       If (allocated(idxlo)) Deallocate (idxlo)
       Allocate (idxlo(lolmmax, nlomax, natmtot)) 
 ! copied from genidxlo
@@ -119,7 +119,7 @@ module modHmlalon_test
 
       Deallocate(hloa)
       Deallocate(gntyry)
-      Deallocate(idxlm,input%groundstate)
+      Deallocate(idxlm,idxlo,input%groundstate)
 
     End Subroutine freeGlobals
 
@@ -160,7 +160,7 @@ module modHmlalon_test
 
 
 !------------------------------------------------------------------------------
-! test testHmlaan_SpherSymmAsymGnt_Serial
+! test testHmlalon_SpherSymmAsymGnt_Serial
 !------------------------------------------------------------------------------
 ! 1st test, serial
 ! The purpose is to test whether gaunt coefficients are handled properly.
@@ -246,7 +246,7 @@ module modHmlalon_test
     End Subroutine testHmlalon_Gnt_Serial
 
 !------------------------------------------------------------------------------
-! test testHmlaan_SphSymLO_Serial
+! test testHmlalon_SphSymLO_Serial
 !------------------------------------------------------------------------------
 ! 2nd test, serial
 ! The purpose is to test whether whether hloa is handled properly.
@@ -331,7 +331,7 @@ module modHmlalon_test
 
 
 !------------------------------------------------------------------------------
-! test testHmlaan_SphSymAPW_Serial
+! test testHmlalon_SphSymAPW_Serial
 !------------------------------------------------------------------------------
 ! 3rd test, serial
 ! The purpose is to test whether whether apwalm is handled properly.
@@ -347,12 +347,12 @@ module modHmlalon_test
       Implicit None
 ! Size of the tests
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
-      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
+      parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
 
 
 
       Integer :: l1,m1,lm1,l3,g1,g2
-      integer :: ilo,last
+      integer :: ilo,last,i,l,m,lm
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
@@ -361,6 +361,19 @@ module modHmlalon_test
 
 ! ! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+      nlorb(1)=4
+      lorbl(1:4,1)=(/0,1,2,3/)
+! copied from genidxlo
+      i=0
+      Do ilo = 1, nlorb (1)
+        l = lorbl (ilo, 1)
+          Do m = - l, l
+            i = i + 1
+            lm = idxlm (l, m)
+            idxlo (lm, ilo, 1) = i
+          End Do
+      End Do
 
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
@@ -416,7 +429,7 @@ module modHmlalon_test
 
 
 !------------------------------------------------------------------------------
-! test testHmlaan_SphSymAsymAPW_Serial
+! test testHmlalon_SphSymAsymAPW_Serial
 !------------------------------------------------------------------------------
 ! 4th test, serial
 ! The purpose is to test whether whether apwalm is handled properly.
@@ -497,7 +510,7 @@ module modHmlalon_test
     End Subroutine testHmlalon_SphSymAsymAPW_Serial
 
 !------------------------------------------------------------------------------
-! test testHmlaan_SphSymAsymLO_Serial
+! test testHmlalon_SphSymAsymLO_Serial
 !------------------------------------------------------------------------------
 ! 5th test, serial
 ! The purpose is to test whether whether hloa is handled properly.
