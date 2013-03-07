@@ -44,9 +44,9 @@
        Integer, Pointer :: ipiv (:)
        Complex (8), Pointer :: za (:,:)
 #ifdef MPI
-       Integer, Dimension(9) :: desc
+       Integer, Dimension(:), Pointer :: desc
+       Integer :: distribute
 #endif
-
     End Type HermitianMatrix
     !
     Type evsystem
@@ -82,9 +82,9 @@
       Integer, Intent (In) :: nrows, ncols
 #ifdef MPI
       Integer, Intent (In), Optional :: distribute
-#endif
 
       Integer, External   :: NUMROC
+#endif
 
       self%nrows = nrows
       self%ncols = ncols
@@ -130,20 +130,52 @@
     End Subroutine newComplexMatrix
     !
     !
+#ifdef MPI
+    Subroutine newHermitianMatrix (self, size, distribute)
+#else
     Subroutine newHermitianMatrix (self,  size)
+#endif
       Implicit None
       type (HermitianMatrix), Intent (Inout) :: self
       Integer, Intent (In) :: size
+#ifdef MPI
+      Integer, Intent (In), Optional :: distribute
 
       Integer, External   :: NUMROC
+#endif
 
       self%size = size
 #ifdef MPI
-      self%nrows_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-      self%ncols_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-      CALL DESCINIT(self%desc, self%size, self%size, &
-                    MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
-                    MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
+      if (present(distribute)) then
+        self%distribute = distribute
+      else
+        self%distribute = DISTRIBUTE_2D
+      end if
+
+      allocate(self%desc(9))
+
+      select case (self%distribute)
+        case (DISTRIBUTE_2D) 
+          self%nrows_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+          self%ncols_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+          CALL DESCINIT(self%desc, self%size, self%size, &
+                        MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
+                        MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
+  
+        case (DISTRIBUTE_ROWS)
+          self%nrows_loc = NUMROC(self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+          self%ncols_loc = self%size
+          CALL DESCINIT(self%desc, self%size, self%size, &
+                        MPIglobal_1D%blocksize, self%size, 0, 0, &
+                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+
+        case (DISTRIBUTE_COLS) 
+          self%nrows_loc = self%size
+          self%ncols_loc = NUMROC(self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+          CALL DESCINIT(self%desc, self%size, self%size, &
+                        self%size, MPIglobal_1D%blocksize, 0, 0, &
+                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+      end select 
 #else
       self%nrows_loc = size
       self%ncols_loc = size
@@ -163,6 +195,10 @@
       Deallocate (self%za)
 
       If (self%ludecomposed) deallocate (self%ipiv)
+
+#ifdef MPI
+      Deallocate (self%desc)
+#endif
     End Subroutine deleteHermitianMatrix
     !
     !
@@ -264,21 +300,21 @@
 
     subroutine HermitianMatrixMatrixNew(self,zm1,zm2,ldzm,naa,ngp)
 ! !INPUT/OUTPUT PARAMETERS:
-!   self   : Result matrix, hermitian, dimension(ngp,ngp). 
+!   self   : Result matrix, hermitian. 
 !            The result of the matrix-matrix multiplication 
 !            of the other matrices is ADDED to self
 !   zm1    : First factor, complex matrix, dimension(naa,ngp)
 !   zm2    : Second factor, complex matrix, dimension(naa,ngp)
 !   ldzm   : leading dimension of zm1 and zm2
 !   naa    : number of rows of zm1 and zm2
-!   ngp    : number of G+p-vectors, smaller than dimension of system!!
+!   ngp    : number of G+p-vectors, smaller than dimension of self!!
 ! !DESCRIPTION:
 !   Performs the matrix-matrix multiplication
-!   self = zm1**H * zm2 + za
-!   global matrices have dimensions
-!     zm1(naa,ngp)
-!     zm2(naa,ngp)
-!     self%za(ngp,ngp)
+!   self = zm1**H * zm2 + self
+!   The matrices are expected to have distributed columns when MPI is used
+!      (even for only one proc)
+!      Practically just featuring the same distribution (context) is sufficient, 
+!      but this is neither needed nor tested
 !
 ! !REVISION HISTORY:
 !   Parallelized and with new matrix types February 2013 (G. Huhs - BSC)
@@ -298,35 +334,39 @@
 #ifdef MPI
       complex(8), dimension(:,:), pointer :: A, B
       integer, dimension(:), pointer      :: descA, descB
-      Type (ComplexMatrix)                :: tmp1, tmp2
-      logical                             :: redistributeA, redistributeB
+!       Type (ComplexMatrix)                :: tmp1, tmp2
+!       logical                             :: redistributeA, redistributeB
 
-      ! self is given in 2D block cyclic distribution, while zm1 and zm2 are only 1D distributed. 
-      ! PBLAS can't deal with differing processor configurations (contexts)
-      ! so the factos also get 2D distributed
-      ! (compared to 1D distribution of self: better performance of 2D MM-multiplication, usually less memory overhead, no back-distribution)
-      redistributeA = (zm1%distribute .ne. DISTRIBUTE_2D)
-      redistributeB = (zm2%distribute .ne. DISTRIBUTE_2D)
+! PBLAS can't deal with differing processor configurations (contexts)
+! so for differing distributions a redistribution is necessary
+! here is some code to bring all to 2D distribution assuming a 2D distributed Hamiltonian/overlap matrix 
+!       redistributeA = (zm1%distribute .ne. DISTRIBUTE_2D)
+!       redistributeB = (zm2%distribute .ne. DISTRIBUTE_2D)
+! 
+!       if (redistributeA) then 
+!         Call newmatrix(tmp1, zm1%nrows, zm1%ncols, DISTRIBUTE_2D)
+!         Call PZGEMR2D(zm1%nrows, zm1%ncols, zm1%za, 1, 1, zm1%desc, tmp1%za, 1, 1, tmp1%desc, MPIglobal%context)
+!         A => tmp1%za
+!         descA => tmp1%desc
+!       else 
+!         A => zm1%za
+!         descA => zm1%desc
+!       end if
+! 
+!       if (redistributeB) then 
+!         Call newmatrix(tmp2, zm2%nrows, zm2%ncols, DISTRIBUTE_2D)
+!         Call PZGEMR2D(zm2%nrows, zm2%ncols, zm2%za, 1, 1, zm2%desc, tmp2%za, 1, 1, tmp2%desc, MPIglobal%context)
+!         B => tmp2%za
+!         descB => tmp2%desc
+!       else 
+!         B => zm2%za
+!         descB => zm2%desc
+!       end if
 
-      if (redistributeA) then 
-        Call newmatrix(tmp1, zm1%nrows, zm1%ncols, DISTRIBUTE_2D)
-        Call PZGEMR2D(zm1%nrows, zm1%ncols, zm1%za, 1, 1, zm1%desc, tmp1%za, 1, 1, tmp1%desc, MPIglobal%context)
-        A => tmp1%za
-        descA => tmp1%desc
-      else 
-        A => zm1%za
-        descA => zm1%desc
-      end if
-
-      if (redistributeB) then 
-        Call newmatrix(tmp2, zm2%nrows, zm2%ncols, DISTRIBUTE_2D)
-        Call PZGEMR2D(zm2%nrows, zm2%ncols, zm2%za, 1, 1, zm2%desc, tmp2%za, 1, 1, tmp2%desc, MPIglobal%context)
-        B => tmp2%za
-        descB => tmp2%desc
-      else 
-        B => zm2%za
-        descB => zm2%desc
-      end if
+      A => zm1%za
+      descA => zm1%desc
+      B => zm2%za
+      descB => zm2%desc
 
       CALL PZGEMM( 'C', &           ! TRANSA = 'C'  op( A ) = A**H.
                    'N', &           ! TRANSB = 'N'  op( B ) = B.
@@ -349,12 +389,12 @@
                    self%desc &      ! DESCC
                    )
 
-      if (redistributeA) then 
-        Call deletematrix(tmp1)
-      end if
-      if (redistributeB) then 
-        Call deletematrix(tmp2)
-      end if
+!       if (redistributeA) then 
+!         Call deletematrix(tmp1)
+!       end if
+!       if (redistributeB) then 
+!         Call deletematrix(tmp2)
+!       end if
 #else
       ! ZGEMM  performs one of the matrix-matrix operations
       !        C := alpha*op( A )*op( B ) + beta*C,

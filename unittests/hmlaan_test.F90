@@ -701,8 +701,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
 ! The line below makes sure that other terms apart from the surface kinetic energy 
@@ -803,8 +803,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
 ! The line below makes sure that other terms apart from the surface kinetic energy 
@@ -901,8 +901,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=0d0
@@ -994,8 +994,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=0d0
@@ -1090,8 +1090,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=1d0
@@ -1201,8 +1201,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=0d0
@@ -1296,13 +1296,10 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
-      Call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize    = 2
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
+      If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
 ! ! initialisation of global variables
@@ -1311,8 +1308,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
@@ -1351,21 +1348,18 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
 
-        select case (MPIglobal%rank)
+        nrows_loc = nmatp
+        select case (MPIglobal_1D%rank)
           case (0)
-            nrows_loc = 6
-            ncols_loc = 6
+            ncols_loc = 4
           case (1)
-            nrows_loc = 6
-            ncols_loc = 5
+            ncols_loc = 3
           case (2)
-            nrows_loc = 5
-            ncols_loc = 6
+            ncols_loc = 2
           case (3)
-            nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 2
         End select
 
         Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
@@ -1382,7 +1376,6 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_EkinSurfaceSumL_4Proc
@@ -1420,13 +1413,10 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
-      Call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
+      If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
 ! initialisation of global variables
@@ -1435,8 +1425,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
@@ -1472,21 +1462,18 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
 
-        select case (MPIglobal%rank)
+        nrows_loc = nmatp
+        select case (MPIglobal_1D%rank)
           case (0)
-            nrows_loc = 6
-            ncols_loc = 6
+            ncols_loc = 4
           case (1)
-            nrows_loc = 6
-            ncols_loc = 5
+            ncols_loc = 3
           case (2)
-            nrows_loc = 5
-            ncols_loc = 6
+            ncols_loc = 2
           case (3)
-            nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 2
         End select
 
         Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
@@ -1503,7 +1490,6 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_EkinSurfaceSumM_4Proc
@@ -1542,13 +1528,10 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
-      Call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize    = 2
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
+      If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
 ! initialisation of global variables
@@ -1557,8 +1540,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
@@ -1597,21 +1580,18 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
 
-        select case (MPIglobal%rank)
+        nrows_loc = nmatp
+        select case (MPIglobal_1D%rank)
           case (0)
-            nrows_loc = 6
-            ncols_loc = 6
+            ncols_loc = 4
           case (1)
-            nrows_loc = 6
-            ncols_loc = 5
+            ncols_loc = 3
           case (2)
-            nrows_loc = 5
-            ncols_loc = 6
+            ncols_loc = 2
           case (3)
-            nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 2
         End select
 
         Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
@@ -1628,7 +1608,6 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmSumL_4Proc
@@ -1667,13 +1646,10 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
-      Call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize    = 2
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
+      If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
 ! initialisation of global variables
@@ -1682,8 +1658,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
@@ -1719,21 +1695,18 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
 
-        select case (MPIglobal%rank)
+        nrows_loc = nmatp
+        select case (MPIglobal_1D%rank)
           case (0)
-            nrows_loc = 6
-            ncols_loc = 6
+            ncols_loc = 4
           case (1)
-            nrows_loc = 6
-            ncols_loc = 5
+            ncols_loc = 3
           case (2)
-            nrows_loc = 5
-            ncols_loc = 6
+            ncols_loc = 2
           case (3)
-            nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 2
         End select
 
         Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
@@ -1750,7 +1723,6 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmSumM_4Proc
@@ -1792,13 +1764,10 @@ module modHmlaan_test
       Complex(8), External :: gauntyry
 
       n_procs_test = 4
-      Call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
-      Call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize    = 2
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
+      If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
 ! initialisation of global variables
@@ -1807,8 +1776,9 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
+
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
@@ -1856,21 +1826,18 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=test
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
 
-        select case (MPIglobal%rank)
+        nrows_loc = nmatp
+        select case (MPIglobal_1D%rank)
           case (0)
-            nrows_loc = 6
-            ncols_loc = 6
+            ncols_loc = 4
           case (1)
-            nrows_loc = 6
-            ncols_loc = 5
+            ncols_loc = 3
           case (2)
-            nrows_loc = 5
-            ncols_loc = 6
+            ncols_loc = 2
           case (3)
-            nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 2
         End select
 
         Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
@@ -1887,7 +1854,6 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmAsymGnt_4Proc
@@ -1928,13 +1894,10 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(2, 2, MPIglobal%comm,    MPIglobal%context,    ierror_t)
-      Call setupProcGrid(1, 4, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize    = 2
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       MPIglobal_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
+      If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
 ! initialisation of global variables
@@ -1943,8 +1906,8 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton,nmatp)
-        Call newmatrix(hamilton_ref,nmatp)
+        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
@@ -1975,7 +1938,7 @@ module modHmlaan_test
         Enddo
 
         ! prefactor depends on an element of apwalm which is located at first proc!!
-        if (MPIglobal%rank .eq. 0) then
+        if (MPIglobal_1D%rank .eq. 0) then
           prefactor=cmplx(0,0,8)
           Do lm2=1,lmmaxmat
             Do lm1=1,lmmaxmat
@@ -1983,29 +1946,25 @@ module modHmlaan_test
             Enddo
           Enddo
         end if
-        Call MPI_BCAST(prefactor, 2, MPI_DOUBLE_PRECISION, 0, MPIglobal%comm, ierror_t) 
+        Call MPI_BCAST(prefactor, 2, MPI_DOUBLE_PRECISION, 0, MPIglobal_1D%comm, ierror_t) 
 
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)*prefactor
           Enddo
         Enddo
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
 
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
-
-        select case (MPIglobal%rank)
+        nrows_loc = nmatp
+        select case (MPIglobal_1D%rank)
           case (0)
-            nrows_loc = 6
-            ncols_loc = 6
+            ncols_loc = 4
           case (1)
-            nrows_loc = 6
-            ncols_loc = 5
+            ncols_loc = 3
           case (2)
-            nrows_loc = 5
-            ncols_loc = 6
+            ncols_loc = 2
           case (3)
-            nrows_loc = 5
-            ncols_loc = 5
+            ncols_loc = 2
         End select
 
         Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
@@ -2022,7 +1981,6 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmAsymSumLm1Lm3_4Proc
