@@ -1,6 +1,6 @@
-! !MODULE:  modHmlaan_test
+! !MODULE:  modHmlistln_test
 ! !DESCRIPTION:
-! Modules with test and helper routines for testing hmlaan
+! Modules with test and helper routines for testing hmlistln
 !
 ! !REVISION HISTORY:
 !   Created: Februrary 2013 (G. Huhs - BSC, A. Gulans)

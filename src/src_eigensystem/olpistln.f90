@@ -15,12 +15,9 @@ Subroutine olpistln (overlap, ngp, igpig)
       Use modmain
       Use modfvsystem
 ! !INPUT/OUTPUT PARAMETERS:
-!   ngp   : number of G+p-vectors (in,integer)
-!   igpig : index from G+p-vectors to G-vectors (in,integer(ngkmax))
-!   v     : input vector to which O is applied if tapp is .true., otherwise
-!           not referenced (in,complex(nmatmax))
-!   o     : O applied to v if tapp is .true., otherwise it is the overlap
-!         : matrix in packed form (inout,complex(npmatmax))
+!   ngp    : number of G+p-vectors (in,integer)
+!   igpig  : index from G+p-vectors to G-vectors (in,integer(ngkmax))
+!   overlap: The overlap matrix (inout,complex(npmatmax))
 ! !DESCRIPTION:
 !   Computes the interstitial contribution to the overlap matrix for the APW
 !   basis functions. The overlap is given by

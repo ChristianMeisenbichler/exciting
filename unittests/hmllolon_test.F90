@@ -1,6 +1,6 @@
-! !MODULE:  modHmlaan_test
+! !MODULE:  modHmllolon_test
 ! !DESCRIPTION:
-! Modules with test and helper routines for testing hmlaan
+! Modules with test and helper routines for testing hmllolon
 !
 ! !REVISION HISTORY:
 !   Created: Februrary 2013 (G. Huhs - BSC, A. Gulans)
@@ -167,7 +167,7 @@ module modHmllolon_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
       
-      Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1
+      Integer :: l1,m1,l2,m2,l3,m3
       integer :: i,j,ilo,ilo2
       complex(8)               :: test
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
@@ -243,9 +243,8 @@ module modHmllolon_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
 
-      Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1
-      integer :: i,j,ilo,ilo2
-      complex(8)               :: test
+      Integer :: l1,m1,lm1
+      integer :: ilo
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
 ! Externals
@@ -306,9 +305,8 @@ module modHmllolon_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
 
-      Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1
+      Integer :: l1,m1,lm1,lm2,l3,m3,lm3
       integer :: i,j,ilo,ilo2
-      complex(8)               :: test
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
 ! Externals

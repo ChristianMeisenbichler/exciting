@@ -56,8 +56,6 @@ Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
           ig = ivgig (iv(1), iv(2), iv(3))
           If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
             t1 = 0.5d0 * dot_product (vgpc(:, i), vgpc(:, j))
-!            write(*,*) t1,vgpc(:, 1)
-!            stop
             zt = veffig (ig) + t1 * cfunig (ig)
 
             Call Hermitianmatrix_indexedupdate (hamilton, j, i, zt)
