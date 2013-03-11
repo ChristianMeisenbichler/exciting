@@ -40,7 +40,21 @@ libexciting::$(PREFIX)/build/make.inc libs $(GeneratedFiles)  $(LIBXCMOD)
 	$(PREFIX)/build/utilities/mkmf -t ./template -f -m Makefile.mkmf -p exciting \
 	$(SOURCEDIRS)  $(LIBXCMOD)      $(PREFIX)/src/mainxml/ \
 	&& $(MAKE) -f Makefile.mkmf exciting LD=echo 
-	
+
+
+speciesbin:: $(PREFIX)/build/make.inc libs $(GeneratedFiles)
+	../../build/utilities/mkmf -t ./template -f -m Makefile.species -p species \
+	$(PREFIX)/src/species $(PREFIX)/src/src_lib $(PREFIX)/src/src_xc $(PREFIX)/src/modxcifc.f90 $(PREFIX)/src/atom.f90 \
+	$(PREFIX)/src/zfftifc.f90 \
+	$(PREFIX)/src/mod_muffin_tin.F90 \
+	$(PREFIX)/src/mod_atoms.F90 \
+	$(PREFIX)/src/mod_Gvector.F90 \
+   	$(PREFIX)/src/mod_SHT.F90 \
+   	$(PREFIX)/src/mod_potential_and_density.F90 \
+   	$(PREFIX)/src/src_inputparser/inputmodules.f90 \
+   	$(PREFIX)/src/src_inputparser/modinputdom.f90 \
+	&& $(MAKE) -f Makefile.species species \
+	&& cp species ../../bin/species	
 doc::
 	cd ./docs/exciting; \
 	perl $(PREFIX)/build/utilities/scripts/genprotexdoc.pl $(PREFIX)/src/mainxml/  $(SOURCEDIRS)  ;\

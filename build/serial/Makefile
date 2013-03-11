@@ -12,7 +12,8 @@ clean:
 cleanlibs:
 	$(MAKE) cleanlibs  -f ../Make.common PREFIX=../..
 
-
+species::
+	$(MAKE) speciesbin -f ../Make.common PREFIX=../..
 
 
 
