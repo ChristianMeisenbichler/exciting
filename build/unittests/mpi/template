@@ -2,9 +2,9 @@ include ../../make.inc
 include ../../libraries.inc
 
 FC = $(MPIF90)
-FFLAGS = $(MPIF90_OPTS) -Ifinclude
+FFLAGS = $(MPIF90_DEBUGOPTS) -Ifinclude
 LD = $(FC)
-LDFLAGS =$(MPIF90_OPS) $(MPI_LIBS) $(INTERNALLIBS)
+LDFLAGS =$(MPIF90_DEBUGOPTS) $(MPI_LIBS) $(INTERNALLIBS)
 TMPFILES = *.mod
 PREFIX=../../..
 SUFFIX=utmpi
