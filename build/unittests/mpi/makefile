@@ -1,43 +1,16 @@
 include ../../make.inc
-
 testsrc = ../../../unittests
-excsrc  = ../../../src
-includes = -I. -I../../../src/FoX/dom/ -I../../../src/FoX/fsys/ 
-objects = modfvsystem_test.o hmlaan_test.o olpaan_test.o hmlalon_test.o olpalon_test.o \
-          hmllolon_test.o olplolon_test.o hmlistln_test.o olpistln_test.o\
-          fruit_util.o fruit.o test_helpers.o testsuite.o
-cmd = $(MPIF90)
-opts = $(F90_OPTS_UT_MPI)
 
-foxlib = -L../../../src/FoX/objs/lib/ -lFoX_dom -lFoX_sax -lFoX_utils -lFoX_wcml -lFoX_wxml -lFoX_fsys -lFoX_common
+all:  tests_mpi
+PREFIX=../../..
+include ../../Make.common
 
-LIBS_T = $(foxlib) 
-
-# main program ##############################################
-
-all: ../make.inc ../Make.common ../libraries.inc tests_mpi
-	rm -f libexciting.a
-tests_mpi: libexciting.a $(objects)
-	$(cmd) $(opts) -o tests_mpi $(objects) libexciting_mpi.a $(LIBS_T) 
-        
-# exciting library
-libexciting.a:
-	$(MAKE)  -f ../Make.common libexciting PREFIX=../../..
-	ar q libexciting_mpi.a `ls *.o`
-
-# unit tests ##############################################
-include ../files_unittests.inc
-
-# general stuff ##############################################
+tests_mpi::$(PREFIX)/build/make.inc libs $(GeneratedFiles)  $(LIBXCMOD)
+	perl $(PREFIX)/build/utilities/versionstamp.pl  
+	$(PREFIX)/build/utilities/mkmf -t ./template -f -m Makefile.mkmf -p tests_mpi \
+	$(SOURCEDIRS)  $(LIBXCMOD)	$(testsrc)\
+	&& $(MAKE) -f Makefile.mkmf tests_mpi
 
 
-clean:
-	rm -rf *.o *.mod tests* *.a finclude lib Makefile.* 
 
-make.inc:
-	cp ../make.inc .
-Make.common:
-	cp ../Make.common .
-libraries.inc:
-	cp ../libraries.inc .
 

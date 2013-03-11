@@ -1,6 +1,5 @@
 -include ../make.inc
 .NOTPARALLEL:
-PREFIX=../..
 #	../../src/src_iterative_solver/src_diis/ \
 	
 SOURCEDIRS=	$(PREFIX)/src/  \
@@ -22,7 +21,6 @@ SOURCEDIRS=	$(PREFIX)/src/  \
 	$(PREFIX)/src/src_sym/ \
 	$(PREFIX)/src/src_gw/ \
 	$(PREFIX)/src/src_gw/src_acfreq/ \
-	$(PREFIX)/src/unittests \
 	$(PREFIX)/src/ \
 	
 GeneratedFiles=  $(PREFIX)/src/src_inputparser/inputmodules.f90 $(PREFIX)/src/src_inputparser/speciesmodules.f90	
