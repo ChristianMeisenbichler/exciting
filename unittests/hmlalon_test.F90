@@ -829,9 +829,9 @@ module modHmlalon_test
       Implicit None
 ! Size of the tests
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
-      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
-      Integer :: l1,m1,lm1,l3,g1,g2,i
-      integer :: ilo,last
+      parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
+      Integer :: l1,m1,lm1,l3,g1,g2
+      integer :: ilo,last,i,l,m,lm
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
       Integer, Dimension(nmatp) :: hamilton_loc_cols
@@ -856,6 +856,19 @@ module modHmlalon_test
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+         nlorb(1)=4
+         lorbl(1:4,1)=(/0,1,2,3/)
+! copied from genidxlo
+         i=0
+         Do ilo = 1, nlorb (1)
+            l = lorbl (ilo, 1)
+            Do m = - l, l
+               i = i + 1
+               lm = idxlm (l, m)
+               idxlo (lm, ilo, 1) = i
+            End Do
+         End Do
 
 ! allocate and generate complex Gaunt coefficient array
          Call initGntyry
@@ -1403,10 +1416,10 @@ module modHmlalon_test
       Implicit None
 ! Size of the tests
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
-      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23) 
+      parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
 
       Integer :: l1,m1,lm1,l3,g1,g1_idx,g2
-      integer :: ilo, last
+      integer :: ilo, last,i,l,m,lm
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
@@ -1433,6 +1446,19 @@ module modHmlalon_test
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+         nlorb(1)=4
+         lorbl(1:4,1)=(/0,1,2,3/)
+! copied from genidxlo
+         i=0
+         Do ilo = 1, nlorb (1)
+            l = lorbl (ilo, 1)
+            Do m = - l, l
+               i = i + 1
+               lm = idxlm (l, m)
+               idxlo (lm, ilo, 1) = i
+            End Do
+         End Do
 
 ! allocate and generate complex Gaunt coefficient array
          Call initGntyry
@@ -1480,17 +1506,17 @@ module modHmlalon_test
 
          select case (MPIglobal%rank)
             case (0)
-               ncols_loc = 12
-               nrows_loc = 12
+               ncols_loc = 22
+               nrows_loc = 22
             case (1)
-               ncols_loc = 11
-               nrows_loc = 12
+               ncols_loc = 21
+               nrows_loc = 22
             case (2)
-               ncols_loc = 12
-               nrows_loc = 11
+               ncols_loc = 22
+               nrows_loc = 21
             case (3)
-               ncols_loc = 11
-               nrows_loc = 11
+               ncols_loc = 21
+               nrows_loc = 21
          End select
 
          Call hmlalon(hamilton,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_cols)
