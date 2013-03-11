@@ -246,7 +246,7 @@
       Complex (8) :: z
 
       If (j .Le. i) Then
-         self%za (j, i) = self%za(j, i) + z
+         self%za(j, i) = self%za(j, i) + z
       Else
          Write (*,*) "warning lower part of hamilton updated"
       End If

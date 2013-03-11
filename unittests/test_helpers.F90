@@ -1,3 +1,10 @@
+! !MODULE:  test_helpers
+! !DESCRIPTION:
+! General functions and tools for the unittests
+!
+! !REVISION HISTORY:
+!   Created: Februrary 2013 (G. Huhs - BSC)
+!
 module test_helpers
 #ifdef MPI
     use modmpi

@@ -22,13 +22,13 @@ program testsuite
     Call runtestcase(testcaseHermitianMatrixMatrix4Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 4 procs')
 
     Call runtestcase(testcaseHmlaan1Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 1 proc')
-    Call runtestcase(testcaseHmlaan4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 4 pros')
+    Call runtestcase(testcaseHmlaan4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlaan) on 4 procs')
 
     Call runtestcase(testcaseOlpaan1Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 1 proc')
-    Call runtestcase(testcaseOlpaan4Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 4 pros')
+    Call runtestcase(testcaseOlpaan4Proc, 'modfvsystem - Hamiltonian matrix setup (olpaan) on 4 procs')
 
     Call runtestcase(testcaseHmlalon1Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 1 proc')
-    Call runtestcase(testcaseHmlalon4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 4 pros')
+    Call runtestcase(testcaseHmlalon4Proc, 'modfvsystem - Hamiltonian matrix setup (hmlalon) on 4 procs')
 #else
     Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
     Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
