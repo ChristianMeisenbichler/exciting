@@ -1,27 +1,36 @@
-F90=ifort
-F90_OPTS = -O3 -ip -unroll -scalar_rep 
+AR=xiar
+F90=ifort  
+F90_OPTS = -O3 -xSSE4.2 -ip -unroll  -scalar_rep  
 CPP_ON_OPT = -cpp -DXS -DISO -DTETRA -DLIBXC
 F77=$(F90)
-F77_OPTS = -O3 -ip -unroll -scalar_rep 
+F77_OPTS = -O3 -xSSE4.2 -ip -unroll  -scalar_rep 
 LIB_ARP =libarpack.a
-#export USE_SYS_LAPACK=true
-LIB_LPK =  liblapack.a libblas.a
+export USE_SYS_LAPACK=true
 LIB_FFT = fftlib.a
 LIB_BZINT=libbzint.a
 
-LIBS=  $(LIB_ARP) $(LIB_LPK) $(LIB_FFT) $(LIB_BZINT)
+LIBS=  $(LIB_ARP)  $(LIB_FFT) $(LIB_BZINT) 
 
-F90_DEBUGOPTS=-g -O0 -std03 -warn declarations  -warn uncalled -check all -traceback -ftrapuv
-F77_DEBUGOPTS=-g -O0 -warn declarations -warn uncalled -check all -traceback -ftrapuv
+F90_DEBUGOPTS=-g  -fpe0 -traceback -check all
+F77_DEBUGOPTS=-g  -fpe0
+
 #Ignore if you don't have MPI or smplibs
  
-MPIF90=mpif90
-MPIF90_OPTS=$(F90_OPTS) $(CPP_ON_OPT) -DMPI -DMPIRHO -DMPISEC
+MPIF90=mpiifort
+MPIF90_OPTS=  $(CPP_ON_OPT)  -DMPI -DMPIRHO -DMPISEC
 
 F77MT=$(F77)
 F90MT=$(F90)
-SMP_LIBS=$(LIBS)
+SMP_LIBS=-mkl=parallel $(LIBS)
+SER_LIBS= -mkl=sequential $(LIBS)
+MPI_LIBS= -mkl=cluster $(LIBS)
+MPISMP_LIBS=-mkl=cluster $(LIBS) 
 SMPF90_OPTS=$(F90_OPTS) 
 SMPF77_OPTS=$(SMPF90_OPTS) 
-MPISMPF90_OPTS=$(SMPF90_OPTS)  -DMPI -DMPIRHO -DMPISECBUILDMPI=false
+MPIF77MT=$(MPIF77)
+MPIF90MT=$(MPIF90)
+MPISMPF90_OPTS= $(CPP_ON_OPT) -DMPI -DMPIRHO -DMPISEC 
 
+
+BUILDMPI=true
+BUILDSMP=true

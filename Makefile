@@ -2,7 +2,7 @@
 
 
 .NOTPARALLEL:
-
+PREFIX="../.."
 default: build/make.inc all 
 
 all:    serial mpi smp spacegroup stateinfo stateconvert species

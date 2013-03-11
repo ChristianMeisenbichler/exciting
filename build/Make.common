@@ -1,6 +1,6 @@
 -include ../make.inc
 .NOTPARALLEL:
-
+PREFIX=../..
 #	../../src/src_iterative_solver/src_diis/ \
 	
 SOURCEDIRS=	$(PREFIX)/src/  \
