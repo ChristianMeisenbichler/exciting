@@ -1,3 +1,18 @@
+olpistln_test.o: $(testsrc)/olpistln_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/olpistln_test.F90
+
+hmlistln_test.o: $(testsrc)/hmlistln_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/hmlistln_test.F90
+
+olplolon_test.o: $(testsrc)/olplolon_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/olplolon_test.F90
+
+hmllolon_test.o: $(testsrc)/hmllolon_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/hmllolon_test.F90
+
+olpalon_test.o: $(testsrc)/olpalon_test.F90 test_helpers.o fruit.o
+	$(cmd) $(opts) $(includes) -c $(testsrc)/olpalon_test.F90
+
 hmlalon_test.o: $(testsrc)/hmlalon_test.F90 test_helpers.o fruit.o
 	$(cmd) $(opts) $(includes) -c $(testsrc)/hmlalon_test.F90
 

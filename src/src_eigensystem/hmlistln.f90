@@ -15,15 +15,10 @@ Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
       Use modmain
       Use modfvsystem
 ! !INPUT/OUTPUT PARAMETERS:
-!   tapp  : .true. if the Hamiltonian is to be applied to the input vector,
-!           .false. if the full matrix is to be calculated (in,logical)
 !   ngp   : number of G+p-vectors (in,integer)
 !   igpig : index from G+p-vectors to G-vectors (in,integer(ngkmax))
 !   vgpc  : G+p-vectors in Cartesian coordinates (in,real(3,ngkmax))
-!   v     : input vector to which H is applied if tapp is .true., otherwise
-!           not referenced (in,complex(nmatmax))
-!   h     : H applied to v if tapp is .true., otherwise it is the Hamiltonian
-!           matrix in packed form (inout,complex(npmatmax))
+!   hamilton : the Hamiltonian matrix in packed form (inout,complex(npmatmax))
 ! !DESCRIPTION:
 !   Computes the interstitial contribution to the Hamiltonian matrix for the APW
 !   basis functions. The Hamiltonian is given by
