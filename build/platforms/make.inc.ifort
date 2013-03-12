@@ -11,25 +11,26 @@ LIB_BZINT=libbzint.a
 
 LIBS=  $(LIB_ARP)  $(LIB_FFT) $(LIB_BZINT) 
 
-F90_DEBUGOPTS=-g  -fpe0 -traceback -check all
-F77_DEBUGOPTS=-g  -fpe0
+
+F90_DEBUGOPTS=-g -debug all   -implicitnone -warn unused -fp-stack-check -heap-arrays -ftrapuv -check all 
+F77_DEBUGOPTS=-g -debug all   -implicitnone -warn unused -fp-stack-check -heap-arrays -ftrapuv -check all
 
 #Ignore if you don't have MPI or smplibs
  
 MPIF90=mpiifort
-MPIF90_OPTS=  $(CPP_ON_OPT)  -DMPI -DMPIRHO -DMPISEC
-
+MPIF90_OPTS= $(F90_OPTS)  $(CPP_ON_OPT)   -DMPI -DMPIRHO -DMPISEC
+MPIF90_DEBUGOPTS= $(F90_DEBUGOPTS)  $(CPP_ON_OPT)   -DMPI -DMPIRHO -DMPISEC
 F77MT=$(F77)
 F90MT=$(F90)
 SMP_LIBS=-mkl=parallel $(LIBS)
-SER_LIBS= -mkl=sequential $(LIBS)
+SER_LIBS= $(LIBS) -mkl=sequential 
 MPI_LIBS= -mkl=cluster $(LIBS)
 MPISMP_LIBS=-mkl=cluster $(LIBS) 
 SMPF90_OPTS=$(F90_OPTS) 
 SMPF77_OPTS=$(SMPF90_OPTS) 
 MPIF77MT=$(MPIF77)
 MPIF90MT=$(MPIF90)
-MPISMPF90_OPTS= $(CPP_ON_OPT) -DMPI -DMPIRHO -DMPISEC 
+MPISMPF90_OPTS=$(F90_OPTS) $(CPP_ON_OPT) -DMPI -DMPIRHO -DMPISEC 
 
 
 BUILDMPI=true
