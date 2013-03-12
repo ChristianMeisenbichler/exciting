@@ -3,7 +3,7 @@
 ! Modules with test and helper routines for testing hmlalon
 !
 ! !REVISION HISTORY:
-!   Created: Februrary 2013 (G. Huhs - BSC, A. Gulans)
+!   Created: March 2013 (G. Huhs - BSC, A. Gulans)
 !
 module modHmlalon_test
     Use fruit
@@ -46,6 +46,17 @@ module modHmlalon_test
     Subroutine testcaseHmlalon1Proc
       Implicit None
 
+      Call set_test_name ('Gaunt coefficients')
+      Call testHmlalon_Gnt_1Proc
+      Call set_test_name ('Spherically symmetric contributions, hloa')
+      Call testHmlalon_SphSymLO_1Proc
+      Call set_test_name ('Spherically symmetric contributions, apwalm')
+      Call testHmlalon_SphSymAPW_1Proc
+      Call set_test_name ('Spherically symmetric and asymmetric contributions, apwalm')
+      Call testHmlalon_SphSymAsymAPW_1Proc
+      Call set_test_name ('Spherically symmetric and asymmetric contributions, hloa')
+      Call testHmlalon_SphSymAsymLO_1Proc
+
     End Subroutine testcaseHmlalon1Proc
 #endif
 
@@ -54,6 +65,16 @@ module modHmlalon_test
     Subroutine testcaseHmlalon4Proc
       Implicit None
 
+      Call set_test_name ('Gaunt coefficients')
+      Call testHmlalon_Gnt_4Proc
+      Call set_test_name ('Spherically symmetric contributions, hloa')
+      Call testHmlalon_SphSymLO_4Proc
+      Call set_test_name ('Spherically symmetric contributions, apwalm')
+      Call testHmlalon_SphSymAPW_4Proc
+      Call set_test_name ('Spherically symmetric and asymmetric contributions, apwalm')
+      Call testHmlalon_SphSymAsymAPW_4Proc
+      Call set_test_name ('Spherically symmetric and asymmetric contributions, hloa')
+      Call testHmlalon_SphSymAsymLO_4Proc
     End Subroutine testcaseHmlalon4Proc
 #endif
 
@@ -103,12 +124,12 @@ module modHmlalon_test
 ! copied from genidxlo
       i=0
       Do ilo = 1, nlorb (1)
-        l = lorbl (ilo, 1)
-          Do m = - l, l
+         l = lorbl (ilo, 1)
+         Do m = - l, l
             i = i + 1
             lm = idxlm (l, m) 
             idxlo (lm, ilo, 1) = i
-          End Do
+         End Do
       End Do
     End Subroutine initGlobals
 
@@ -138,6 +159,7 @@ module modHmlalon_test
 
       If (allocated(gntyry)) Deallocate (gntyry)
       Allocate (gntyry(lmmaxmat, lmmaxvr, lmmaxapw))
+
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
             lm1 = idxlm (l1, m1)
@@ -154,7 +176,6 @@ module modHmlalon_test
             End Do
          End Do
       End Do
-
 
     End Subroutine initGntyry
 
@@ -183,7 +204,7 @@ module modHmlalon_test
 ! Externals
       Complex(8), External :: gauntyry
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -195,39 +216,36 @@ module modHmlalon_test
 
       hloa(:,:,:,:,:)=1d0
 
-      hamilton%za(:,:)=cmplx(0,0,8)
-      hamilton_ref%za(:,:)=cmplx(0,0,8)
-
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
       Do l1=0,lmaxapw
-        Do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          Do g1=1,gsize
-            apwalm(g1,:,lm1,1)=cmplx(1d0,0,8)
-          Enddo
-        Enddo
+         Do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            Do g1=1,gsize
+               apwalm(g1,:,lm1,1)=cmplx(1d0,0,8)
+            Enddo
+         Enddo
       Enddo
 
       i=0
       Do ilo= 1,nlorb (1)
-        l1 = lorbl (ilo, 1)
-        Do m1 = - l1, l1
-          i=i+1
-          lm1 = idxlm (l1, m1)
-          test=cmplx(0,0,8)
-          Do l2 = 0, input%groundstate%lmaxvr
-            Do m2 = - l2, l2
-              lm2 = idxlm (l2, m2)
-              Do l3 = 0, input%groundstate%lmaxmat
-                Do m3 = - l3, l3
-                  lm3 = idxlm (l3, m3)
-                  test = test + gauntyry (l1, l2, l3, m1, m2, m3)
-                End Do
-              End Do
+         l1 = lorbl (ilo, 1)
+         Do m1 = - l1, l1
+            i=i+1
+            lm1 = idxlm (l1, m1)
+            test=cmplx(0,0,8)
+            Do l2 = 0, input%groundstate%lmaxvr
+               Do m2 = - l2, l2
+               lm2 = idxlm (l2, m2)
+                  Do l3 = 0, input%groundstate%lmaxmat
+                     Do m3 = - l3, l3
+                        lm3 = idxlm (l3, m3)
+                        test = test + gauntyry (l1, l2, l3, m1, m2, m3)
+                     End Do
+                  End Do
+               End Do
             End Do
-          End Do
-          hamilton_ref%za(1:gsize,i+gsize)=conjg(test)
-        End Do
+            hamilton_ref%za(1:gsize,i+gsize)=conjg(test)
+         End Do
       End Do
 
       Call hmlalon(hamilton,1,1,gsize,apwalm)
@@ -262,14 +280,14 @@ module modHmlalon_test
       parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
 
       Integer :: l1,m1,lm1,lm2,l3,g1
-      integer :: ilo,last
+      integer :: ilo
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
 ! Externals
       Complex(8), External :: gauntyry
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -283,34 +301,30 @@ module modHmlalon_test
 ! The condition for the spherically symmetric evaluation
       hloa(:,1,:,2:lmmaxvr,1)=0d0
 
-      hamilton%za(:,:)=cmplx(0,0,8)
-      hamilton_ref%za(:,:)=cmplx(0,0,8)
-
       Do ilo= 1,nlorb (1)
-        l1=lorbl(ilo,1)
-        Do l3 = 0, input%groundstate%lmaxmat
-          hloa(ilo,:,l3,1,1)=dble(ilo)*sqrt(dble(l1+1))/sqrt(dble(l3+1))*sqrt(4d0*pi)
-        End Do
+         l1=lorbl(ilo,1)
+         Do l3 = 0, input%groundstate%lmaxmat
+            hloa(ilo,:,l3,1,1)=dble(ilo)*sqrt(dble(l1+1))/sqrt(dble(l3+1))*sqrt(4d0*pi)
+         End Do
       End Do
 
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
-        Do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          Do g1=1,gsize
-            apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
-          Enddo
-        Enddo
+         Do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            Do g1=1,gsize
+               apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
+            Enddo
+         Enddo
       Enddo
 
-      last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
       do g1=1,gsize
-       do ilo=1,nlorb (1)
-          l1=lorbl(ilo,1)
-          lm1=idxlm(l1,-l1)
-          lm2=idxlm(l1,l1)
-          hamilton_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=g1*ilo
-       enddo
+         do ilo=1,nlorb (1)
+            l1=lorbl(ilo,1)
+            lm1=idxlm(l1,-l1)
+            lm2=idxlm(l1,l1)
+            hamilton_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=g1*ilo
+         enddo
       enddo
 
       Call hmlalon(hamilton,1,1,gsize,apwalm)
@@ -349,8 +363,6 @@ module modHmlalon_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
 
-
-
       Integer :: l1,m1,lm1,l3,g1,g2
       integer :: ilo,last,i,l,m,lm
       Complex (8), allocatable :: apwalm (:, :, :, :)
@@ -359,7 +371,7 @@ module modHmlalon_test
 ! Externals
       Complex(8), External :: gauntyry
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
       nlorb(1)=4
@@ -385,30 +397,28 @@ module modHmlalon_test
       hloa(:,:,:,:,:)=1d8
       hloa(:,:,:,2:lmmaxvr,:)=0d0
       Do ilo= 1,nlorb (1)
-        l1=lorbl(ilo,1)
-        Do l3 = 0, input%groundstate%lmaxmat
-          hloa(ilo,:,l3,1,1)=1d0/sqrt(dble(l3+1))*sqrt(4d0*pi)
-        End Do
+         l1=lorbl(ilo,1)
+         Do l3 = 0, input%groundstate%lmaxmat
+            hloa(ilo,:,l3,1,1)=1d0/sqrt(dble(l3+1))*sqrt(4d0*pi)
+         End Do
       End Do
-
-      hamilton%za(:,:)=cmplx(0,0,8)
 
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
-        Do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          Do g1=1,gsize
-            ilo=l1**2+l1+m1+1
-            apwalm(g1,:,lm1,1)=cmplx(g1,0,8)*cmplx(sqrt(dble(l1+1)),0,8)*dble(ilo)
-          Enddo
-        Enddo
+         Do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            Do g1=1,gsize
+               ilo=l1**2+l1+m1+1
+               apwalm(g1,:,lm1,1)=cmplx(g1,0,8)*cmplx(sqrt(dble(l1+1)),0,8)*dble(ilo)
+            Enddo
+         Enddo
       Enddo
 
       last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
       do g1=1,gsize
-        do g2=1,last
-           hamilton_ref%za(g1,gsize+g2)=g1*g2
-        enddo
+         do g2=1,last
+            hamilton_ref%za(g1,gsize+g2)=g1*g2
+         enddo
       enddo
 
       Call hmlalon(hamilton,1,1,gsize,apwalm)
@@ -453,7 +463,7 @@ module modHmlalon_test
 ! Externals
       Complex(8), External :: gauntyry
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -466,32 +476,29 @@ module modHmlalon_test
       hloa(:,:,:,:,:)=1d8
       hloa(:,1,:,:,1)=1d0
 
-      hamilton%za(:,:)=cmplx(0,0,8)
-      hamilton_ref%za(:,:)=cmplx(0,0,8)
-
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
-        Do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          Do g1=1,gsize
-            apwalm(g1,:,lm1,1)=cmplx(g1,0,8)*cmplx(cos(dble(lm1)),sin(dble(lm1)),8)
-          Enddo
-        Enddo
+         Do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            Do g1=1,gsize
+               apwalm(g1,:,lm1,1)=cmplx(g1,0,8)*cmplx(cos(dble(lm1)),sin(dble(lm1)),8)
+            Enddo
+         Enddo
       Enddo
 
       last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
       do ilo=1,nlorb(1)
-        l1=lorbl(ilo,1)
-        do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          g2=idxlo(lm1,ilo,1)
-          do lm2=1,lmmaxmat
-            hamilton_ref%za(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,1:lmmaxvr,lm2))*cmplx(cos(dble(lm2)),sin(dble(lm2)),8))+hamilton_ref%za(1:gsize,gsize+g2)
-          enddo
-      enddo
+         l1=lorbl(ilo,1)
+         do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            g2=idxlo(lm1,ilo,1)
+            do lm2=1,lmmaxmat
+               hamilton_ref%za(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,1:lmmaxvr,lm2))*cmplx(cos(dble(lm2)),sin(dble(lm2)),8))+hamilton_ref%za(1:gsize,gsize+g2)
+            enddo
+         enddo
       enddo
       do g1=1,gsize
-        hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
+         hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
       enddo
 
       Call hmlalon(hamilton,1,1,gsize,apwalm)
@@ -508,6 +515,7 @@ module modHmlalon_test
 ! deallocation of global variables   
       Call freeGlobals
     End Subroutine testHmlalon_SphSymAsymAPW_Serial
+
 
 !------------------------------------------------------------------------------
 ! test testHmlalon_SphSymAsymLO_Serial
@@ -534,7 +542,7 @@ module modHmlalon_test
 ! Externals
       Complex(8), External :: gauntyry
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -548,34 +556,31 @@ module modHmlalon_test
       hloa(:,1,:,:,1)=1d0
 
       Do ilo= 1,nlorb (1)
-        l1=lorbl(ilo,1)
-        Do l3 = 0, input%groundstate%lmaxmat
-          do lm2=1,lmmaxvr
-            hloa(ilo,:,l3,lm2,1)=dble(ilo)*cos(dble(l3))*sin(dble(lm2))
-          enddo
-        End Do
+         l1=lorbl(ilo,1)
+         Do l3 = 0, input%groundstate%lmaxmat
+            do lm2=1,lmmaxvr
+               hloa(ilo,:,l3,lm2,1)=dble(ilo)*cos(dble(l3))*sin(dble(lm2))
+            enddo
+         End Do
       End Do
-
-      hamilton%za(:,:)=cmplx(0,0,8)
-      hamilton_ref%za(:,:)=cmplx(0,0,8)
 
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do g1=1,gsize
-        apwalm(g1,1,:,1)=cmplx(g1,0,8)
+         apwalm(g1,1,:,1)=cmplx(g1,0,8)
       Enddo
 
       last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
       do ilo=1,nlorb(1)
-        l1=lorbl(ilo,1)
-        do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          g2=idxlo(lm1,ilo,1)
-          do l2=0,lmaxmat
-            do lm3=1,lmmaxvr
-              hamilton_ref%za(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,lm3,idxlm(l2,-l2):idxlm(l2,l2))))*dble(ilo)*cos(dble(l2))*sin(dble(lm3))+hamilton_ref%za(1:gsize,gsize+g2)
+         l1=lorbl(ilo,1)
+         do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            g2=idxlo(lm1,ilo,1)
+            do l2=0,lmaxmat
+               do lm3=1,lmmaxvr
+                  hamilton_ref%za(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,lm3,idxlm(l2,-l2):idxlm(l2,l2))))*dble(ilo)*cos(dble(l2))*sin(dble(lm3))+hamilton_ref%za(1:gsize,gsize+g2)
+               enddo
             enddo
-          enddo
-      enddo
+         enddo
       enddo
       do g1=1,gsize
         hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
@@ -595,6 +600,1206 @@ module modHmlalon_test
 ! deallocation of global variables   
       Call freeGlobals
     End Subroutine testHmlalon_SphSymAsymLO_Serial
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SpherSymmAsymGnt_1Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 1 proc
+! The purpose is to test whether gaunt coefficients are handled properly.
+! The matching coefficients apwalm contain a constant.
+! The radial integrals are constant.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_Gnt_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
+      
+      Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1
+      Integer :: i,ilo
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Complex(8)               :: test
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Integer, Dimension(nmatp) :: hamilton_loc_cols
+
+! Externals
+      Complex(8), External :: gauntyry
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+         Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton,nmatp)
+         Call newmatrix(hamilton_ref,nmatp)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d0
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1=1,gsize
+                  apwalm(g1,:,lm1,1)=cmplx(1d0,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         i=0
+         Do ilo= 1,nlorb (1)
+            l1 = lorbl (ilo, 1)
+            Do m1 = - l1, l1
+               i=i+1
+               lm1 = idxlm (l1, m1)
+               test=cmplx(0,0,8)
+               Do l2 = 0, input%groundstate%lmaxvr
+                  Do m2 = - l2, l2
+                     lm2 = idxlm (l2, m2)
+                     Do l3 = 0, input%groundstate%lmaxmat
+                        Do m3 = - l3, l3
+                           lm3 = idxlm (l3, m3)
+                           test = test + gauntyry (l1, l2, l3, m1, m2, m3)
+                        End Do
+                     End Do
+                  End Do
+               End Do
+               hamilton_ref%za(1:gsize,i+gsize)=conjg(test)
+            End Do
+         End Do
+
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals    
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_Gnt_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymLO_1Proc
+!------------------------------------------------------------------------------
+! 2nd test, MPI with 1 proc
+! The purpose is to test whether whether hloa is handled properly.
+! This test involves only the spherically symmetric component, meaning only a part of hloa is tested.
+! The matching coefficients apwalm depend on g1.
+! The radial integrals (hloa) depend on the LO index and angular momentum of APW.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymLO_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
+
+      Integer :: l1,m1,lm1,lm2,l3,g1,i
+      integer :: ilo
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Integer, Dimension(nmatp) :: hamilton_loc_cols
+
+! Externals
+      Complex(8), External :: gauntyry
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+         Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton,nmatp)
+         Call newmatrix(hamilton_ref,nmatp)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+! The condition for the spherically symmetric evaluation
+         hloa(:,1,:,2:lmmaxvr,1)=0d0
+
+         Do ilo= 1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do l3 = 0, input%groundstate%lmaxmat
+               hloa(ilo,:,l3,1,1)=dble(ilo)*sqrt(dble(l1+1))/sqrt(dble(l3+1))*sqrt(4d0*pi)
+            End Do
+         End Do
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1=1,gsize
+                  apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         do g1=1,gsize
+            do ilo=1,nlorb (1)
+               l1=lorbl(ilo,1)
+               lm1=idxlm(l1,-l1)
+               lm2=idxlm(l1,l1)
+               hamilton_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=g1*ilo
+            enddo
+         enddo
+
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymLO_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymAPW_1Proc
+!------------------------------------------------------------------------------
+! 3rd test, MPI with 1 proc
+! The purpose is to test whether whether apwalm is handled properly.
+! This test involves only the spherically symmetric component, meaning only a part of hloa is tested.
+! The matching coefficients apwalm depend on g1, angular momentum of APW and LO index.
+! The radial integrals (hloa) depend on angular momentum of APW.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+! IMPORTANT NOTE: This test depends on initialisation done in a specific way.
+! Make sure that lorbl contains either (/0/), (/0,1/), (/0,1,2/), (/0,1,2,3/) etc.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymAPW_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
+      Integer :: l1,m1,lm1,l3,g1,g2
+      integer :: ilo,last,i,l,m,lm
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Integer, Dimension(nmatp) :: hamilton_loc_cols
+
+! Externals
+      Complex(8), External :: gauntyry
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+         Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+         nlorb(1)=4
+         lorbl(1:4,1)=(/0,1,2,3/)
+! copied from genidxlo
+         i=0
+         Do ilo = 1, nlorb (1)
+            l = lorbl (ilo, 1)
+            Do m = - l, l
+               i = i + 1
+               lm = idxlm (l, m)
+               idxlo (lm, ilo, 1) = i
+            End Do
+         End Do
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton,nmatp)
+         Call newmatrix(hamilton_ref,nmatp)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+         hloa(:,:,:,2:lmmaxvr,:)=0d0
+         Do ilo= 1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do l3 = 0, input%groundstate%lmaxmat
+               hloa(ilo,:,l3,1,1)=1d0/sqrt(dble(l3+1))*sqrt(4d0*pi)
+            End Do
+         End Do
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1=1,gsize
+                  ilo=l1**2+l1+m1+1
+                  apwalm(g1,:,lm1,1)=cmplx(g1,0,8)*cmplx(sqrt(dble(l1+1)),0,8)*dble(ilo)
+               Enddo
+            Enddo
+         Enddo
+
+         last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
+         do g1=1,gsize
+            do g2=1,last
+               hamilton_ref%za(g1,gsize+g2)=g1*g2
+            enddo
+         enddo
+
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymAPW_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymAsymAPW_1Proc
+!------------------------------------------------------------------------------
+! 4th test, MPI with 1 proc
+! The purpose is to test whether whether apwalm is handled properly.
+! This test involves both the spherically symmetric and asymmetric components.
+! This test is a more general version of the 3rd test, but it is also more difficult to follow if something goes wrong here.
+! The matching coefficients apwalm depend on depend on g1, the orbital momentum l3 and magnetic moment m3.
+! The radial integrals (hloa) are constant.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymAsymAPW_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
+
+      Integer :: l1,m1,lm1,lm2,g1,g2,i
+      integer :: ilo,last
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Integer, Dimension(nmatp) :: hamilton_loc_cols
+
+! Externals
+      Complex(8), External :: gauntyry
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+         Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton,nmatp)
+         Call newmatrix(hamilton_ref,nmatp)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+         hloa(:,1,:,:,1)=1d0
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1=1,gsize
+                  apwalm(g1,:,lm1,1)=cmplx(g1,0,8)*cmplx(cos(dble(lm1)),sin(dble(lm1)),8)
+               Enddo
+            Enddo
+         Enddo
+
+         last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
+         do ilo=1,nlorb(1)
+            l1=lorbl(ilo,1)
+            do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               g2=idxlo(lm1,ilo,1)
+               do lm2=1,lmmaxmat
+                  hamilton_ref%za(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,1:lmmaxvr,lm2))*cmplx(cos(dble(lm2)),sin(dble(lm2)),8))+hamilton_ref%za(1:gsize,gsize+g2)
+               enddo
+            enddo
+         enddo
+         do g1=1,gsize
+            hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
+         enddo
+
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
+         
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymAsymAPW_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymAsymLO_4Proc
+!------------------------------------------------------------------------------
+! 5th test, MPI with 1 proc
+! The purpose is to test whether whether hloa is handled properly.
+! This test involves both the spherically symmetric and asymmetric components.
+! This test is a more general version of the 2nd test, but it is also more difficult to follow if something goes wrong here.
+! The matching coefficients apwalm depend on depend on g1.
+! The radial integrals (hloa) depend on the LO index (ilo), the orbital momentum of APW (l3) and the lm couple of the potential (lm2).
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymAsymLO_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
+
+      Integer :: l1,m1,lm1,l2,lm2,l3,lm3,g1,g2,i
+      integer :: ilo,last
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Integer, Dimension(nmatp) :: hamilton_loc_cols
+
+! Externals
+      Complex(8), External :: gauntyry
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+         Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton,nmatp)
+         Call newmatrix(hamilton_ref,nmatp)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+         hloa(:,1,:,:,1)=1d0
+
+         Do ilo= 1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do l3 = 0, input%groundstate%lmaxmat
+               do lm2=1,lmmaxvr
+                  hloa(ilo,:,l3,lm2,1)=dble(ilo)*cos(dble(l3))*sin(dble(lm2))
+               enddo
+            End Do
+         End Do
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Do g1=1,gsize
+         apwalm(g1,1,:,1)=cmplx(g1,0,8)
+         Enddo
+
+         last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
+         do ilo=1,nlorb(1)
+            l1=lorbl(ilo,1)
+            do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               g2=idxlo(lm1,ilo,1)
+               do l2=0,lmaxmat
+                  do lm3=1,lmmaxvr
+                  hamilton_ref%za(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,lm3,idxlm(l2,-l2):idxlm(l2,l2))))*dble(ilo)*cos(dble(l2))*sin(dble(lm3))+hamilton_ref%za(1:gsize,gsize+g2)
+                  enddo
+               enddo
+            enddo
+         enddo
+         do g1=1,gsize
+         hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
+         enddo
+
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymAsymLO_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SpherSymmAsymGnt_4Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 4 procs
+! The purpose is to test whether gaunt coefficients are handled properly.
+! The matching coefficients apwalm contain a constant.
+! The radial integrals are constant.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_Gnt_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23)
+      
+      Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1_idx
+      integer :: i,ilo
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      complex(8)               :: test
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+      Complex(8), External :: gauntyry
+
+! MPI related variables
+      Integer :: n_procs_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, hamilton_loc_cols
+
+      n_procs_test = 4
+      Call setupProcGrid(2, 2, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton, nmatp, DISTRIBUTE_2D)
+         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc_idx(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc_idx, hamilton_loc_cols, MPIglobal)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d0
+
+         hamilton_ref_global(:,:)=cmplx(0,0,8)
+
+         allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))      
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1_idx=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                          ! according to the processor rows
+                  apwalm(g1_idx,:,lm1,1)=cmplx(1d0,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         i=0
+         Do ilo= 1,nlorb (1)
+            l1 = lorbl (ilo, 1)
+            Do m1 = - l1, l1
+               i=i+1
+               lm1 = idxlm (l1, m1)
+               test=cmplx(0,0,8)
+               Do l2 = 0, input%groundstate%lmaxvr
+                  Do m2 = - l2, l2
+                     lm2 = idxlm (l2, m2)
+                     Do l3 = 0, input%groundstate%lmaxmat
+                        Do m3 = - l3, l3
+                           lm3 = idxlm (l3, m3)
+                           test = test + gauntyry (l1, l2, l3, m1, m2, m3)
+                        End Do
+                     End Do
+                  End Do
+               End Do
+               hamilton_ref_global(1:gsize,i+gsize)=conjg(test)
+            End Do
+         End Do
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+
+         select case (MPIglobal%rank)
+            case (0)
+               ncols_loc = 12
+               nrows_loc = 12
+            case (1)
+               ncols_loc = 11
+               nrows_loc = 12
+            case (2)
+               ncols_loc = 12
+               nrows_loc = 11
+            case (3)
+               ncols_loc = 11
+               nrows_loc = 11
+         End select
+
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm, hamilton_loc_cols, apwalm1_loc_idx)
+! deallocation of global variables   
+         Call freeGlobals    
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_Gnt_4Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymLO_4Proc
+!------------------------------------------------------------------------------
+! 2nd test, MPI with 4 procs
+! The purpose is to test whether whether hloa is handled properly.
+! This test involves only the spherically symmetric component, meaning only a part of hloa is tested.
+! The matching coefficients apwalm depend on g1.
+! The radial integrals (hloa) depend on the LO index and angular momentum of APW.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymLO_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23) 
+
+      Integer :: l1,m1,lm1,lm2,l3,g1,g1_idx
+      integer :: ilo
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+      Complex(8), External :: gauntyry
+
+! MPI related variables
+      Integer :: n_procs_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, hamilton_loc_cols
+
+      n_procs_test = 4
+      Call setupProcGrid(2, 2, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton, nmatp, DISTRIBUTE_2D)
+         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc_idx(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc_idx, hamilton_loc_cols, MPIglobal)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+! The condition for the spherically symmetric evaluation
+         hloa(:,1,:,2:lmmaxvr,1)=0d0
+
+         Do ilo= 1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do l3 = 0, input%groundstate%lmaxmat
+               hloa(ilo,:,l3,1,1)=dble(ilo)*sqrt(dble(l1+1))/sqrt(dble(l3+1))*sqrt(4d0*pi)
+            End Do
+         End Do
+
+         allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1_idx=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                          ! according to the processor rows
+                  g1=apwalm1_loc_idx(g1_idx) 
+                  apwalm(g1_idx,:,lm1,1)=cmplx(g1,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         do g1=1,gsize
+            do ilo=1,nlorb (1)
+               l1=lorbl(ilo,1)
+               lm1=idxlm(l1,-l1)
+               lm2=idxlm(l1,l1)
+               hamilton_ref_global(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=g1*ilo
+            enddo
+         enddo
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+
+         select case (MPIglobal%rank)
+            case (0)
+               ncols_loc = 12
+               nrows_loc = 12
+            case (1)
+               ncols_loc = 11
+               nrows_loc = 12
+            case (2)
+               ncols_loc = 12
+               nrows_loc = 11
+            case (3)
+               ncols_loc = 11
+               nrows_loc = 11
+         End select
+
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm, hamilton_loc_cols, apwalm1_loc_idx)
+! deallocation of global variables   
+         Call freeGlobals    
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymLO_4Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymAPW_4Proc
+!------------------------------------------------------------------------------
+! 3rd test, MPI with 1 proc
+! The purpose is to test whether whether apwalm is handled properly.
+! This test involves only the spherically symmetric component, meaning only a part of hloa is tested.
+! The matching coefficients apwalm depend on g1, angular momentum of APW and LO index.
+! The radial integrals (hloa) depend on angular momentum of APW.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+! IMPORTANT NOTE: This test depends on initialisation done in a specific way.
+! Make sure that lorbl contains either (/0/), (/0,1/), (/0,1,2/), (/0,1,2,3/) etc.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymAPW_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=5,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=43)
+
+      Integer :: l1,m1,lm1,l3,g1,g1_idx,g2
+      integer :: ilo, last,i,l,m,lm
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+      Complex(8), External :: gauntyry
+
+! MPI related variables
+      Integer :: n_procs_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, hamilton_loc_cols
+
+      n_procs_test = 4
+      Call setupProcGrid(2, 2, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+         nlorb(1)=4
+         lorbl(1:4,1)=(/0,1,2,3/)
+! copied from genidxlo
+         i=0
+         Do ilo = 1, nlorb (1)
+            l = lorbl (ilo, 1)
+            Do m = - l, l
+               i = i + 1
+               lm = idxlm (l, m)
+               idxlo (lm, ilo, 1) = i
+            End Do
+         End Do
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton, nmatp, DISTRIBUTE_2D)
+         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc_idx(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc_idx, hamilton_loc_cols, MPIglobal)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+         hloa(:,:,:,2:lmmaxvr,:)=0d0
+         Do ilo= 1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do l3 = 0, input%groundstate%lmaxmat
+               hloa(ilo,:,l3,1,1)=1d0/sqrt(dble(l3+1))*sqrt(4d0*pi)
+            End Do
+         End Do
+
+         allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1_idx=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                          ! according to the processor rows
+                  g1=apwalm1_loc_idx(g1_idx) 
+                  ilo=l1**2+l1+m1+1
+                  apwalm(g1_idx,:,lm1,1)=cmplx(g1,0,8)*cmplx(sqrt(dble(l1+1)),0,8)*dble(ilo)
+               Enddo
+            Enddo
+         Enddo
+
+         last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
+         do g1=1,gsize
+            do g2=1,last
+               hamilton_ref_global(g1,gsize+g2)=g1*g2
+            enddo
+         enddo
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+
+         select case (MPIglobal%rank)
+            case (0)
+               ncols_loc = 22
+               nrows_loc = 22
+            case (1)
+               ncols_loc = 21
+               nrows_loc = 22
+            case (2)
+               ncols_loc = 22
+               nrows_loc = 21
+            case (3)
+               ncols_loc = 21
+               nrows_loc = 21
+         End select
+
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm, hamilton_loc_cols, apwalm1_loc_idx)
+! deallocation of global variables   
+         Call freeGlobals    
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymAPW_4Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymAsymAPW_1Proc
+!------------------------------------------------------------------------------
+! 4th test, MPI with 1 proc
+! The purpose is to test whether whether apwalm is handled properly.
+! This test involves both the spherically symmetric and asymmetric components.
+! This test is a more general version of the 3rd test, but it is also more difficult to follow if something goes wrong here.
+! The matching coefficients apwalm depend on depend on g1, the orbital momentum l3 and magnetic moment m3.
+! The radial integrals (hloa) are constant.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymAsymAPW_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23) 
+
+      Integer :: l1,m1,lm1,lm2,g1,g1_idx,g2
+      integer :: ilo, last
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+      Complex(8), External :: gauntyry
+
+! MPI related variables
+      Integer :: n_procs_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, hamilton_loc_cols
+
+      n_procs_test = 4
+      Call setupProcGrid(2, 2, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton, nmatp, DISTRIBUTE_2D)
+         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc_idx(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc_idx, hamilton_loc_cols, MPIglobal)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+         hloa(:,1,:,:,1)=1d0
+
+         allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1_idx=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                          ! according to the processor rows
+                  g1=apwalm1_loc_idx(g1_idx) 
+                  apwalm(g1_idx,:,lm1,1)=cmplx(g1,0,8)*cmplx(cos(dble(lm1)),sin(dble(lm1)),8)
+               Enddo
+            Enddo
+         Enddo
+
+         last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
+         do ilo=1,nlorb(1)
+            l1=lorbl(ilo,1)
+            do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               g2=idxlo(lm1,ilo,1)
+               do lm2=1,lmmaxmat
+                  hamilton_ref_global(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,1:lmmaxvr,lm2))*cmplx(cos(dble(lm2)),sin(dble(lm2)),8))+hamilton_ref_global(1:gsize,gsize+g2)
+               enddo
+            enddo
+         enddo
+         do g1=1,gsize
+            hamilton_ref_global(g1,gsize+1:gsize+last)=hamilton_ref_global(g1,gsize+1:gsize+last)*dble(g1)
+         enddo
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+
+         select case (MPIglobal%rank)
+            case (0)
+               ncols_loc = 12
+               nrows_loc = 12
+            case (1)
+               ncols_loc = 11
+               nrows_loc = 12
+            case (2)
+               ncols_loc = 12
+               nrows_loc = 11
+            case (3)
+               ncols_loc = 11
+               nrows_loc = 11
+         End select
+
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm, hamilton_loc_cols, apwalm1_loc_idx)
+! deallocation of global variables   
+         Call freeGlobals    
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymAsymAPW_4Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHmlalon_SphSymAsymLO_4Proc
+!------------------------------------------------------------------------------
+! 5th test, MPI with 1 proc
+! The purpose is to test whether whether hloa is handled properly.
+! This test involves both the spherically symmetric and asymmetric components.
+! This test is a more general version of the 2nd test, but it is also more difficult to follow if something goes wrong here.
+! The matching coefficients apwalm depend on depend on g1.
+! The radial integrals (hloa) depend on the LO index (ilo), the orbital momentum of APW (l3) and the lm couple of the potential (lm2).
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testHmlalon_SphSymAsymLO_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=23) 
+
+      Integer :: l1,l2,m1,lm1,lm2,lm3,l3,g1,g1_idx,g2
+      integer :: ilo, last
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+      Complex(8), External :: gauntyry
+
+! MPI related variables
+      Integer :: n_procs_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, hamilton_loc_cols
+
+      n_procs_test = 4
+      Call setupProcGrid(2, 2, MPIglobal%comm, MPIglobal%context, ierror_t)
+      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
+
+! allocate and generate complex Gaunt coefficient array
+         Call initGntyry
+
+         Call newmatrix(hamilton, nmatp, DISTRIBUTE_2D)
+         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc_idx(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc_idx, hamilton_loc_cols, MPIglobal)
+! initialisation is finished
+
+         hloa(:,:,:,:,:)=1d8
+         hloa(:,1,:,:,1)=1d0
+
+         Do ilo= 1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do l3 = 0, input%groundstate%lmaxmat
+               do lm2=1,lmmaxvr
+                  hloa(ilo,:,l3,lm2,1)=dble(ilo)*cos(dble(l3))*sin(dble(lm2))
+               enddo
+            End Do
+         End Do
+
+         allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Do g1_idx=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                    ! according to the processor rows
+            g1=apwalm1_loc_idx(g1_idx) 
+            apwalm(g1_idx,1,:,1)=cmplx(g1,0,8)
+         Enddo
+
+         last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
+         do ilo=1,nlorb(1)
+            l1=lorbl(ilo,1)
+            do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               g2=idxlo(lm1,ilo,1)
+               do l2=0,lmaxmat
+                  do lm3=1,lmmaxvr
+                     hamilton_ref_global(1:gsize,gsize+g2)=conjg(sum(gntyry(lm1,lm3,idxlm(l2,-l2):idxlm(l2,l2))))*dble(ilo)*cos(dble(l2))*sin(dble(lm3))+hamilton_ref_global(1:gsize,gsize+g2)
+                  enddo
+               enddo
+            enddo
+         enddo
+         do g1=1,gsize
+            hamilton_ref_global(g1,gsize+1:gsize+last)=hamilton_ref_global(g1,gsize+1:gsize+last)*dble(g1)
+         enddo
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+
+         select case (MPIglobal%rank)
+            case (0)
+               ncols_loc = 12
+               nrows_loc = 12
+            case (1)
+               ncols_loc = 11
+               nrows_loc = 12
+            case (2)
+               ncols_loc = 12
+               nrows_loc = 11
+            case (3)
+               ncols_loc = 11
+               nrows_loc = 11
+         End select
+
+         Call hmlalon(hamilton,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_cols)
+
+         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(hamilton)
+         Call deletematrix(hamilton_ref)
+         Deallocate(apwalm, hamilton_loc_cols, apwalm1_loc_idx)
+! deallocation of global variables   
+         Call freeGlobals    
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      End If
+   End Subroutine testHmlalon_SphSymAsymLO_4Proc
+#endif
 
 
 end module modHmlalon_test

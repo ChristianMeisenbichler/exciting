@@ -205,7 +205,7 @@ module modHmlaan_test
       Real(8) :: mc
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -281,7 +281,7 @@ module modHmlaan_test
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
-! ! initialisation of global variables
+! initialisation of global variables
      Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -358,7 +358,7 @@ module modHmlaan_test
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
-! ! initialisation of global variables
+! initialisation of global variables
      Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -410,7 +410,6 @@ module modHmlaan_test
     End Subroutine testHmlaan_SpherSymmSumL_Serial
 
 
-
 !------------------------------------------------------------------------------
 ! test testHmlaan_SpherSymmSumM_Serial
 !------------------------------------------------------------------------------
@@ -431,7 +430,7 @@ module modHmlaan_test
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -506,7 +505,7 @@ module modHmlaan_test
 ! Externals
       Complex(8), External :: gauntyry
 
-! ! initialisation of global variables
+! initialisation of global variables
      Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -594,7 +593,7 @@ module modHmlaan_test
       complex(8) :: prefactor
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -1302,7 +1301,7 @@ module modHmlaan_test
       If (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
-! ! initialisation of global variables
+! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
 
 ! allocate and generate complex Gaunt coefficient array
@@ -1568,7 +1567,7 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
             lm1=idxlm(l1,m1)
-            Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
+              Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
               g1=apwalm1_loc_idx(g1_idx) 
               apwalm(g1_idx,:,lm1,1)=(4d0*pi)**0.25d0*g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat*(l1+1)))
             Enddo

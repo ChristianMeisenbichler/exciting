@@ -52,6 +52,7 @@ program testsuite
 #else
     Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
     Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
+
     Call runtestcase(testcaseHmlaanSerial, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) serial')
     Call runtestcase(testcaseOlpaanSerial, 'modfvsystem - Overlap matrix setup (the APW-APW part / olpaan) serial')
     Call runtestcase(testcaseHmlalonSerial, 'modfvsystem - Hamiltonian matrix setup (the APW-LO part / hmlalon) serial')
