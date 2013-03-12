@@ -245,7 +245,7 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+      Call hmlaan(hamilton,1,1,gsize,apwalm)
 
       Call assert_equals(nmatp, hamilton%size, 'checking result rank')
       Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
@@ -321,7 +321,7 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+      Call hmlaan(hamilton,1,1,gsize,apwalm)
 
       Call assert_equals(nmatp, hamilton%size, 'checking result rank')
       Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
@@ -394,7 +394,7 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+      Call hmlaan(hamilton,1,1,gsize,apwalm)
 
       Call assert_equals(nmatp, hamilton%size, 'checking result rank')
       Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
@@ -465,7 +465,7 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+      Call hmlaan(hamilton,1,1,gsize,apwalm)
 
       Call assert_equals(nmatp, hamilton%size, 'checking result rank')
       Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
@@ -556,7 +556,7 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+      Call hmlaan(hamilton,1,1,gsize,apwalm)
 
       Call assert_equals(nmatp, hamilton%size, 'checking result rank')
       Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
@@ -636,7 +636,7 @@ module modHmlaan_test
         Enddo
       Enddo
       
-      Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+      Call hmlaan(hamilton,1,1,gsize,apwalm)
 
       Call assert_equals(nmatp, hamilton%size, 'checking result rank')
       Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
@@ -1279,7 +1279,7 @@ module modHmlaan_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       Parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=11)
       
-      Integer                  :: l1,m1,lm1,g1,g1_idx,g2
+      Integer                  :: l1,m1,lm1,g1,g1_loc,g2
       Complex (8), Allocatable :: apwalm (:, :, :, :)
       Real(8)                  :: mc
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
@@ -1289,7 +1289,7 @@ module modHmlaan_test
       Integer :: n_procs_test, ierror_t
       Integer :: nrows_loc, ncols_loc
       Integer :: gsize_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, dummy
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
 ! Externals
       Integer, External   :: NUMROC
@@ -1312,8 +1312,8 @@ module modHmlaan_test
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc_idx, MPIglobal_1D)
+        allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
 
 ! initialisation is finished
 
@@ -1334,10 +1334,10 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
             lm1=idxlm(l1,m1)
-            Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
-              g1=apwalm1_loc_idx(g1_idx) 
+            Do g1_loc=1,gsize_loc !splitting of apwalm along first dimension!
+              g1=apwalm1_loc2glob(g1_loc) 
               mc=dble(g1)/(sqrt(dble(l1+1))*sqrt(dble(2*(lmaxmat+1)*(lmaxmat+2)*(2*l1+1))))
-              apwalm(g1_idx,:,lm1,1)=cmplx(mc,mc,8)
+              apwalm(g1_loc,:,lm1,1)=cmplx(mc,mc,8)
             Enddo 
           Enddo
         Enddo
@@ -1371,7 +1371,7 @@ module modHmlaan_test
 ! finalisation
         Call deletematrix(hamilton)
         Call deletematrix(hamilton_ref)
-        Deallocate(apwalm, apwalm1_loc_idx, dummy)
+        Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
@@ -1397,7 +1397,7 @@ module modHmlaan_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=11)
       
-      Integer                  :: l1,m1,lm1,g1,g1_idx,g2
+      Integer                  :: l1,m1,lm1,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
@@ -1406,7 +1406,7 @@ module modHmlaan_test
       Integer :: n_procs_test, ierror_t
       Integer :: nrows_loc, ncols_loc
       Integer :: gsize_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, dummy
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
 ! Externals
       Integer, External   :: NUMROC
@@ -1429,8 +1429,8 @@ module modHmlaan_test
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc_idx, MPIglobal_1D)
+        allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
 ! initialisation is finished
 
 ! The line below makes sure that other terms apart from the surface kinetic energy 
@@ -1449,9 +1449,9 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
             lm1=idxlm(l1,m1)
-            Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
-              g1=apwalm1_loc_idx(g1_idx) 
-              apwalm(g1_idx,:,lm1,1)=g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(2d0*dble(lmmaxmat))
+            Do g1_loc=1,gsize_loc !splitting of apwalm along first dimension!
+              g1=apwalm1_loc2glob(g1_loc) 
+              apwalm(g1_loc,:,lm1,1)=g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(2d0*dble(lmmaxmat))
             Enddo
           Enddo
         Enddo
@@ -1485,7 +1485,7 @@ module modHmlaan_test
 ! finalisation
         Call deletematrix(hamilton)
         Call deletematrix(hamilton_ref)
-        Deallocate(apwalm, apwalm1_loc_idx, dummy)
+        Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
@@ -1512,7 +1512,7 @@ module modHmlaan_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=11)
       
-      Integer l1,m1,lm1,g1,g1_idx,g2
+      Integer l1,m1,lm1,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
@@ -1521,7 +1521,7 @@ module modHmlaan_test
       Integer :: n_procs_test, ierror_t
       Integer :: nrows_loc, ncols_loc
       Integer :: gsize_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, dummy
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
 ! Externals
       Integer, External   :: NUMROC
@@ -1544,8 +1544,8 @@ module modHmlaan_test
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc_idx, MPIglobal_1D)
+        allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
 
 ! initialisation is finished
 
@@ -1567,9 +1567,9 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
             lm1=idxlm(l1,m1)
-              Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
-              g1=apwalm1_loc_idx(g1_idx) 
-              apwalm(g1_idx,:,lm1,1)=(4d0*pi)**0.25d0*g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat*(l1+1)))
+              Do g1_loc=1,gsize_loc !splitting of apwalm along first dimension!
+              g1=apwalm1_loc2glob(g1_loc) 
+              apwalm(g1_loc,:,lm1,1)=(4d0*pi)**0.25d0*g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat*(l1+1)))
             Enddo
           Enddo
         Enddo
@@ -1603,7 +1603,7 @@ module modHmlaan_test
 ! finalisation
         Call deletematrix(hamilton)
         Call deletematrix(hamilton_ref)
-        Deallocate(apwalm, apwalm1_loc_idx, dummy)
+        Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
@@ -1630,7 +1630,7 @@ module modHmlaan_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=11)
       
-      Integer l1,m1,lm1,g1,g1_idx,g2
+      Integer l1,m1,lm1,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
@@ -1639,7 +1639,7 @@ module modHmlaan_test
       Integer :: n_procs_test, ierror_t
       Integer :: nrows_loc, ncols_loc
       Integer :: gsize_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, dummy
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
 ! Externals
       Integer, External   :: NUMROC
@@ -1662,8 +1662,8 @@ module modHmlaan_test
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc_idx, MPIglobal_1D)
+        allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
 
 ! initialisation is finished
 
@@ -1682,9 +1682,9 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
             lm1=idxlm(l1,m1)
-            Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
-              g1=apwalm1_loc_idx(g1_idx) 
-              apwalm(g1_idx,:,lm1,1)=(4d0*pi)**0.25d0*g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat))
+            Do g1_loc=1,gsize_loc !splitting of apwalm along first dimension!
+              g1=apwalm1_loc2glob(g1_loc) 
+              apwalm(g1_loc,:,lm1,1)=(4d0*pi)**0.25d0*g1*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat))
             Enddo
           Enddo
         Enddo
@@ -1718,7 +1718,7 @@ module modHmlaan_test
 ! finalisation
         Call deletematrix(hamilton)
         Call deletematrix(hamilton_ref)
-        Deallocate(apwalm, apwalm1_loc_idx, dummy)
+        Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
@@ -1746,7 +1746,7 @@ module modHmlaan_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=11)
       
-      Integer ::l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1,g1_idx,g2
+      Integer ::l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8)               :: test
       Type (HermitianMatrix)   :: hamilton,hamilton_ref
@@ -1756,7 +1756,7 @@ module modHmlaan_test
       Integer :: n_procs_test, ierror_t
       Integer :: nrows_loc, ncols_loc
       Integer :: gsize_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, dummy
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
 ! Externals
       Integer,    External :: NUMROC
@@ -1780,8 +1780,8 @@ module modHmlaan_test
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc_idx, MPIglobal_1D)
+        allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
 
 ! initialisation is finished
 
@@ -1796,8 +1796,8 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
             lm1=idxlm(l1,m1)
-            Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
-              apwalm(g1_idx,:,lm1,1)=cmplx(1d0,0,8)
+            Do g1_loc=1,gsize_loc !splitting of apwalm along first dimension!
+              apwalm(g1_loc,:,lm1,1)=cmplx(1d0,0,8)
             Enddo
           Enddo
         Enddo
@@ -1849,7 +1849,7 @@ module modHmlaan_test
 ! finalisation
         Call deletematrix(hamilton)
         Call deletematrix(hamilton_ref)
-        Deallocate(apwalm, apwalm1_loc_idx, dummy)
+        Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
@@ -1877,7 +1877,7 @@ module modHmlaan_test
       Integer lmaxmat,lmaxapw,lmaxvr,gsize,nmatp
       parameter (lmaxmat=2,lmaxapw=10,lmaxvr=6,gsize=9,nmatp=11)
       
-      Integer :: l1,m1,lm1,lm2,g1,g1_idx,g2
+      Integer :: l1,m1,lm1,lm2,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8)               :: prefactor
       Type (HermitianMatrix)   :: hamilton, hamilton_ref
@@ -1887,7 +1887,7 @@ module modHmlaan_test
       Integer :: n_procs_test, ierror_t
       Integer :: nrows_loc, ncols_loc
       Integer :: gsize_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc_idx, dummy
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
 ! Externals
       Integer, External   :: NUMROC
@@ -1910,8 +1910,8 @@ module modHmlaan_test
 
 ! init datastructures for splitting apwalm
         gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
-        allocate(dummy(gsize), apwalm1_loc_idx(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc_idx, MPIglobal_1D)
+        allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
 
 ! initialisation is finished
 
@@ -1929,9 +1929,9 @@ module modHmlaan_test
         Do l1=0,lmaxapw
           Do m1=-l1,l1
           lm1=idxlm(l1,m1)
-            Do g1_idx=1,gsize_loc !splitting of apwalm along first dimension!
-              g1=apwalm1_loc_idx(g1_idx) 
-              apwalm(g1_idx,1,lm1,1)=cmplx(g1,0,8)*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat))
+            Do g1_loc=1,gsize_loc !splitting of apwalm along first dimension!
+              g1=apwalm1_loc2glob(g1_loc) 
+              apwalm(g1_loc,1,lm1,1)=cmplx(g1,0,8)*cmplx(cos(2d0*pi*dble(lm1)/dble(lmmaxmat)),sin(2d0*pi*dble(lm1)/dble(lmmaxmat)),8)/sqrt(dble(lmmaxmat))
             Enddo
           Enddo
         Enddo
@@ -1976,7 +1976,7 @@ module modHmlaan_test
 ! finalisation
         Call deletematrix(hamilton)
         Call deletematrix(hamilton_ref)
-        Deallocate(apwalm, apwalm1_loc_idx, dummy)
+        Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid

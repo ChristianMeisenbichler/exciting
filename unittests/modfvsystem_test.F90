@@ -216,20 +216,18 @@ module modfvsystem_test
 
         Call newmatrix(matrix, nrows, ncols, DISTRIBUTE_2D)
         
-        select case (MPIglobal%rank)
-          case (0)
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
             nrows_loc = 5
-            ncols_loc = 6
-          case (1)
-            nrows_loc = 5
-            ncols_loc = 4
-          case (2)
+          Case (1)
             nrows_loc = 4
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
             ncols_loc = 6
-          case (3)
-            nrows_loc = 4
+          Case (1)
             ncols_loc = 4
-        end select
+        End Select
 
         Call assert_equals(nrows, matrix%nrows, 'checking newmatrix nrows')
         Call assert_equals(ncols, matrix%ncols, 'checking newmatrix ncols')
@@ -433,20 +431,18 @@ module modfvsystem_test
 
         Call newmatrix(matrix, nmatp, DISTRIBUTE_2D)
         
-        select case (MPIglobal%rank)
-          case (0)
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
             nrows_loc = 6
-            ncols_loc = 6
-          case (1)
-            nrows_loc = 6
-            ncols_loc = 4
-          case (2)
+          Case (1)
             nrows_loc = 4
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
             ncols_loc = 6
-          case (3)
-            nrows_loc = 4
+          Case (1)
             ncols_loc = 4
-        end select
+        End Select
 
         Call assert_equals(nmatp, matrix%size, 'checking newmatrix size')
         Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
@@ -661,20 +657,18 @@ module modfvsystem_test
 
         Call newsystem (system, nmatp)
         
-        select case (MPIglobal%rank)
-          case (0)
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
             nrows_loc = 5
-            ncols_loc = 5
-          case (1)
-            nrows_loc = 5
-            ncols_loc = 4
-          case (2)
+          Case (1)
             nrows_loc = 4
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
             ncols_loc = 5
-          case (3)
-            nrows_loc = 4
+          Case (1)
             ncols_loc = 4
-        end select
+        End Select
 
         Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
         Call assert_equals(nrows_loc, system%hamilton%nrows_loc, 'checking newsystem H nrows_loc')

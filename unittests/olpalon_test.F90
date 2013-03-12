@@ -24,7 +24,6 @@ module modOlpalon_test
 
     contains
 
-
     Subroutine testcaseOlpalonSerial
       Implicit None
 
@@ -40,6 +39,11 @@ module modOlpalon_test
     Subroutine testcaseOlpalon1Proc
       Implicit None
 
+      Call set_test_name ('Matching coefficients, apwalm')
+      Call testOlpalon_APW_1Proc
+      Call set_test_name ('Radial integrals, oalo')
+      Call testOlpalon_APWLO_1Proc
+
     End Subroutine testcaseOlpalon1Proc
 #endif
 
@@ -47,6 +51,11 @@ module modOlpalon_test
 #ifdef MPI
     Subroutine testcaseOlpalon4Proc
       Implicit None
+
+      Call set_test_name ('Matching coefficients, apwalm')
+      Call testOlpalon_APW_4Proc
+      Call set_test_name ('Radial integrals, oalo')
+      Call testOlpalon_APWLO_4Proc
 
     End Subroutine testcaseOlpalon4Proc
 #endif
@@ -144,27 +153,24 @@ module modOlpalon_test
 ! The condition for the spherically symmetric evaluation
       oalo(:,:,:)=1d0
 
-      overlap%za(:,:)=cmplx(0,0,8)
-      overlap_ref%za(:,:)=cmplx(0,0,8)
-
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
-        Do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          Do g1=1,gsize
-            apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
-          Enddo
-        Enddo
+         Do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            Do g1=1,gsize
+               apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
+            Enddo
+         Enddo
       Enddo
 
       last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
       do g1=1,gsize
-       do ilo=1,nlorb (1)
-          l1=lorbl(ilo,1)
-          lm1=idxlm(l1,-l1)
-          lm2=idxlm(l1,l1)
-          overlap_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1,0,8)
-       enddo
+         do ilo=1,nlorb (1)
+            l1=lorbl(ilo,1)
+            lm1=idxlm(l1,-l1)
+            lm2=idxlm(l1,l1)
+            overlap_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1,0,8)
+         enddo
       enddo
 
       Call olpalon(overlap,1,1,gsize,apwalm)
@@ -218,27 +224,27 @@ module modOlpalon_test
       overlap_ref%za(:,:)=cmplx(0,0,8)
 
       Do ilo= 1,nlorb (1)
-          oalo(1,ilo,1)=dble(ilo)
+         oalo(1,ilo,1)=dble(ilo)
       End Do
 
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
-        Do m1=-l1,l1
-          lm1=idxlm(l1,m1)
-          Do g1=1,gsize
-            apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
-          Enddo
-        Enddo
+         Do m1=-l1,l1
+            lm1=idxlm(l1,m1)
+            Do g1=1,gsize
+               apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
+            Enddo
+         Enddo
       Enddo
 
       last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
       do g1=1,gsize
-       do ilo=1,nlorb (1)
-          l1=lorbl(ilo,1)
-          lm1=idxlm(l1,-l1)
-          lm2=idxlm(l1,l1)
-          overlap_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1*ilo,0,8)
-       enddo
+         do ilo=1,nlorb (1)
+            l1=lorbl(ilo,1)
+            lm1=idxlm(l1,-l1)
+            lm2=idxlm(l1,l1)
+            overlap_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1*ilo,0,8)
+         enddo
       enddo
 
       Call olpalon(overlap,1,1,gsize,apwalm)
@@ -255,5 +261,405 @@ module modOlpalon_test
 ! deallocation of global variables 
       Call freeGlobals
     End Subroutine testOlpalon_APWLO_Serial
+
+
+!------------------------------------------------------------------------------
+! test testOlpalon_APW_1Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 1 proc
+! The purpose is to test whether the matching coefficients apwalm are handled properly.
+! The matching coefficients apwalm depend on g1.
+! The radial integrals oalo are constant. 
+#ifdef MPI
+    Subroutine testOlpalon_APW_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,gsize=9,nmatp=27)
+
+      Integer :: l1,m1,lm1,lm2,g1
+      integer :: ilo,i
+      Complex (8), allocatable  :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)    :: overlap,overlap_ref
+      Integer, Dimension(nmatp) :: overlap_loc_cols
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,gsize)
+
+         Call newmatrix(overlap,nmatp)
+         Call newmatrix(overlap_ref,nmatp)
+! initialisation is finished
+
+! The condition for the spherically symmetric evaluation
+         oalo(:,:,:)=1d0
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1=1,gsize
+                  apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         do g1=1,gsize
+            do ilo=1,nlorb (1)
+               l1=lorbl(ilo,1)
+               lm1=idxlm(l1,-l1)
+               lm2=idxlm(l1,l1)
+               overlap_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1,0,8)
+            enddo
+         enddo
+
+         overlap_loc_cols = (/(i,i=1,nmatp)/)
+         Call olpalon(overlap,1,1,gsize,apwalm,gsize,gsize,overlap_loc_cols)
+
+         Call assert_equals(nmatp, overlap%size, 'checking result rank')
+         Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(overlap)
+         Call deletematrix(overlap_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlpalon_APW_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testOlpalon_APW_1Proc
+!------------------------------------------------------------------------------
+! 2nd test, MPI with 1 proc
+! The purpose is to test whether the radial integrals oalo are handled properly.
+! The matching coefficients apwalm depend on g1.
+! The radial integrals oalo depend on the LO index. 
+#ifdef MPI
+    Subroutine testOlpalon_APWLO_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,gsize=9,nmatp=27)
+
+      Integer :: l1,m1,lm1,lm2,g1
+      integer :: ilo,i
+      Complex (8), allocatable  :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)    :: overlap,overlap_ref
+      Integer, Dimension(nmatp) :: overlap_loc_cols
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,gsize)
+
+         Call newmatrix(overlap,nmatp)
+         Call newmatrix(overlap_ref,nmatp)
+! initialisation is finished
+
+! The condition for the spherically symmetric evaluation
+         oalo(:,:,:)=1d8
+         oalo(:,:,1)=0d0
+
+         Do ilo= 1,nlorb (1)
+            oalo(1,ilo,1)=dble(ilo)
+         End Do
+
+         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1=1,gsize
+                  apwalm(g1,:,lm1,1)=cmplx(g1,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         do g1=1,gsize
+            do ilo=1,nlorb (1)
+               l1=lorbl(ilo,1)
+               lm1=idxlm(l1,-l1)
+               lm2=idxlm(l1,l1)
+               overlap_ref%za(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1*ilo,0,8)
+            enddo
+         enddo
+
+         overlap_loc_cols = (/(i,i=1,nmatp)/)
+         Call olpalon(overlap,1,1,gsize,apwalm,gsize,gsize,overlap_loc_cols)
+
+         Call assert_equals(nmatp, overlap%size, 'checking result rank')
+         Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(overlap)
+         Call deletematrix(overlap_ref)
+         Deallocate(apwalm)
+! deallocation of global variables 
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlpalon_APWLO_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testOlpalon_APW_4Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 4 procs
+! The purpose is to test whether the matching coefficients apwalm are handled properly.
+! The matching coefficients apwalm depend on g1.
+! The radial integrals oalo are constant. 
+#ifdef MPI
+    Subroutine testOlpalon_APW_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,gsize=9,nmatp=27)
+
+      Integer :: l1,m1,lm1,lm2,g1,g1_loc
+      integer :: ilo
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Complex (8), Dimension(nmatp,nmatp) :: overlap_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+
+! MPI related variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, overlap_loc_cols
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,gsize)
+
+         Call newmatrix(overlap,nmatp, DISTRIBUTE_2D)
+         Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc2glob(gsize_nrows_loc), overlap_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, overlap_loc_cols, MPIglobal)
+
+! initialisation is finished
+
+! The condition for the spherically symmetric evaluation
+         oalo(:,:,:)=1d0
+
+         allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1_loc=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                          ! according to the processor rows
+                  g1=apwalm1_loc2glob(g1_loc) 
+                  apwalm(g1_loc,:,lm1,1)=cmplx(g1,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         do g1=1,gsize
+            do ilo=1,nlorb (1)
+               l1=lorbl(ilo,1)
+               lm1=idxlm(l1,-l1)
+               lm2=idxlm(l1,l1)
+               overlap_ref_global(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1,0,8)
+            enddo
+         enddo
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+
+         Select Case (MPIglobal%myprocrow)
+            Case (0)
+               nrows_loc = 14
+            Case (1)
+               nrows_loc = 13
+         End Select
+         Select Case (MPIglobal%myproccol)
+            Case (0)
+               ncols_loc = 14
+            Case (1)
+               ncols_loc = 13
+         End Select
+
+         Call olpalon(overlap,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,overlap_loc_cols)
+
+         Call assert_equals(nmatp, overlap%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(overlap%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(overlap)
+         Call deletematrix(overlap_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlpalon_APW_4Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testOlpalon_APW_4Proc
+!------------------------------------------------------------------------------
+! 2nd test, MPI with 4 procs
+! The purpose is to test whether the radial integrals oalo are handled properly.
+! The matching coefficients apwalm depend on g1.
+! The radial integrals oalo depend on the LO index. 
+#ifdef MPI
+    Subroutine testOlpalon_APWLO_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer lmaxmat,lmaxapw,gsize,nmatp
+      parameter (lmaxmat=2,lmaxapw=10,gsize=9,nmatp=27)
+
+      Integer :: l1,m1,lm1,lm2,g1,g1_loc
+      integer :: ilo
+      Complex (8), allocatable :: apwalm (:, :, :, :)
+      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Complex (8), Dimension(nmatp,nmatp) :: overlap_ref_global
+
+! Externals
+      Integer,    External :: NUMROC
+
+! MPI related variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
+      Integer :: gsize_nrows_loc, nmat_ncols_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, overlap_loc_cols
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,gsize)
+
+         Call newmatrix(overlap,nmatp, DISTRIBUTE_2D)
+         Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_2D)
+
+! init datastructures for splitting apwalm
+         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+         allocate(apwalm1_loc2glob(gsize_nrows_loc), overlap_loc_cols(nmat_ncols_loc))
+         Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, overlap_loc_cols, MPIglobal)
+
+! initialisation is finished
+
+! The condition for the spherically symmetric evaluation
+         oalo(:,:,:)=1d8
+         oalo(:,:,1)=0d0
+
+         Do ilo= 1,nlorb (1)
+            oalo(1,ilo,1)=dble(ilo)
+         End Do
+
+         allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Do l1=0,lmaxapw
+            Do m1=-l1,l1
+               lm1=idxlm(l1,m1)
+               Do g1_loc=1,gsize_nrows_loc !splitting of apwalm along first dimension
+                                          ! according to the processor rows
+                  g1=apwalm1_loc2glob(g1_loc) 
+                  apwalm(g1_loc,:,lm1,1)=cmplx(g1,0,8)
+               Enddo
+            Enddo
+         Enddo
+
+         do g1=1,gsize
+            do ilo=1,nlorb (1)
+               l1=lorbl(ilo,1)
+               lm1=idxlm(l1,-l1)
+               lm2=idxlm(l1,l1)
+               overlap_ref_global(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1*ilo,0,8)
+            enddo
+         enddo
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+
+         Select Case (MPIglobal%myprocrow)
+            Case (0)
+               nrows_loc = 14
+            Case (1)
+               nrows_loc = 13
+         End Select
+         Select Case (MPIglobal%myproccol)
+            Case (0)
+               ncols_loc = 14
+            Case (1)
+               ncols_loc = 13
+         End Select
+
+         Call olpalon(overlap,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,overlap_loc_cols)
+
+         Call assert_equals(nmatp, overlap%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(overlap%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+
+! finalisation
+         Call deletematrix(overlap)
+         Call deletematrix(overlap_ref)
+         Deallocate(apwalm)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlpalon_APWLO_4Proc
+#endif
 
 end module modOlpalon_test
