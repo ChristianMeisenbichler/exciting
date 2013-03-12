@@ -1,4 +1,5 @@
-include ../make.inc
+include ../../make.inc
+
 
 FC = $(F77)
 FFLAGS = $(F77_OPTS_UT_MPI) 

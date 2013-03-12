@@ -2,7 +2,7 @@
 
 
 .NOTPARALLEL:
-
+PREFIX="../.."
 default: build/make.inc all 
 
 all:    serial mpi smp spacegroup stateinfo stateconvert species
@@ -94,8 +94,8 @@ stateinfo::
 stateconvert::
 	cd src/stateconvert; $(MAKE)  
 
-species::libs
-	cd src/species; $(MAKE)
+species::
+	cd build/serial; $(MAKE) species
 
 libs:
 	cd build/serial; $(MAKE) libs

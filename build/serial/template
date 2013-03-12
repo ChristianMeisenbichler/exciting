@@ -4,7 +4,7 @@ include ../libraries.inc
 FC = $(F90)
 FFLAGS = $(F90_OPTS) $(CPP_ON_OPT) -I./finclude
 LD = $(FC)
-LDFLAGS = $(F90_OPTS) $(LIBS) $(INTERNALLIBS)
+LDFLAGS = $(F90_OPTS) $(SER_LIBS) $(INTERNALLIBS)
 AR = ar
 ARFLAGS = -rc
 F77=$(F77) $(F77_OPTS)
