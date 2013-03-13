@@ -7,7 +7,7 @@
 !
 !
 #ifdef MPI      
-Subroutine hmlalon (hamilton, is, ia, ngp, apwalm, ngp_loc_row, ngp_loc_col, hamilton_loc_cols)
+Subroutine hmlalon (hamilton, is, ia, ngp, apwalm, ngp_loc_row, ngp_loc_col, cols_loc2glob)
 #else
 Subroutine hmlalon (hamilton, is, ia, ngp, apwalm)
 #endif
@@ -26,7 +26,7 @@ Subroutine hmlalon (hamilton, is, ia, ngp, apwalm)
 #ifdef MPI      
       Complex (8), Intent (In) :: apwalm (ngp_loc_row, apwordmax, lmmaxapw, natmtot) !SPLIT first dimension over procs
       Integer, Intent (In)     :: ngp_loc_row, ngp_loc_col !TODO better name
-      Integer, Dimension(hamilton%ncols_loc), Intent (In) :: hamilton_loc_cols
+      Integer, Dimension(hamilton%ncols_loc), Intent (In) :: cols_loc2glob
 #else 
       Complex (8), Intent (In) :: apwalm (ngp, apwordmax, lmmaxapw, natmtot) 
 #endif
@@ -47,7 +47,7 @@ Subroutine hmlalon (hamilton, is, ia, ngp, apwalm)
             lm1 = idxlm (l1, m1)
             i_glob = ngp + idxlo (lm1, ilo, ias)
 #ifdef MPI
-            if (Any(hamilton_loc_cols .eq. i_glob)) then
+            if (Any(cols_loc2glob .eq. i_glob)) then
                i_loc = i_loc+1 !!! assuming that the indexing increases
                                ! => problem if indexing or order of loops changes
                                ! an array linking between global and local indices would be better

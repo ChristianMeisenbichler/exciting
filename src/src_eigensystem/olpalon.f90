@@ -7,7 +7,7 @@
 !
 !
 #ifdef MPI      
-Subroutine olpalon (overlap, is, ia, ngp, apwalm, ngp_loc_row, ngp_loc_col, overlap_loc_cols)
+Subroutine olpalon (overlap, is, ia, ngp, apwalm, ngp_loc_row, ngp_loc_col, cols_loc2glob)
 #else
 Subroutine olpalon (overlap, is, ia, ngp, apwalm)
 #endif
@@ -22,7 +22,7 @@ Subroutine olpalon (overlap, is, ia, ngp, apwalm)
 #ifdef MPI      
       Complex (8), Intent (In) :: apwalm (ngp_loc_row, apwordmax, lmmaxapw, natmtot) !SPLIT first dimension over procs
       Integer, Intent (In)     :: ngp_loc_row, ngp_loc_col !TODO better name
-      Integer, Dimension(overlap%ncols_loc), Intent (In) :: overlap_loc_cols
+      Integer, Dimension(overlap%ncols_loc), Intent (In) :: cols_loc2glob
 #else 
       Complex (8), Intent (In) :: apwalm (ngp, apwordmax, lmmaxapw, natmtot) 
 #endif
@@ -45,7 +45,7 @@ Subroutine olpalon (overlap, is, ia, ngp, apwalm)
             lm = idxlm (l, m)
             j_glob = ngp + idxlo (lm, ilo, ias)
 #ifdef MPI
-            if (Any(overlap_loc_cols .eq. j_glob)) then
+            if (Any(cols_loc2glob .eq. j_glob)) then
                j_loc = j_loc+1 !!! assuming that the indexing increases
                                  ! => problem if indexing or order of loops changes
                                  ! an array linking between global and local indices would be better

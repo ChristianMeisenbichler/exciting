@@ -216,7 +216,7 @@ module modHmlalon_test
 
       hloa(:,:,:,:,:)=1d0
 
-      allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
+      Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
       Do l1=0,lmaxapw
          Do m1=-l1,l1
             lm1=idxlm(l1,m1)
@@ -308,7 +308,7 @@ module modHmlalon_test
          End Do
       End Do
 
-      allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+      Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
          Do m1=-l1,l1
             lm1=idxlm(l1,m1)
@@ -403,7 +403,7 @@ module modHmlalon_test
          End Do
       End Do
 
-      allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+      Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
          Do m1=-l1,l1
             lm1=idxlm(l1,m1)
@@ -476,7 +476,7 @@ module modHmlalon_test
       hloa(:,:,:,:,:)=1d8
       hloa(:,1,:,:,1)=1d0
 
-      allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+      Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do l1=0,lmaxapw
          Do m1=-l1,l1
             lm1=idxlm(l1,m1)
@@ -564,7 +564,7 @@ module modHmlalon_test
          End Do
       End Do
 
-      allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+      Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
       Do g1=1,gsize
          apwalm(g1,1,:,1)=cmplx(g1,0,8)
       Enddo
@@ -648,11 +648,12 @@ module modHmlalon_test
 
          Call newmatrix(hamilton,nmatp)
          Call newmatrix(hamilton_ref,nmatp)
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          hloa(:,:,:,:,:)=1d0
 
-         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
+         Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -684,7 +685,6 @@ module modHmlalon_test
             End Do
          End Do
 
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
          Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
 
          Call assert_equals(nmatp, hamilton%size, 'checking result rank')
@@ -751,6 +751,7 @@ module modHmlalon_test
 
          Call newmatrix(hamilton,nmatp)
          Call newmatrix(hamilton_ref,nmatp)
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          hloa(:,:,:,:,:)=1d8
@@ -764,7 +765,7 @@ module modHmlalon_test
             End Do
          End Do
 
-         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -783,7 +784,6 @@ module modHmlalon_test
             enddo
          enddo
 
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
          Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
 
          Call assert_equals(nmatp, hamilton%size, 'checking result rank')
@@ -864,6 +864,7 @@ module modHmlalon_test
 
          Call newmatrix(hamilton,nmatp)
          Call newmatrix(hamilton_ref,nmatp)
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          hloa(:,:,:,:,:)=1d8
@@ -875,7 +876,7 @@ module modHmlalon_test
             End Do
          End Do
 
-         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -893,7 +894,6 @@ module modHmlalon_test
             enddo
          enddo
 
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
          Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
 
          Call assert_equals(nmatp, hamilton%size, 'checking result rank')
@@ -961,12 +961,13 @@ module modHmlalon_test
 
          Call newmatrix(hamilton,nmatp)
          Call newmatrix(hamilton_ref,nmatp)
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          hloa(:,:,:,:,:)=1d8
          hloa(:,1,:,:,1)=1d0
 
-         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -991,7 +992,6 @@ module modHmlalon_test
             hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
          enddo
 
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
          Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
          
          Call assert_equals(nmatp, hamilton%size, 'checking result rank')
@@ -1059,6 +1059,7 @@ module modHmlalon_test
 
          Call newmatrix(hamilton,nmatp)
          Call newmatrix(hamilton_ref,nmatp)
+         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          hloa(:,:,:,:,:)=1d8
@@ -1073,7 +1074,7 @@ module modHmlalon_test
             End Do
          End Do
 
-         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
          Do g1=1,gsize
          apwalm(g1,1,:,1)=cmplx(g1,0,8)
          Enddo
@@ -1095,7 +1096,6 @@ module modHmlalon_test
          hamilton_ref%za(g1,gsize+1:gsize+last)=hamilton_ref%za(g1,gsize+1:gsize+last)*dble(g1)
          enddo
 
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
          Call hmlalon(hamilton,1,1,gsize,apwalm,gsize,gsize,hamilton_loc_cols)
 
          Call assert_equals(nmatp, hamilton%size, 'checking result rank')
@@ -1171,7 +1171,7 @@ module modHmlalon_test
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
          nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
          Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
@@ -1179,7 +1179,7 @@ module modHmlalon_test
 
          hamilton_ref_global(:,:)=cmplx(0,0,8)
 
-         allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))      
+         Allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))      
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -1190,6 +1190,7 @@ module modHmlalon_test
             Enddo
          Enddo
 
+         hamilton_ref_global = Cmplx(0,0,8)
          i=0
          Do ilo= 1,nlorb (1)
             l1 = lorbl (ilo, 1)
@@ -1301,7 +1302,7 @@ module modHmlalon_test
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
          nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
          Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
@@ -1316,7 +1317,7 @@ module modHmlalon_test
             End Do
          End Do
 
-         allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm (gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -1328,6 +1329,7 @@ module modHmlalon_test
             Enddo
          Enddo
 
+         hamilton_ref_global = Cmplx(0,0,8)
          do g1=1,gsize
             do ilo=1,nlorb (1)
                l1=lorbl(ilo,1)
@@ -1374,7 +1376,7 @@ module modHmlalon_test
 !------------------------------------------------------------------------------
 ! test testHmlalon_SphSymAPW_4Proc
 !------------------------------------------------------------------------------
-! 3rd test, MPI with 1 proc
+! 3rd test, MPI with 4 procs
 ! The purpose is to test whether whether apwalm is handled properly.
 ! This test involves only the spherically symmetric component, meaning only a part of hloa is tested.
 ! The matching coefficients apwalm depend on g1, angular momentum of APW and LO index.
@@ -1441,7 +1443,7 @@ module modHmlalon_test
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
          nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
          Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
@@ -1454,7 +1456,7 @@ module modHmlalon_test
             End Do
          End Do
 
-         allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -1467,6 +1469,7 @@ module modHmlalon_test
             Enddo
          Enddo
 
+         hamilton_ref_global = Cmplx(0,0,8)
          last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
          do g1=1,gsize
             do g2=1,last
@@ -1509,9 +1512,9 @@ module modHmlalon_test
 
 
 !------------------------------------------------------------------------------
-! test testHmlalon_SphSymAsymAPW_1Proc
+! test testHmlalon_SphSymAsymAPW_4Proc
 !------------------------------------------------------------------------------
-! 4th test, MPI with 1 proc
+! 4th test, MPI with 4 procs
 ! The purpose is to test whether whether apwalm is handled properly.
 ! This test involves both the spherically symmetric and asymmetric components.
 ! This test is a more general version of the 3rd test, but it is also more difficult to follow if something goes wrong here.
@@ -1564,14 +1567,14 @@ module modHmlalon_test
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
          nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
          Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
          hloa(:,:,:,:,:)=1d8
          hloa(:,1,:,:,1)=1d0
 
-         allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -1583,6 +1586,7 @@ module modHmlalon_test
             Enddo
          Enddo
 
+         hamilton_ref_global = Cmplx(0,0,8)
          last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
          do ilo=1,nlorb(1)
             l1=lorbl(ilo,1)
@@ -1635,7 +1639,7 @@ module modHmlalon_test
 !------------------------------------------------------------------------------
 ! test testHmlalon_SphSymAsymLO_4Proc
 !------------------------------------------------------------------------------
-! 5th test, MPI with 1 proc
+! 5th test, MPI with 4 procs
 ! The purpose is to test whether whether hloa is handled properly.
 ! This test involves both the spherically symmetric and asymmetric components.
 ! This test is a more general version of the 2nd test, but it is also more difficult to follow if something goes wrong here.
@@ -1688,7 +1692,7 @@ module modHmlalon_test
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
          nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
+         Allocate(apwalm1_loc2glob(gsize_nrows_loc), hamilton_loc_cols(nmat_ncols_loc))
          Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
@@ -1704,13 +1708,14 @@ module modHmlalon_test
             End Do
          End Do
 
-         allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
+         Allocate(apwalm(gsize_nrows_loc, apwordmax, lmmaxapw, natmtot))
          Do g1_loc=1,gsize_nrows_loc !splitting of apwalm along first dimension
                                     ! according to the processor rows
             g1=apwalm1_loc2glob(g1_loc) 
             apwalm(g1_loc,1,:,1)=cmplx(g1,0,8)
          Enddo
 
+         hamilton_ref_global = Cmplx(0,0,8)
          last=idxlo(idxlm(lorbl(nlorb (1),1),lorbl(nlorb (1),1)),nlorb (1),1)
          do ilo=1,nlorb(1)
             l1=lorbl(ilo,1)

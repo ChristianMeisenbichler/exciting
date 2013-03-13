@@ -1311,12 +1311,14 @@ contains
     double precision, intent (in) :: var1(n, m), var2(n, m)
     double precision, intent (in) :: delta
     character(len = *), intent (in), optional :: message
+    character(len=100) :: location_str
     do j = 1, m
       do i = 1, n
         if (abs(var1(i, j) - var2(i, j)) > delta) then
+          write(location_str,'(A,i3,A,I3,A)') '(',i,',',j,'), '
           call failed_assert_action(&
           & to_s(var1(i, j)), &
-          & to_s(var2(i, j)), '2d array has difference, ' // message)
+          & to_s(var2(i, j)), '2d array has difference in ' // trim(location_str) // message)
           return
         endif
       enddo
@@ -1421,12 +1423,15 @@ contains
     complex(kind=kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
     double precision, intent (in) :: delta
     character(len = *), intent (in), optional :: message
+    character(len=100) :: location_str
     do j = 1, m
       do i = 1, n
         if (abs(var1(i, j) - var2(i, j)) > delta) then
+
+          write(location_str,'(A,i3,A,I3,A)') '(',i,',',j,'), '
           call failed_assert_action(&
           & to_s(var1(i, j)), &
-          & to_s(var2(i, j)), '2d array has difference, ' // message)
+          & to_s(var2(i, j)), '2d array has difference in ' // trim(location_str) // message)
           return
         endif
       enddo

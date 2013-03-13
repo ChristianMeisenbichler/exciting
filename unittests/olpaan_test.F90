@@ -302,6 +302,7 @@ module modOlpaan_test
             Enddo
          Enddo
 
+         overlap_ref_global = Cmplx(0,0,8)
          Do g2=1,gsize
             Do g1=1,gsize      
                overlap_ref_global(g1,g2)=cmplx(g1*g2,0,8)

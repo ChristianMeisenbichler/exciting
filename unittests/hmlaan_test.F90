@@ -218,15 +218,15 @@ module modHmlaan_test
 ! The line below makes sure that other terms apart from the surface kinetic energy 
 ! do not contribute.
       haa(:,:,:,:,:,:)=0d0
-
-      hamilton%za(:,:)=cmplx(0,0,8)
       rmt(:)=2d0
       apwfr(:,:,:,:,:)=0d0
       apwdfr(:,:,:)=0d0
+
       Do l1=0,lmaxapw
         apwfr(nrmt(1),1,:,l1,1)=sqrt(dble(l1+1)) 
         apwdfr(:,l1,1)=sqrt(dble(l1+1))*dble(l1+1)
       Enddo
+
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
       apwalm(:,:,:,:)=0d0
       Do l1=0,lmaxapw
@@ -294,15 +294,15 @@ module modHmlaan_test
 ! The line below makes sure that other terms apart from the surface kinetic energy 
 ! do not contribute.
       haa(:,:,:,:,:,:)=0d0
-
-      hamilton%za(:,:)=cmplx(0,0,8)
       rmt(:)=2d0
       apwfr(:,:,:,:,:)=0d0
       apwdfr(:,:,:)=0d0
+
       Do l1=0,lmaxapw
         apwfr(nrmt(1),1,:,l1,1)=1d0
         apwdfr(:,l1,1)=1d0
       Enddo
+
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
       Do l1=0,lmaxapw
         Do m1=-l1,l1
@@ -369,13 +369,11 @@ module modHmlaan_test
 ! initialisation is finished
 
       haa(:,:,:,:,:,:)=0d0
-
-      hamilton%za(:,:)=cmplx(0,0,8)
+      haa(1,:,1,:,1,1)=1d0
       rmt(:)=2d0
       apwfr(:,:,:,:,:)=0d0
       apwdfr(:,:,:)=0d0
 
-      haa(1,:,1,:,1,1)=1d0
       Do l1=0,lmaxmat
         haa(1,l1,1,l1,1,1)=dble(l1+1)
       Enddo
@@ -441,13 +439,10 @@ module modHmlaan_test
 ! initialisation is finished
 
       haa(:,:,:,:,:,:)=0d0
-
-      hamilton%za(:,:)=cmplx(0,0,8)
+      haa(1,:,1,:,1,1)=1d0
       rmt(:)=2d0
       apwfr(:,:,:,:,:)=0d0
       apwdfr(:,:,:)=0d0
-
-      haa(1,:,1,:,1,1)=1d0
 
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
       Do l1=0,lmaxapw
@@ -516,8 +511,6 @@ module modHmlaan_test
 ! initialisation is finished
 
       haa(:,:,:,:,:,:)=1d0
-
-      hamilton%za(:,:)=cmplx(0,0,8)
       rmt(:)=2d0
       apwfr(:,:,:,:,:)=0d0
       apwdfr(:,:,:)=0d0
@@ -603,14 +596,11 @@ module modHmlaan_test
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
-      haa(:,:,:,:,:,:)=0d0
-
-      hamilton%za(:,:)=cmplx(0,0,8)
+      haa(:,:,:,:,:,:)=cmplx(1,0,8)
       rmt(:)=2d0
       apwfr(:,:,:,:,:)=0d0
       apwdfr(:,:,:)=0d0
       
-      haa(:,:,:,:,:,:)=cmplx(1,0,8)
 
       allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
       apwalm(:,:,:,:)=0d0
@@ -707,17 +697,16 @@ module modHmlaan_test
 ! The line below makes sure that other terms apart from the surface kinetic energy 
 ! do not contribute.
         haa(:,:,:,:,:,:)=0d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
+
         Do l1=0,lmaxapw
           apwfr(nrmt(1),1,:,l1,1)=sqrt(dble(l1+1)) 
           apwdfr(:,l1,1)=sqrt(dble(l1+1))*dble(l1+1)
         Enddo
-        allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
 
+        allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
         apwalm(:,:,:,:)=0d0
         Do l1=0,lmaxapw
           Do m1=-l1,l1
@@ -809,15 +798,15 @@ module modHmlaan_test
 ! The line below makes sure that other terms apart from the surface kinetic energy 
 ! do not contribute.
         haa(:,:,:,:,:,:)=0d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
+
         Do l1=0,lmaxapw
           apwfr(nrmt(1),1,:,l1,1)=1d0
           apwdfr(:,l1,1)=1d0
         Enddo
+
         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
         Do l1=0,lmaxapw
           Do m1=-l1,l1
@@ -905,16 +894,15 @@ module modHmlaan_test
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=0d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
+        haa(1,:,1,:,1,1)=1d0
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
 
-        haa(1,:,1,:,1,1)=1d0
         Do l1=0,lmaxmat
           haa(1,l1,1,l1,1,1)=dble(l1+1)
         Enddo
+
         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
         Do l1=0,lmaxapw
           Do m1=-l1,l1
@@ -924,6 +912,7 @@ module modHmlaan_test
             Enddo
           Enddo
         Enddo
+
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref%za(g1,g2)=cmplx(g1*g2,0,8)
@@ -998,13 +987,10 @@ module modHmlaan_test
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=0d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
+        haa(1,:,1,:,1,1)=1d0
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
-
-        haa(1,:,1,:,1,1)=1d0
 
         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
         Do l1=0,lmaxapw
@@ -1094,12 +1080,9 @@ module modHmlaan_test
 ! initialisation is finished
 
         haa(:,:,:,:,:,:)=1d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
-
 
         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
         Do l1=0,lmaxapw
@@ -1204,15 +1187,11 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
-        haa(:,:,:,:,:,:)=0d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
+        haa(:,:,:,:,:,:)=cmplx(1,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
         
-        haa(:,:,:,:,:,:)=cmplx(1,0,8)
-
         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
         apwalm(:,:,:,:)=0d0
         Do l1=0,lmaxapw
@@ -1320,15 +1299,15 @@ module modHmlaan_test
 ! The line below makes sure that other terms apart from the surface kinetic energy 
 ! do not contribute.
         haa(:,:,:,:,:,:)=0d0
-
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
+
         Do l1=0,lmaxapw
           apwfr(nrmt(1),1,:,l1,1)=sqrt(dble(l1+1)) 
           apwdfr(:,l1,1)=sqrt(dble(l1+1))*dble(l1+1)
         Enddo
+
         allocate(apwalm(gsize_loc, apwordmax, lmmaxapw, natmtot))      
         apwalm(:,:,:,:)=0d0
         Do l1=0,lmaxapw
@@ -1342,6 +1321,7 @@ module modHmlaan_test
           Enddo
         Enddo
 
+        hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
           Do g1=1,gsize      
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
@@ -1437,7 +1417,6 @@ module modHmlaan_test
 ! do not contribute.
         haa(:,:,:,:,:,:)=0d0
 
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
@@ -1456,6 +1435,7 @@ module modHmlaan_test
           Enddo
         Enddo
 
+        hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
@@ -1553,7 +1533,6 @@ module modHmlaan_test
 ! do not contribute.
         haa(:,:,:,:,:,:)=0d0
 
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
@@ -1574,6 +1553,7 @@ module modHmlaan_test
           Enddo
         Enddo
 
+        hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
@@ -1671,7 +1651,6 @@ module modHmlaan_test
 ! do not contribute.
         haa(:,:,:,:,:,:)=0d0
 
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
@@ -1689,6 +1668,7 @@ module modHmlaan_test
           Enddo
         Enddo
 
+        hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
@@ -1787,7 +1767,6 @@ module modHmlaan_test
 
         haa(:,:,:,:,:,:)=1d0
 
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
@@ -1820,6 +1799,7 @@ module modHmlaan_test
           End Do
         End Do
 
+        hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref_global(g1,g2)=test
@@ -1917,7 +1897,6 @@ module modHmlaan_test
 
         haa(:,:,:,:,:,:)=0d0
 
-        hamilton%za(:,:)=cmplx(0,0,8)
         rmt(:)=2d0
         apwfr(:,:,:,:,:)=0d0
         apwdfr(:,:,:)=0d0
@@ -1947,6 +1926,7 @@ module modHmlaan_test
         end if
         Call MPI_BCAST(prefactor, 2, MPI_DOUBLE_PRECISION, 0, MPIglobal_1D%comm, ierror_t) 
 
+        hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
           Do g1=1,gsize
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)*prefactor

@@ -503,6 +503,7 @@ module modOlpalon_test
             Enddo
          Enddo
 
+         overlap_ref_global = Cmplx(0,0,8)
          do g1=1,gsize
             do ilo=1,nlorb (1)
                l1=lorbl(ilo,1)
@@ -620,6 +621,7 @@ module modOlpalon_test
             Enddo
          Enddo
 
+         overlap_ref_global = Cmplx(0,0,8)
          do g1=1,gsize
             do ilo=1,nlorb (1)
                l1=lorbl(ilo,1)
