@@ -14,7 +14,7 @@ module modOlpalon_test
     Use mod_Gkvector,    Only: ngkmax
     Use mod_atoms,       Only: natmtot
     Use mod_eigensystem, Only: oalo, idxlo
-    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix
+    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix,evsystem,newsystem,deletesystem
 #ifdef MPI
     use modmpi
 #endif
@@ -141,12 +141,14 @@ module modOlpalon_test
       Integer :: l1,m1,lm1,lm2,g1
       integer :: ilo,last
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Type(evsystem)           :: system
+      Type(HermitianMatrix)    :: overlap_ref
+
 
 ! ! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,gsize)
 
-      Call newmatrix(overlap,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(overlap_ref,nmatp)
 ! initialisation is finished
 
@@ -173,15 +175,16 @@ module modOlpalon_test
          enddo
       enddo
 
-      Call olpalon(overlap,1,1,gsize,apwalm)
+      Call olpalon(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, overlap%size, 'checking result rank')
-      Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
-      Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%overlap%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%overlap%za,2), 'checking result size cols')
+      Call assert_equals(overlap_ref%za, system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-      Call deletematrix(overlap)
+      Call deletesystem(system)
       Call deletematrix(overlap_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -207,12 +210,14 @@ module modOlpalon_test
       Integer :: l1,m1,lm1,lm2,g1
       integer :: ilo,last
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Type(evsystem)           :: system
+      Type(HermitianMatrix)    :: overlap_ref
+
 
 ! ! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,gsize)
 
-      Call newmatrix(overlap,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(overlap_ref,nmatp)
 ! initialisation is finished
 
@@ -220,7 +225,7 @@ module modOlpalon_test
       oalo(:,:,:)=1d8
       oalo(:,:,1)=0d0
 
-      overlap%za(:,:)=cmplx(0,0,8)
+      system%overlap%za(:,:)=cmplx(0,0,8)
       overlap_ref%za(:,:)=cmplx(0,0,8)
 
       Do ilo= 1,nlorb (1)
@@ -247,15 +252,16 @@ module modOlpalon_test
          enddo
       enddo
 
-      Call olpalon(overlap,1,1,gsize,apwalm)
+      Call olpalon(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, overlap%size, 'checking result rank')
-      Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
-      Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%overlap%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%overlap%za,2), 'checking result size cols')
+      Call assert_equals(overlap_ref%za, system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-      Call deletematrix(overlap)
+      Call deletesystem(system)
       Call deletematrix(overlap_ref)
       Deallocate(apwalm)
 ! deallocation of global variables 
@@ -279,10 +285,10 @@ module modOlpalon_test
       parameter (lmaxmat=2,lmaxapw=10,gsize=9,nmatp=27)
 
       Integer :: l1,m1,lm1,lm2,g1
-      integer :: ilo,i
+      integer :: ilo
       Complex (8), allocatable  :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)    :: overlap,overlap_ref
-      Integer, Dimension(nmatp) :: overlap_loc_cols
+      Type(evsystem)            :: system
+      Type(HermitianMatrix)     :: overlap_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -299,7 +305,7 @@ module modOlpalon_test
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
 
-         Call newmatrix(overlap,nmatp)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(overlap_ref,nmatp)
 ! initialisation is finished
 
@@ -325,16 +331,16 @@ module modOlpalon_test
             enddo
          enddo
 
-         overlap_loc_cols = (/(i,i=1,nmatp)/)
-         Call olpalon(overlap,1,1,gsize,apwalm,gsize,gsize,overlap_loc_cols)
+         Call olpalon(system,1,1,apwalm)
 
-         Call assert_equals(nmatp, overlap%size, 'checking result rank')
-         Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
-         Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
-         Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nmatp, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-         Call deletematrix(overlap)
+         Call deletesystem(system)
          Call deletematrix(overlap_ref)
          Deallocate(apwalm)
 ! deallocation of global variables   
@@ -362,10 +368,10 @@ module modOlpalon_test
       parameter (lmaxmat=2,lmaxapw=10,gsize=9,nmatp=27)
 
       Integer :: l1,m1,lm1,lm2,g1
-      integer :: ilo,i
+      integer :: ilo
       Complex (8), allocatable  :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)    :: overlap,overlap_ref
-      Integer, Dimension(nmatp) :: overlap_loc_cols
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: overlap_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -382,7 +388,7 @@ module modOlpalon_test
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
 
-         Call newmatrix(overlap,nmatp)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(overlap_ref,nmatp)
 ! initialisation is finished
 
@@ -394,7 +400,7 @@ module modOlpalon_test
             oalo(1,ilo,1)=dble(ilo)
          End Do
 
-         allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))
+         allocate(apwalm(gsize, apwordmax, lmmaxapw, natmtot))
          Do l1=0,lmaxapw
             Do m1=-l1,l1
                lm1=idxlm(l1,m1)
@@ -413,16 +419,16 @@ module modOlpalon_test
             enddo
          enddo
 
-         overlap_loc_cols = (/(i,i=1,nmatp)/)
-         Call olpalon(overlap,1,1,gsize,apwalm,gsize,gsize,overlap_loc_cols)
+         Call olpalon(system,1,1,apwalm)
 
-         Call assert_equals(nmatp, overlap%size, 'checking result rank')
-         Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
-         Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
-         Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nmatp, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-         Call deletematrix(overlap)
+         Call deletesystem(system)
          Call deletematrix(overlap_ref)
          Deallocate(apwalm)
 ! deallocation of global variables 
@@ -452,7 +458,9 @@ module modOlpalon_test
       Integer :: l1,m1,lm1,lm2,g1,g1_loc
       integer :: ilo
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Type(evsystem)           :: system
+      Type(HermitianMatrix)    :: overlap_ref
+
       Complex (8), Dimension(nmatp,nmatp) :: overlap_ref_global
 
 ! Externals
@@ -460,9 +468,8 @@ module modOlpalon_test
 
 ! MPI related variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
-      Integer :: gsize_nrows_loc, nmat_ncols_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, overlap_loc_cols
+      Integer :: nrows_loc, ncols_loc, gsize_nrows_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -476,15 +483,13 @@ module modOlpalon_test
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
 
-         Call newmatrix(overlap,nmatp, DISTRIBUTE_2D)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_2D)
 
 ! init datastructures for splitting apwalm
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), overlap_loc_cols(nmat_ncols_loc))
-         Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, overlap_loc_cols, MPIglobal)
+         allocate(apwalm1_loc2glob(gsize_nrows_loc), dummy(MPIglobal%blocksize))
+         Call getLocalIndices(gsize, MPIglobal%nproccols*MPIglobal%blocksize, apwalm1_loc2glob, dummy, MPIglobal)
 
 ! initialisation is finished
 
@@ -527,15 +532,16 @@ module modOlpalon_test
                ncols_loc = 13
          End Select
 
-         Call olpalon(overlap,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,overlap_loc_cols)
+         Call olpalon(system,1,1,apwalm)
 
-         Call assert_equals(nmatp, overlap%size, 'checking result rank')
-         Call assert_equals(nrows_loc, size(overlap%za,1), 'checking result size rows')
-         Call assert_equals(ncols_loc, size(overlap%za,2), 'checking result size cols')
-         Call assert_equals(overlap_ref%za, overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-         Call deletematrix(overlap)
+         Call deletesystem(system)
          Call deletematrix(overlap_ref)
          Deallocate(apwalm)
 ! deallocation of global variables   
@@ -565,7 +571,8 @@ module modOlpalon_test
       Integer :: l1,m1,lm1,lm2,g1,g1_loc
       integer :: ilo
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: overlap_ref
       Complex (8), Dimension(nmatp,nmatp) :: overlap_ref_global
 
 ! Externals
@@ -573,9 +580,8 @@ module modOlpalon_test
 
 ! MPI related variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer :: nrows_loc, gsize_ncols_loc, ncols_loc
-      Integer :: gsize_nrows_loc, nmat_ncols_loc
-      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, overlap_loc_cols
+      Integer :: nrows_loc, ncols_loc, gsize_nrows_loc
+      Integer, Dimension(:), Allocatable :: apwalm1_loc2glob, dummy
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -589,15 +595,13 @@ module modOlpalon_test
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
 
-         Call newmatrix(overlap,nmatp, DISTRIBUTE_2D)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_2D)
 
 ! init datastructures for splitting apwalm
          gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         nmat_ncols_loc  = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), overlap_loc_cols(nmat_ncols_loc))
-         Call getLocalIndices(gsize, nmatp, apwalm1_loc2glob, overlap_loc_cols, MPIglobal)
+         allocate(apwalm1_loc2glob(gsize_nrows_loc), dummy(MPIglobal%blocksize))
+         Call getLocalIndices(gsize, MPIglobal%nproccols*MPIglobal%blocksize, apwalm1_loc2glob, dummy, MPIglobal)
 
 ! initialisation is finished
 
@@ -645,15 +649,16 @@ module modOlpalon_test
                ncols_loc = 13
          End Select
 
-         Call olpalon(overlap,1,1,gsize,apwalm,gsize_nrows_loc,gsize_ncols_loc,overlap_loc_cols)
+         Call olpalon(system,1,1,apwalm)
 
-         Call assert_equals(nmatp, overlap%size, 'checking result rank')
-         Call assert_equals(nrows_loc, size(overlap%za,1), 'checking result size rows')
-         Call assert_equals(ncols_loc, size(overlap%za,2), 'checking result size cols')
-         Call assert_equals(overlap_ref%za, overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-         Call deletematrix(overlap)
+         Call deletesystem(system)
          Call deletematrix(overlap_ref)
          Deallocate(apwalm)
 ! deallocation of global variables   

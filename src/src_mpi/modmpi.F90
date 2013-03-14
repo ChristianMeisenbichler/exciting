@@ -33,7 +33,8 @@ implicit none
 
       End Type MPIinfo
 
-      Integer, Parameter :: DISTRIBUTE_ROWS = 1
+! not needed, so not tested and not implemented
+!       Integer, Parameter :: DISTRIBUTE_ROWS = 1
       Integer, Parameter :: DISTRIBUTE_COLS = 2
       Integer, Parameter :: DISTRIBUTE_2D   = 3
 

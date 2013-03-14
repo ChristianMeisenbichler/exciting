@@ -14,7 +14,7 @@ module modHmlaan_test
     Use mod_Gkvector,    Only: ngkmax
     Use mod_atoms,       Only: natmtot, idxas
     Use mod_eigensystem, Only: gntyry, haa
-    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix
+    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix,evsystem,newsystem,deletesystem
 #ifdef MPI
     use modmpi
 #endif
@@ -203,7 +203,8 @@ module modHmlaan_test
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Real(8) :: mc
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -211,7 +212,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -245,15 +246,16 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm)
+      Call hmlaan(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -279,7 +281,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! initialisation of global variables
      Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -287,7 +290,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -321,15 +324,16 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm)
+      Call hmlaan(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')     
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')     
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -356,7 +360,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! initialisation of global variables
      Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -364,7 +369,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -392,15 +397,16 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm)
+      Call hmlaan(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -426,7 +432,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -434,7 +441,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -460,15 +467,16 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm)
+      Call hmlaan(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -495,7 +503,8 @@ module modHmlaan_test
       Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8)               :: test
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! Externals
       Complex(8), External :: gauntyry
@@ -506,7 +515,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -549,15 +558,16 @@ module modHmlaan_test
         Enddo
       Enddo
 
-      Call hmlaan(hamilton,1,1,gsize,apwalm)
+      Call hmlaan(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -584,7 +594,8 @@ module modHmlaan_test
       Integer l1,m1,lm1,lm2,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8) :: prefactor
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -592,7 +603,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
       Call initGntyry
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -626,15 +637,16 @@ module modHmlaan_test
         Enddo
       Enddo
       
-      Call hmlaan(hamilton,1,1,gsize,apwalm)
+      Call hmlaan(system,1,1,apwalm)
 
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
       Deallocate(apwalm)
 ! deallocation of global variables   
@@ -666,7 +678,8 @@ module modHmlaan_test
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Real(8) :: mc
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -690,7 +703,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
@@ -729,15 +742,16 @@ module modHmlaan_test
           Enddo
         Enddo
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm)
 ! deallocation of global variables   
@@ -768,7 +782,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -791,7 +806,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
@@ -825,15 +840,16 @@ module modHmlaan_test
           Enddo
         Enddo
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')     
-        Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')     
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm)
 ! deallocation of global variables   
@@ -866,7 +882,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -889,7 +906,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
@@ -919,15 +936,16 @@ module modHmlaan_test
           Enddo
         Enddo
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm)
 ! deallocation of global variables   
@@ -959,7 +977,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -982,7 +1001,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
@@ -1008,15 +1027,16 @@ module modHmlaan_test
           Enddo
         Enddo
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm)
 ! deallocation of global variables   
@@ -1049,7 +1069,8 @@ module modHmlaan_test
       Integer :: l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8)               :: test
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! Externals
       Complex(8), External :: gauntyry
@@ -1075,7 +1096,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
@@ -1118,15 +1139,16 @@ module modHmlaan_test
           Enddo
         Enddo
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm)
 ! deallocation of global variables   
@@ -1160,7 +1182,8 @@ module modHmlaan_test
       Integer l1,m1,lm1,lm2,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8) :: prefactor
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
@@ -1183,7 +1206,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
@@ -1216,15 +1239,16 @@ module modHmlaan_test
           Enddo
         Enddo
         
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm)
 ! deallocation of global variables   
@@ -1261,7 +1285,8 @@ module modHmlaan_test
       Integer                  :: l1,m1,lm1,g1,g1_loc,g2
       Complex (8), Allocatable :: apwalm (:, :, :, :)
       Real(8)                  :: mc
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
 
 ! MPI related variables
@@ -1286,7 +1311,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
@@ -1341,15 +1366,16 @@ module modHmlaan_test
             ncols_loc = 2
         End select
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
@@ -1379,7 +1405,8 @@ module modHmlaan_test
       
       Integer                  :: l1,m1,lm1,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
 
 ! MPI related variables
@@ -1404,7 +1431,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
@@ -1455,15 +1482,16 @@ module modHmlaan_test
             ncols_loc = 2
         End select
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
@@ -1494,7 +1522,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
 
 ! MPI related variables
@@ -1519,7 +1548,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
@@ -1573,15 +1602,16 @@ module modHmlaan_test
             ncols_loc = 2
         End select
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
@@ -1612,7 +1642,8 @@ module modHmlaan_test
       
       Integer l1,m1,lm1,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
 
 ! MPI related variables
@@ -1637,7 +1668,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
@@ -1688,15 +1719,16 @@ module modHmlaan_test
             ncols_loc = 2
         End select
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
@@ -1729,7 +1761,8 @@ module modHmlaan_test
       Integer ::l1,m1,lm1,l2,m2,lm2,l3,m3,lm3,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8)               :: test
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
 
 ! MPI related variables
@@ -1755,7 +1788,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
@@ -1819,15 +1852,16 @@ module modHmlaan_test
             ncols_loc = 2
         End select
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   
@@ -1860,7 +1894,8 @@ module modHmlaan_test
       Integer :: l1,m1,lm1,lm2,g1,g1_loc,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       complex(8)               :: prefactor
-      Type (HermitianMatrix)   :: hamilton, hamilton_ref
+      Type(evsystem)           :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(nmatp,nmatp) :: hamilton_ref_global
 
 ! MPI related variables
@@ -1885,7 +1920,7 @@ module modHmlaan_test
 ! allocate and generate complex Gaunt coefficient array
         Call initGntyry
 
-        Call newmatrix(hamilton, nmatp, DISTRIBUTE_COLS)
+        Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
@@ -1946,15 +1981,16 @@ module modHmlaan_test
             ncols_loc = 2
         End select
 
-        Call hmlaan(hamilton,1,1,gsize,apwalm,gsize_loc)
+        Call hmlaan(system,1,1,apwalm)
 
-        Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-        Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-        Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-        Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+        Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-        Call deletematrix(hamilton)
+        Call deletesystem(system)
         Call deletematrix(hamilton_ref)
         Deallocate(apwalm, apwalm1_loc2glob, dummy)
 ! deallocation of global variables   

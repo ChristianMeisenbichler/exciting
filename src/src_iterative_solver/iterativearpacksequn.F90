@@ -149,7 +149,7 @@ Subroutine iterativearpacksecequn (ik, ispn, apwalm, vgpc, evalfv, &
 !
 
 !
-      Call newsystem (system, n)
+      Call newsystem (system, n, ngk(ispn, ik))
       Call hamiltonandoverlapsetup (system, ngk(ispn, ik), apwalm, &
      & igkig(1, ispn, ik), vgpc)
 !

@@ -45,12 +45,19 @@
        Complex (8), Pointer :: za (:,:)
 #ifdef MPI
        Integer, Dimension(:), Pointer :: desc
+       Integer, Dimension(:), Pointer :: my_rows_idx, my_cols_idx
        Integer :: distribute
 #endif
     End Type HermitianMatrix
     !
     Type evsystem
        Type (HermitianMatrix) :: hamilton, overlap
+
+       ! number of G+k-vectors for augmented plane waves
+       Integer                :: ngp
+       ! number of local rows/cols of G+k vectors
+       Integer                :: ngp_loc_rows, ngp_loc_cols
+
     End Type evsystem
 
     Interface newmatrix
@@ -105,12 +112,12 @@
                         MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
                         MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
   
-        case (DISTRIBUTE_ROWS)
-          self%nrows_loc = NUMROC(self%nrows, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
-          self%ncols_loc = self%ncols
-          CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-                        MPIglobal_1D%blocksize, self%ncols, 0, 0, &
-                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+!         case (DISTRIBUTE_ROWS)
+!           self%nrows_loc = NUMROC(self%nrows, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+!           self%ncols_loc = self%ncols
+!           CALL DESCINIT(self%desc, self%nrows, self%ncols, &
+!                         MPIglobal_1D%blocksize, self%ncols, 0, 0, &
+!                         MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
 
         case (DISTRIBUTE_COLS) 
           self%nrows_loc = self%nrows
@@ -125,7 +132,7 @@
       self%ncols_loc = ncols
 #endif
       Allocate (self%za(self%nrows_loc, self%ncols_loc))
-      self%za = 0.0
+      self%za = cmplx(0,0,8)
 
     End Subroutine newComplexMatrix
     !
@@ -140,6 +147,8 @@
       Integer, Intent (In) :: size
 #ifdef MPI
       Integer, Intent (In), Optional :: distribute
+
+      Integer :: i
 
       Integer, External   :: NUMROC
 #endif
@@ -161,13 +170,21 @@
           CALL DESCINIT(self%desc, self%size, self%size, &
                         MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
                         MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
-  
-        case (DISTRIBUTE_ROWS)
-          self%nrows_loc = NUMROC(self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
-          self%ncols_loc = self%size
-          CALL DESCINIT(self%desc, self%size, self%size, &
-                        MPIglobal_1D%blocksize, self%size, 0, 0, &
-                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+
+          Allocate(self%my_rows_idx(self%nrows_loc), self%my_cols_idx(self%ncols_loc))
+          Call getLocalIndices(self%my_rows_idx, self%size, MPIglobal%blocksize, MPIglobal%myprocrow, MPIglobal%nprocrows)
+          Call getLocalIndices(self%my_cols_idx, self%size, MPIglobal%blocksize, MPIglobal%myproccol, MPIglobal%nproccols)
+
+!         case (DISTRIBUTE_ROWS)
+!           self%nrows_loc = NUMROC(self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+!           self%ncols_loc = self%size
+!           CALL DESCINIT(self%desc, self%size, self%size, &
+!                         MPIglobal_1D%blocksize, self%size, 0, 0, &
+!                         MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+! 
+!           Allocate(self%my_rows_idx(self%nrows_loc), self%my_cols_idx(self%ncols_loc))
+!           Call getLocalIndices(self%my_rows_idx, self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, MPIglobal_1D%nprocrows)
+!           self%my_cols_idx = (/(i,i=1,self%ncols_loc)/)
 
         case (DISTRIBUTE_COLS) 
           self%nrows_loc = self%size
@@ -175,7 +192,13 @@
           CALL DESCINIT(self%desc, self%size, self%size, &
                         self%size, MPIglobal_1D%blocksize, 0, 0, &
                         MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+
+          Allocate(self%my_rows_idx(self%nrows_loc), self%my_cols_idx(self%ncols_loc))
+          self%my_rows_idx = (/(i,i=1,self%nrows_loc)/)
+          Call getLocalIndices(self%my_cols_idx, self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, MPIglobal_1D%nproccols)
+
       end select 
+      
 #else
       self%nrows_loc = size
       self%ncols_loc = size
@@ -183,7 +206,7 @@
       self%ludecomposed = .False.
 
       Allocate (self%za(self%nrows_loc, self%ncols_loc))
-      self%za = 0.0
+      self%za = cmplx(0,0,8)
 
 !    End Subroutine newMatrix
     End Subroutine newHermitianMatrix
@@ -193,11 +216,11 @@
       Type (HermitianMatrix), Intent (Inout) :: self
 
       Deallocate (self%za)
-
       If (self%ludecomposed) deallocate (self%ipiv)
 
 #ifdef MPI
       Deallocate (self%desc)
+      Deallocate (self%my_rows_idx, self%my_cols_idx)
 #endif
     End Subroutine deleteHermitianMatrix
     !
@@ -212,17 +235,54 @@
     End Subroutine deleteComplexMatrix
     !
     !
-    Subroutine newsystem (self,   size)
+#ifdef MPI
+    Subroutine newsystem (self, size, ngp, distribute_prm)
+#else
+    Subroutine newsystem (self, size, ngp)
+#endif
       Type (evsystem), Intent (Out) :: self
+      Integer, Intent (In)          :: size, ngp
+#ifdef MPI
+      Integer, Intent (In), Optional :: distribute_prm
 
-      Integer, Intent (In) :: size
+      Integer             :: distribute
+
+      Integer, External   :: NUMROC
+#endif
+
+      self%ngp = ngp
+#ifdef MPI
+      if (present(distribute_prm)) then
+        distribute = distribute_prm
+      else
+        distribute = DISTRIBUTE_2D
+      end if
+
+      select case (distribute)
+        case (DISTRIBUTE_2D) 
+          self%ngp_loc_rows = NUMROC(ngp, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
+          self%ngp_loc_cols = NUMROC(ngp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+!         case (DISTRIBUTE_ROWS)
+!           self%ngp_loc_rows = NUMROC(ngp, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+!           self%ngp_loc_cols = ngp
+        case (DISTRIBUTE_COLS) 
+          self%ngp_loc_rows = ngp
+          self%ngp_loc_cols = NUMROC(ngp, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+      end select 
+      Call newmatrix (self%hamilton, size, distribute)
+      Call newmatrix (self%overlap,  size, distribute)
+#else
+      self%ngp_loc_rows = ngp
+      self%ngp_loc_cols = ngp
       Call newmatrix (self%hamilton, size)
       Call newmatrix (self%overlap,  size)
+#endif
     End Subroutine newsystem
     !
     !
     Subroutine deletesystem (self)
       Type (evsystem), Intent (Inout) :: self
+
       Call deletematrix (self%hamilton)
       Call deletematrix (self%overlap)
     End Subroutine deletesystem
@@ -543,5 +603,25 @@
 
     End Subroutine HermitianMatrixdiagonal
     !
+
+    Subroutine GetLocalIndices(loc_idx, n_glob, blocksize, my_procidx, n_procs)
+      Implicit None
+      Integer, Dimension(:), Intent(Out) :: loc_idx
+      Integer, Intent(In) :: n_glob, blocksize, my_procidx, n_procs
+
+      Integer :: i_glob, i_loc
+
+      If (n_procs .eq. 1) Then
+        loc_idx = (/(i_glob,i_glob=1,n_glob)/)
+      Else
+        i_loc = 1
+        Do i_glob=1,n_glob
+          If (Mod((i_glob-1)/blocksize,n_procs) .eq. my_procidx) Then
+            loc_idx(i_loc) = i_glob
+            i_loc = i_loc+1
+          End If
+        End Do
+      End If
+    End Subroutine GetLocalIndices
 
   End Module modfvsystem

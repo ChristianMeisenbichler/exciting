@@ -6,30 +6,19 @@
 ! See the file COPYING for license details.
 !
 !
-#ifdef MPI      
-Subroutine hmlalon (hamilton, is, ia, ngp, apwalm, ngp_loc_row, ngp_loc_col, cols_loc2glob)
-#else
-Subroutine hmlalon (hamilton, is, ia, ngp, apwalm)
-#endif
+Subroutine hmlalon (system, is, ia, apwalm)
       Use modinput,        Only: input
       Use mod_muffin_tin,  Only: idxlm, lmmaxapw
       Use mod_APW_LO,      Only: apword, apwordmax, nlorb, lorbl
       Use mod_atoms,       Only: natmtot, idxas
       Use mod_eigensystem, Only: gntyry, idxlo, hloa
-      Use modfvsystem,     Only: HermitianMatrix, Hermitianmatrix_indexedupdate
+      Use modfvsystem,     Only: evsystem, Hermitianmatrix_indexedupdate
       Implicit None
 ! arguments
-      Type (HermitianMatrix), Intent (Inout) :: hamilton
+      Type (evsystem), Intent (Inout) :: system
       Integer, Intent (In) :: is
       Integer, Intent (In) :: ia
-      Integer, Intent (In) :: ngp
-#ifdef MPI      
-      Complex (8), Intent (In) :: apwalm (ngp_loc_row, apwordmax, lmmaxapw, natmtot) !SPLIT first dimension over procs
-      Integer, Intent (In)     :: ngp_loc_row, ngp_loc_col !TODO better name
-      Integer, Dimension(hamilton%ncols_loc), Intent (In) :: cols_loc2glob
-#else 
-      Complex (8), Intent (In) :: apwalm (ngp, apwordmax, lmmaxapw, natmtot) 
-#endif
+      Complex (8), Intent (In) :: apwalm (system%ngp_loc_rows, apwordmax, lmmaxapw, natmtot) !SPLIT first dimension over procs
 !
 ! local variables
       Integer :: ias, io, ilo, i_glob, i_loc, j
@@ -39,15 +28,15 @@ Subroutine hmlalon (hamilton, is, ia, ngp, apwalm)
       
       ias = idxas (ia, is)
 #ifdef MPI
-      i_loc = ngp_loc_col
+      i_loc = system%ngp_loc_cols
 #endif
       Do ilo = 1, nlorb (is)
          l1 = lorbl (ilo, is)
          Do m1 = - l1, l1
             lm1 = idxlm (l1, m1)
-            i_glob = ngp + idxlo (lm1, ilo, ias)
+            i_glob = system%ngp + idxlo (lm1, ilo, ias)
 #ifdef MPI
-            if (Any(cols_loc2glob .eq. i_glob)) then
+            if (Any(i_glob .eq. system%hamilton%my_cols_idx)) then
                i_loc = i_loc+1 !!! assuming that the indexing increases
                                ! => problem if indexing or order of loops changes
                                ! an array linking between global and local indices would be better
@@ -70,17 +59,14 @@ Subroutine hmlalon (hamilton, is, ia, ngp, apwalm)
 
                         ! calculate the matrix elements
                         If (Abs(dble(zsum))+Abs(aimag(zsum)) .Gt. 1.d-20) Then
+                           Do j = 1, system%ngp_loc_rows
+                              zt1 = zsum * apwalm (j, io, lm3, ias)
 #ifdef MPI
-                           Do j = 1, ngp_loc_row
-                              zt1 = zsum * apwalm (j, io, lm3, ias)
-                              hamilton%za(j,i_loc) = hamilton%za(j,i_loc) + conjg(zt1)
-                           End Do
+                              system%hamilton%za(j,i_loc) = system%hamilton%za(j,i_loc) + conjg(zt1)
 #else
-                           Do j = 1, ngp
-                              zt1 = zsum * apwalm (j, io, lm3, ias)
-                              Call Hermitianmatrix_indexedupdate(hamilton, i_glob, j, conjg(zt1))
-                           End Do
+                              Call Hermitianmatrix_indexedupdate(system%hamilton, i_glob, j, conjg(zt1))
 #endif
+                           End Do
                         End If
                      End Do
                   End Do

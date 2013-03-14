@@ -10,19 +10,18 @@
 ! !INTERFACE:
 !
 !
-#ifdef MPI
-Subroutine hmlistln (hamilton, ngp, igpig, vgpc, ngp_loc_row, ngp_loc_col, rows_loc2glob, cols_loc2glob)
-#else
-Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
-#endif
+Subroutine hmlistln (system, igpig, vgpc)
 ! !USES:
-      Use modmain
-      Use modfvsystem
+    Use mod_Gkvector,    Only: ngkmax
+    Use mod_Gvector,     Only: ivg,ngvec,cfunig,ivgig
+    Use mod_potential_and_density, Only : veffig
+    Use modfvsystem,     Only: evsystem, Hermitianmatrix_indexedupdate
+
 ! !INPUT/OUTPUT PARAMETERS:
-!   ngp   : number of G+p-vectors (in,integer)
-!   igpig : index from G+p-vectors to G-vectors (in,integer(ngkmax))
-!   vgpc  : G+p-vectors in Cartesian coordinates (in,real(3,ngkmax))
-!   hamilton : the Hamiltonian matrix in packed form (inout,complex(npmatmax))
+!   system : EVSystem with the Hamiltonian to update (inout,evsystem)
+!   igpig  : index from G+p-vectors to G-vectors (in,integer(ngkmax))
+!   vgpc   : G+p-vectors in Cartesian coordinates (in,real(3,ngkmax))
+!
 ! !DESCRIPTION:
 !   Computes the interstitial contribution to the Hamiltonian matrix for the APW
 !   basis functions. The Hamiltonian is given by
@@ -33,26 +32,25 @@ Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
 !   {\tt gencfun}.
 !
 ! !REVISION HISTORY:
+!   Parallelized and with new interface March 2013 (G. Huhs - BSC)
 !   Created April 2003 (JKD)
+
 !EOP
 !BOC
       Implicit None
 ! arguments
-      Type (HermitianMatrix), Intent (Inout) :: hamilton
-      Integer,                Intent (In)    :: ngp
-      Integer,                Intent (In)    :: igpig (ngkmax)
-      Real (8),               Intent (In)    :: vgpc (3, ngkmax)
-#ifdef MPI      
-      Integer, Intent (In)     :: ngp_loc_row, ngp_loc_col !TODO better name
-      Integer, Dimension(hamilton%nrows_loc), Intent (In) :: rows_loc2glob
-      Integer, Dimension(hamilton%ncols_loc), Intent (In) :: cols_loc2glob
-#endif
+      Type (evsystem), Intent (Inout) :: system
+      Integer,         Intent (In)    :: igpig (ngkmax)
+      Real (8),        Intent (In)    :: vgpc (3, ngkmax)
 !
-!
-      Complex (8) :: zt
 ! local variables
-      Integer :: i_loc, i_glob, j_loc, j_glob, ig, iv (3)
-      Integer :: i, j
+#ifdef MPI
+      Integer, Dimension(:), Pointer :: rows_loc2glob
+      Integer, Dimension(:), Pointer :: cols_loc2glob
+
+#endif
+      Complex (8) :: zt
+      Integer :: i_loc, i_glob, j_loc, j_glob, ig, iv(3)
       Real (8) :: t1
 !
 ! calculate the matrix elements
@@ -60,13 +58,15 @@ Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
 !#$omp shared(h) private(iv,ig,t1,i,j)
 !#$omp do
 #ifdef MPI
-      Do j_loc = 1, ngp_loc_col
+      rows_loc2glob => system%hamilton%my_rows_idx
+      cols_loc2glob => system%hamilton%my_cols_idx
+      Do j_loc = 1, system%ngp_loc_cols
          j_glob = cols_loc2glob(j_loc)
-         Do i_loc = 1, ngp_loc_row
+         Do i_loc = 1, system%ngp_loc_rows
             i_glob = rows_loc2glob(i_loc)
             if (i_glob .Le. j_glob) then 
 #else
-      Do j_glob = 1, ngp
+      Do j_glob = 1, system%ngp
          Do i_glob = 1, j_glob
 #endif
                iv (:) = ivg (:, igpig(i_glob)) - ivg (:, igpig(j_glob))
@@ -75,30 +75,17 @@ Subroutine hmlistln (hamilton, ngp, igpig, vgpc)
                   t1 = 0.5d0 * dot_product (vgpc(:, i_glob), vgpc(:, j_glob))
                   zt = veffig (ig) + t1 * cfunig (ig)
 #ifdef MPI
-                  hamilton%za(i_loc,j_loc) = hamilton%za(i_loc,j_loc) + zt
+                  system%hamilton%za(i_loc,j_loc) = system%hamilton%za(i_loc,j_loc) + zt
 #else
-                  Call Hermitianmatrix_indexedupdate (hamilton, j_glob, i_glob, zt)
+                  Call Hermitianmatrix_indexedupdate(system%hamilton, j_glob, i_glob, zt)
 #endif
                End If
 #ifdef MPI
+            !TODO else skip rest of loop
             End If
 #endif
          End Do
       End Do
-! #else
-!       Do j = 1, ngp
-!          Do i = 1, j
-!             iv (:) = ivg (:, igpig(i)) - ivg (:, igpig(j))
-!             ig = ivgig (iv(1), iv(2), iv(3))
-!             If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
-!                t1 = 0.5d0 * dot_product (vgpc(:, i), vgpc(:, j))
-!                zt = veffig (ig) + t1 * cfunig (ig)
-! 
-!                Call Hermitianmatrix_indexedupdate (hamilton, j, i, zt)
-!             End If
-!          End Do
-!       End Do
-! #endif
 !#$omp end do
 !#$omp end parallel
 !

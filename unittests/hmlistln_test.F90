@@ -11,7 +11,7 @@ module modHmlistln_test
     Use mod_Gkvector,    Only: ngkmax
     Use mod_Gvector,     Only: ivg,ngvec,cfunig,ngrtot,ivgig
     Use mod_potential_and_density, Only : veffig
-    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix
+    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix,evsystem,newsystem,deletesystem
 #ifdef MPI
     use modmpi
 #endif
@@ -153,7 +153,8 @@ module modHmlistln_test
       Integer :: igpig ((2*maxgk+1)**3)
       Real(8) :: vgpc(3,(2*maxgk+1)**3)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
 
       gsize=(2*maxgk+1)**3
       nmatp=gsize+10
@@ -176,7 +177,7 @@ module modHmlistln_test
 
 ! initialisation is finished
 
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 
 ! preparation of the correct answer
@@ -186,16 +187,17 @@ module modHmlistln_test
         enddo
       enddo
 
-      Call hmlistln(hamilton,gsize,igpig,vgpc)
+      Call hmlistln(system,igpig,vgpc)
 
       Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
-      
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
+
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
 ! deallocation of global variables   
       Call freeGlobals    
@@ -220,7 +222,8 @@ module modHmlistln_test
       Integer :: igpig (gsize)
       Real(8) :: vgpc(3,gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
 
 ! initialisation of global variables
       Call initGlobals(maxg,gsize)
@@ -236,7 +239,7 @@ module modHmlistln_test
       vgpc(:,:)=sqrt(2d0/3d0)
 
 ! allocate and generate complex Gaunt coefficient array
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -251,16 +254,17 @@ module modHmlistln_test
         enddo
       enddo
 
-      Call hmlistln(hamilton,gsize,igpig,vgpc)
+      Call hmlistln(system%hamilton,igpig,vgpc)
 
       Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
 ! deallocation of global variables   
       Call freeGlobals
@@ -285,7 +289,8 @@ module modHmlistln_test
       Integer :: igpig (gsize)
       Real(8) :: vgpc(3,gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
 
 ! initialisation of global variables
       Call initGlobals(maxg,gsize)
@@ -303,7 +308,7 @@ module modHmlistln_test
       enddo
 
 ! allocate and generate complex Gaunt coefficient array
-      Call newmatrix(hamilton,nmatp)
+      Call newsystem(system,nmatp,gsize)
       Call newmatrix(hamilton_ref,nmatp)
 ! initialisation is finished
 
@@ -318,16 +323,17 @@ module modHmlistln_test
         enddo
       enddo
 
-      Call hmlistln(hamilton,gsize,igpig,vgpc)
+      Call hmlistln(system%hamilton,igpig,vgpc)
 
       Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-      Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-      Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-      Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+      Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-      Call deletematrix(hamilton)
+      Call deletesystem(system)
       Call deletematrix(hamilton_ref)
 ! deallocation of global variables   
       Call freeGlobals
@@ -356,11 +362,11 @@ module modHmlistln_test
       Integer :: igpig ((2*maxgk+1)**3)
       Real(8) :: vgpc(3,(2*maxgk+1)**3)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer, Dimension(:), Allocatable :: hamilton_loc_rows, hamilton_loc_cols
 
       n_proc_rows_test = 1
       n_proc_cols_test = 1
@@ -392,11 +398,8 @@ module modHmlistln_test
 
 ! initialisation is finished
 
-         Call newmatrix(hamilton,nmatp)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(hamilton_ref,nmatp)
-         Allocate(hamilton_loc_rows(nmatp), hamilton_loc_cols(nmatp))
-         hamilton_loc_rows = (/(i,i=1,nmatp)/)
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 
 ! preparation of the correct answer
          do i=1,gsize
@@ -405,18 +408,18 @@ module modHmlistln_test
             enddo
          enddo
 
-         Call hmlistln(hamilton,gsize,igpig,vgpc,gsize,gsize,hamilton_loc_rows,hamilton_loc_cols)
+         Call hmlistln(system%hamilton,igpig,vgpc)
 
          Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
-      
+         Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
+
 ! finalisation
-         Call deletematrix(hamilton)
+         Call deletesystem(system)
          Call deletematrix(hamilton_ref)
-         Deallocate(hamilton_loc_rows, hamilton_loc_cols)
 ! deallocation of global variables   
          Call freeGlobals    
 ! freeing proc grid
@@ -445,11 +448,11 @@ module modHmlistln_test
       Integer :: igpig (gsize)
       Real(8) :: vgpc(3,gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer, Dimension(:), Allocatable :: hamilton_loc_rows, hamilton_loc_cols
 
       n_proc_rows_test = 1
       n_proc_cols_test = 1
@@ -473,11 +476,8 @@ module modHmlistln_test
          EndDo
          vgpc(:,:)=sqrt(2d0/3d0)
 
-         Call newmatrix(hamilton,nmatp)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(hamilton_ref,nmatp)
-         Allocate(hamilton_loc_rows(nmatp), hamilton_loc_cols(nmatp))
-         hamilton_loc_rows = (/(i,i=1,nmatp)/)
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          do i=1,ngrtot
@@ -491,18 +491,18 @@ module modHmlistln_test
             enddo
          enddo
 
-         Call hmlistln(hamilton,gsize,igpig,vgpc,gsize,gsize,hamilton_loc_rows,hamilton_loc_cols)
+         Call hmlistln(system,igpig,vgpc)
 
          Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-         Call deletematrix(hamilton)
+         Call deletesystem(system)
          Call deletematrix(hamilton_ref)
-         Deallocate(hamilton_loc_rows, hamilton_loc_cols)
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
@@ -531,11 +531,11 @@ module modHmlistln_test
       Integer :: igpig (gsize)
       Real(8) :: vgpc(3,gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
 
 ! MPI variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer, Dimension(:), Allocatable :: hamilton_loc_rows, hamilton_loc_cols
 
       n_proc_rows_test = 1
       n_proc_cols_test = 1
@@ -562,11 +562,8 @@ module modHmlistln_test
          enddo
 
 ! allocate and generate complex Gaunt coefficient array
-         Call newmatrix(hamilton,nmatp)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(hamilton_ref,nmatp)
-         Allocate(hamilton_loc_rows(nmatp), hamilton_loc_cols(nmatp))
-         hamilton_loc_rows = (/(i,i=1,nmatp)/)
-         hamilton_loc_cols = (/(i,i=1,nmatp)/)
 ! initialisation is finished
 
          do i=1,ngrtot
@@ -580,18 +577,18 @@ module modHmlistln_test
             enddo
          enddo
 
-         Call hmlistln(hamilton,gsize,igpig,vgpc,gsize,gsize,hamilton_loc_rows,hamilton_loc_cols)
+         Call hmlistln(system,igpig,vgpc)
 
          Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-         Call assert_equals(nmatp, size(hamilton%za,1), 'checking result size rows')
-         Call assert_equals(nmatp, size(hamilton%za,2), 'checking result size cols')
-         Call assert_equals(hamilton_ref%za, hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+         Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, system%hamilton%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-         Call deletematrix(hamilton)
+         Call deletesystem(system)
          Call deletematrix(hamilton_ref)
-         Deallocate(hamilton_loc_rows, hamilton_loc_cols)
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
@@ -623,7 +620,8 @@ module modHmlistln_test
       Integer :: igpig ((2*maxgk+1)**3)
       Real(8) :: vgpc(3,(2*maxgk+1)**3)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
       Complex (8), Dimension(:,:), Allocatable :: hamilton_ref_global
 
 ! Externals
@@ -631,8 +629,7 @@ module modHmlistln_test
 
 ! MPI related variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer :: nrows_loc, ncols_loc, gsize_ncols_loc, gsize_nrows_loc
-      Integer, Dimension(:), Allocatable :: hamilton_loc_rows, hamilton_loc_cols
+      Integer :: nrows_loc, ncols_loc
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -664,16 +661,12 @@ module modHmlistln_test
 
 ! initialisation is finished
 
-         Call newmatrix(hamilton,nmatp, DISTRIBUTE_2D)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(hamilton_ref,nmatp, DISTRIBUTE_2D)
          Allocate(hamilton_ref_global(nmatp,nmatp))
 
          nrows_loc = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          ncols_loc = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         Allocate(hamilton_loc_rows(nrows_loc), hamilton_loc_cols(ncols_loc))
-         Call getLocalIndices(nmatp, nmatp, hamilton_loc_rows, hamilton_loc_cols, MPIglobal)
 
 ! preparation of the correct answer
          hamilton_ref_global = Cmplx(0,0,8)
@@ -684,18 +677,19 @@ module modHmlistln_test
          enddo
          Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
 
-         Call hmlistln(hamilton,gsize,igpig,vgpc,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_rows,hamilton_loc_cols)
+         Call hmlistln(system,igpig,vgpc)
 
          Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
-      
+         Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
+
 ! finalisation
-         Call deletematrix(hamilton)
+         Call deletesystem(system)
          Call deletematrix(hamilton_ref)
-         Deallocate(hamilton_ref_global,hamilton_loc_rows,hamilton_loc_cols)  
+         Deallocate(hamilton_ref_global)  
 ! deallocation of global variables   
          Call freeGlobals  
 ! freeing proc grid
@@ -724,7 +718,8 @@ module modHmlistln_test
       Integer :: igpig (gsize)
       Real(8) :: vgpc(3,gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type(evsystem)        :: system
+      Type(HermitianMatrix) :: hamilton_ref
       Complex (8), Dimension(:,:), Allocatable :: hamilton_ref_global
 
 ! Externals
@@ -732,8 +727,7 @@ module modHmlistln_test
 
 ! MPI related variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer :: nrows_loc, ncols_loc, gsize_ncols_loc, gsize_nrows_loc
-      Integer, Dimension(:), Allocatable :: hamilton_loc_rows, hamilton_loc_cols
+      Integer :: nrows_loc, ncols_loc
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -757,16 +751,12 @@ module modHmlistln_test
          EndDo
          vgpc(:,:)=sqrt(2d0/3d0)
 
-         Call newmatrix(hamilton,nmatp, DISTRIBUTE_2D)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(hamilton_ref,nmatp, DISTRIBUTE_2D)
          Allocate(hamilton_ref_global(nmatp,nmatp))
 
          nrows_loc = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          ncols_loc = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         Allocate(hamilton_loc_rows(nrows_loc), hamilton_loc_cols(ncols_loc))
-         Call getLocalIndices(nmatp, nmatp, hamilton_loc_rows, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
          do i=1,ngrtot
@@ -782,18 +772,19 @@ module modHmlistln_test
          enddo
          Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
 
-         Call hmlistln(hamilton,gsize,igpig,vgpc,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_rows,hamilton_loc_cols)
+         Call hmlistln(system,igpig,vgpc)
 
          Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-         Call deletematrix(hamilton)
+         Call deletesystem(system)
          Call deletematrix(hamilton_ref)
-         Deallocate(hamilton_ref_global, hamilton_loc_rows, hamilton_loc_cols)
+         Deallocate(hamilton_ref_global)
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
@@ -822,7 +813,8 @@ module modHmlistln_test
       Integer :: igpig (gsize)
       Real(8) :: vgpc(3,gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   :: hamilton,hamilton_ref
+      Type (evsystem)          :: system
+      Type (HermitianMatrix)   :: hamilton_ref
       Complex (8), Dimension(:,:), Allocatable :: hamilton_ref_global
 
 ! Externals
@@ -830,8 +822,7 @@ module modHmlistln_test
 
 ! MPI related variables
       Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-      Integer :: nrows_loc, ncols_loc, gsize_ncols_loc, gsize_nrows_loc
-      Integer, Dimension(:), Allocatable :: hamilton_loc_rows, hamilton_loc_cols
+      Integer :: nrows_loc, ncols_loc
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -858,20 +849,16 @@ module modHmlistln_test
          enddo
 
 ! allocate and generate complex Gaunt coefficient array
-         Call newmatrix(hamilton,nmatp, DISTRIBUTE_2D)
+         Call newsystem(system,nmatp,gsize)
          Call newmatrix(hamilton_ref,nmatp, DISTRIBUTE_2D)
          Allocate(hamilton_ref_global(nmatp,nmatp))
 
          nrows_loc = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
          ncols_loc = NUMROC(nmatp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         gsize_ncols_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
-         Allocate(hamilton_loc_rows(nrows_loc), hamilton_loc_cols(ncols_loc))
-         Call getLocalIndices(nmatp, nmatp, hamilton_loc_rows, hamilton_loc_cols, MPIglobal)
 ! initialisation is finished
 
          do i=1,ngrtot
-         cfunig(i)=1d0
+            cfunig(i)=1d0
          enddo
 
 ! preparation of the correct answer
@@ -883,18 +870,19 @@ module modHmlistln_test
          enddo
          Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
 
-         Call hmlistln(hamilton,gsize,igpig,vgpc,gsize_nrows_loc,gsize_ncols_loc,hamilton_loc_rows,hamilton_loc_cols)
+         Call hmlistln(system,igpig,vgpc)
 
          Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-         Call assert_equals(nmatp, hamilton%size, 'checking result rank')
-         Call assert_equals(nrows_loc, size(hamilton%za,1), 'checking result size rows')
-         Call assert_equals(ncols_loc, size(hamilton%za,2), 'checking result size cols')
-         Call assert_equals(hamilton_ref%za, hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(nmatp, system%hamilton%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking result size cols')
+         Call assert_equals(hamilton_ref%za, system%hamilton%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking overlap=0')
 
 ! finalisation
-         Call deletematrix(hamilton)
+         Call deletesystem(system)
          Call deletematrix(hamilton_ref)
-         Deallocate(hamilton_ref_global, hamilton_loc_rows, hamilton_loc_cols)
+         Deallocate(hamilton_ref_global)
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid

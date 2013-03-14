@@ -62,7 +62,7 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
 !distribute the relevant part of apwalm 
 
 
-      Call newsystem (system,   nmatp)
+      Call newsystem (system, nmatp, ngp)
       Call hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
 !
   !------------------------------------!

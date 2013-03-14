@@ -10,11 +10,7 @@
 ! !INTERFACE:
 !
 !
-#ifdef MPI
-Subroutine hmlaan (hamilton, is, ia, ngp, apwalm, ngp_loc)
-#else
-Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
-#endif
+Subroutine hmlaan (system, is, ia, apwalm)
 ! !USES:
       Use modinput,        Only: input
       Use mod_muffin_tin,  Only: idxlm, lmmaxapw, rmt, nrmt, lmmaxmat
@@ -23,7 +19,7 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       Use mod_atoms,       Only: natmtot, idxas
       Use mod_eigensystem, Only: gntyry, haa
       Use mod_constants,   Only: zzero
-      Use modfvsystem,     Only: HermitianMatrix, ComplexMatrix, &
+      Use modfvsystem,     Only: evsystem, ComplexMatrix, &
                                  newmatrix, deletematrix, &
                                  HermitianMatrixMatrix
 #ifdef MPI
@@ -31,45 +27,34 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
 #endif
 !
 ! !INPUT/OUTPUT PARAMETERS:
-!   hamilton : Hamiltonian to update (inout,HermitianMatrix)
+!   system   : EVSystem with the Hamiltonian to update (inout,evsystem)
 !   is       : species number (in,integer)
 !   ia       : atom number (in,integer)
-!   ngp      : number of G+p-vectors (in,integer)
 !   apwalm   : APW matching coefficients
 !              (in,complex(ngkmax,apwordmax,lmmaxapw,natmtot))
 !              when using MPI it is distributed along the first dimension
-!   ngp_loc  : size (1st dimension) of local part of apwalm
 !
 ! !DESCRIPTION:
 !   Calculates the APW-APW contribution to the Hamiltonian matrix.
 !   When MPI is used the Hamiltonian is expected to have distributed columns
+!   and apwalm's first dimension has to be distributed according to that
 !
 ! !REVISION HISTORY:
-!   Parallelized and with new matrix types February 2013 (G. Huhs - BSC)
+!   Parallelized and with new matrix types and interface February 2013 (G. Huhs - BSC)
 !   Created October 2002 (JKD)
 !EOP
 !BOC
       Implicit None
 !
 ! arguments
-      Type (HermitianMatrix), Intent (Inout) :: hamilton
+      Type (evsystem), Intent (Inout) :: system
       Integer, Intent (In) :: is
       Integer, Intent (In) :: ia
-      Integer, Intent (In) :: ngp
-#ifdef MPI
-      Complex (8), Intent (In) :: apwalm (ngp_loc, apwordmax, lmmaxapw, &
+      Complex (8), Intent (In) :: apwalm(system%ngp_loc_cols, apwordmax, lmmaxapw, &
      & natmtot)   !SPLIT first dimension over procs
-      Integer, Intent (In) :: ngp_loc
-#else
-      Complex (8), Intent (In) :: apwalm (ngp, apwordmax, lmmaxapw, &
-     & natmtot)   
-#endif
 !
 ! local variables
-#ifndef MPI
-      Integer :: ngp_loc
-#endif
-      Integer :: ias, io1, io2
+      Integer :: ias, io1, io2, ngp_loc
       Integer :: l1, l2, l3, m1, m2, m3, lm1, lm2, lm3, naa
       Real (8) :: t1
       Complex(8) :: zt1, zsum
@@ -80,16 +65,17 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
 ! external functions
 
 #ifdef MPI
-      Call newmatrix(zm1, lmmaxmat*apwordmax, ngp, DISTRIBUTE_COLS)
-      Call newmatrix(zm2, lmmaxmat*apwordmax, ngp, DISTRIBUTE_COLS)
+      Call newmatrix(zm1, lmmaxmat*apwordmax, system%ngp, DISTRIBUTE_COLS)
+      Call newmatrix(zm2, lmmaxmat*apwordmax, system%ngp, DISTRIBUTE_COLS)
 #else
-      Call newmatrix(zm1, lmmaxmat*apwordmax, ngp)
-      Call newmatrix(zm2, lmmaxmat*apwordmax, ngp)
-      ngp_loc = ngp
+      Call newmatrix(zm1, lmmaxmat*apwordmax, system%ngp)
+      Call newmatrix(zm2, lmmaxmat*apwordmax, system%ngp)
 #endif
+      ngp_loc = system%ngp_loc_cols
       allocate(zv(ngp_loc))
       naa=0
       ias = idxas (ia, is)
+
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
             lm1 = idxlm (l1, m1)
@@ -136,12 +122,9 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
       End Do
       
       deallocate(zv)
-!  write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
-!  write (*,*) 'naa', naa
-! write (*,*) 'ngp', ngp
-!       stop
-      call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxmat,naa,ngp)
-      call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxmat,naa,ngp)
+
+      call HermitianMatrixMatrix(system%hamilton,zm1,zm2,apwordmax*lmmaxmat,naa,system%ngp)
+      call HermitianMatrixMatrix(system%hamilton,zm2,zm1,apwordmax*lmmaxmat,naa,system%ngp)
 
 ! kinetic surface contribution
       t1 = 0.25d0 * rmt (is) ** 2
@@ -161,10 +144,9 @@ Subroutine hmlaan (hamilton, is, ia, ngp, apwalm)
             End Do
          End Do
       End Do
-!  write (*,*) 'apwordmax*lmmaxapw', apwordmax*lmmaxapw
-!  write (*,*) 'naa', naa
-      call HermitianMatrixMatrix(hamilton,zm1,zm2,apwordmax*lmmaxmat,naa,ngp)
-      call HermitianMatrixMatrix(hamilton,zm2,zm1,apwordmax*lmmaxmat,naa,ngp)
+
+      call HermitianMatrixMatrix(system%hamilton,zm1,zm2,apwordmax*lmmaxmat,naa,system%ngp)
+      call HermitianMatrixMatrix(system%hamilton,zm2,zm1,apwordmax*lmmaxmat,naa,system%ngp)
 
       Call deletematrix(zm1)
       Call deletematrix(zm2)

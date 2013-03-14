@@ -59,11 +59,11 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
       Do is = 1, nspecies
          Do ia = 1, natoms (is)
              Call timesec (ts0)
-            Call hmlaan (system%hamilton, is, ia, ngp, apwalm, ngp)
+            Call hmlaan (system, is, ia, apwalm)
              Call timesec (ts1)
              time_hmlaan=ts1-ts0+time_hmlaan
              Call timesec (ts0)
-            Call hmlalon (system%hamilton, is, ia, ngp, apwalm)
+            Call hmlalon (system, is, ia, apwalm)
              Call timesec (ts1)
              time_hmlalon=ts1-ts0+time_hmlalon
              Call timesec (ts0)
@@ -71,11 +71,11 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
              Call timesec (ts1)
              time_hmllolon=ts1-ts0+time_hmllolon
              Call timesec (ts0)
-            Call olpaan (system%overlap, is, ia, ngp, apwalm)
+            Call olpaan (system, is, ia, apwalm)
              Call timesec (ts1)
              time_olpaan=ts1-ts0+time_olpaan
              Call timesec (ts0)
-            Call olpalon (system%overlap, is, ia, ngp, apwalm)
+            Call olpalon (system, is, ia, apwalm)
              Call timesec (ts1)
              time_olpalon=ts1-ts0+time_olpalon
              Call timesec (ts0)
@@ -87,7 +87,7 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
 !
 ! interstitial contributions
        Call timesec (ts0)
-      Call hmlistln (system%hamilton, ngp, igpig, vgpc)
+      Call hmlistln (system, igpig, vgpc)
        Call timesec (ts1)
        time_hmlistln=ts1-ts0+time_hmlistln
        Call timesec (ts0)

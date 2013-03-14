@@ -55,19 +55,21 @@ module modfvsystem_test
 
       CALL set_test_name ('new complex matrix')
       CALL testNewComplexMatrix4proc
-      CALL set_test_name ('new complex matrix, distribute rows')
-      CALL testNewComplexMatrix4procDistRows
+!       CALL set_test_name ('new complex matrix, distribute rows')
+!       CALL testNewComplexMatrix4procDistRows
       CALL set_test_name ('new complex matrix, distribute cols')
       CALL testNewComplexMatrix4procDistCols
 
       CALL set_test_name ('new hermitian matrix')
       CALL testNewHermitianMatrix4proc
-      CALL set_test_name ('new hermitian matrix, distribute rows')
-      CALL testNewHermitianMatrix4procDistRows
+!       CALL set_test_name ('new hermitian matrix, distribute rows')
+!       CALL testNewHermitianMatrix4procDistRows
       CALL set_test_name ('new hermitian matrix, distribute cols')
       CALL testNewHermitianMatrix4procDistCols
       CALL set_test_name ('new system')
       CALL testNewSystem4proc
+      CALL set_test_name ('new system, distribute cols')
+      CALL testNewSystem4procDistCols
 
     end subroutine testcaseSystem4Proc
 #endif
@@ -245,57 +247,57 @@ module modfvsystem_test
 #endif
 
 
-!------------------------------------------------------------------------------
-! test testNewComplexMatrix4procDistRows
-!------------------------------------------------------------------------------
-#ifdef MPI
-    subroutine testNewComplexMatrix4procDistRows
-      implicit none
-
-      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-
-      integer, parameter   :: nrows = 9, ncols = 10
-      Type (ComplexMatrix) :: matrix
-
-      integer              :: nrows_loc, ncols_loc
-
-      n_proc_rows_test = 4
-      n_proc_cols_test = 1
-      n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
-
-      if (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
-
-        Call newmatrix(matrix, nrows, ncols, DISTRIBUTE_ROWS)
-
-        ncols_loc = ncols
-        select case (MPIglobal%rank)
-          case (0)
-            nrows_loc = 3
-          case (1)
-            nrows_loc = 2
-          case (2)
-            nrows_loc = 2
-          case (3)
-            nrows_loc = 2
-        end select
-
-        Call assert_equals(nrows, matrix%nrows, 'checking newmatrix nrows')
-        Call assert_equals(ncols, matrix%ncols, 'checking newmatrix ncols')
-        Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
-        Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
-        Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
-        Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
-        Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
-
-        Call deletematrix(matrix)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      end if
-
-    end subroutine testNewComplexMatrix4procDistRows
-#endif
+! !------------------------------------------------------------------------------
+! ! test testNewComplexMatrix4procDistRows
+! !------------------------------------------------------------------------------
+! #ifdef MPI
+!     subroutine testNewComplexMatrix4procDistRows
+!       implicit none
+! 
+!       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+! 
+!       integer, parameter   :: nrows = 9, ncols = 10
+!       Type (ComplexMatrix) :: matrix
+! 
+!       integer              :: nrows_loc, ncols_loc
+! 
+!       n_proc_rows_test = 4
+!       n_proc_cols_test = 1
+!       n_procs_test = n_proc_rows_test*n_proc_cols_test
+!       call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+!       MPIglobal_1D%blocksize = 2
+! 
+!       if (MPIglobal_1D%rank < n_procs_test) then
+!         Call getBlacsGridInfo(MPIglobal_1D)
+! 
+!         Call newmatrix(matrix, nrows, ncols, DISTRIBUTE_ROWS)
+! 
+!         ncols_loc = ncols
+!         select case (MPIglobal%rank)
+!           case (0)
+!             nrows_loc = 3
+!           case (1)
+!             nrows_loc = 2
+!           case (2)
+!             nrows_loc = 2
+!           case (3)
+!             nrows_loc = 2
+!         end select
+! 
+!         Call assert_equals(nrows, matrix%nrows, 'checking newmatrix nrows')
+!         Call assert_equals(ncols, matrix%ncols, 'checking newmatrix ncols')
+!         Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
+!         Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
+!         Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
+!         Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
+!         Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+! 
+!         Call deletematrix(matrix)
+!         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+!       end if
+! 
+!     end subroutine testNewComplexMatrix4procDistRows
+! #endif
 
 
 !------------------------------------------------------------------------------
@@ -380,8 +382,10 @@ module modfvsystem_test
 
       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
 
-      integer, parameter     :: nmatp = 10
-      Type (HermitianMatrix) :: matrix
+      integer, parameter        :: nmatp = 10
+      integer, dimension(nmatp) :: loc_idx
+      integer                   :: i
+      Type (HermitianMatrix)    :: matrix
       
       n_proc_rows_test = 1
       n_proc_cols_test = 1
@@ -391,12 +395,17 @@ module modfvsystem_test
 
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
+
+        loc_idx = (/(i,i=1,nmatp)/)
+
         Call newmatrix(matrix, nmatp)
 
         Call assert_equals(nmatp, matrix%size, 'checking newmatrix size')
         Call assert_equals(nmatp, size(matrix%za,1), 'checking newmatrix size rows')
         Call assert_equals(nmatp, size(matrix%za,2), 'checking newmatrix size cols')
         Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+        Call assert_equals(loc_idx, matrix%my_rows_idx, nmatp, 'checking newmatrix local rows')
+        Call assert_equals(loc_idx, matrix%my_cols_idx, nmatp, 'checking newmatrix local cols')
 
         Call deletematrix(matrix)
         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
@@ -418,7 +427,8 @@ module modfvsystem_test
       integer, parameter     :: nmatp = 10
       Type (HermitianMatrix) :: matrix
 
-      integer                :: nrows_loc, ncols_loc
+      integer                            :: nrows_loc, ncols_loc
+      integer, dimension(:), allocatable :: loc_rows_idx, loc_cols_idx
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -429,8 +439,6 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
 
-        Call newmatrix(matrix, nmatp, DISTRIBUTE_2D)
-        
         Select Case (MPIglobal%myprocrow)
           Case (0)
             nrows_loc = 6
@@ -444,71 +452,107 @@ module modfvsystem_test
             ncols_loc = 4
         End Select
 
+        Allocate(loc_rows_idx(nrows_loc), loc_cols_idx(ncols_loc))
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
+            loc_rows_idx = (/1,2,5,6,9,10/)
+          Case (1)
+            loc_rows_idx = (/3,4,7,8/)
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
+            loc_cols_idx = (/1,2,5,6,9,10/)
+          Case (1)
+            loc_cols_idx = (/3,4,7,8/)
+        End Select
+
+        Call newmatrix(matrix, nmatp, DISTRIBUTE_2D)
+        
         Call assert_equals(nmatp, matrix%size, 'checking newmatrix size')
         Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
         Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
         Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
         Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
         Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+        Call assert_equals(loc_rows_idx, matrix%my_rows_idx, nrows_loc, 'checking newmatrix local rows')
+        Call assert_equals(loc_cols_idx, matrix%my_cols_idx, ncols_loc, 'checking newmatrix local cols')
 
         Call deletematrix(matrix)
+        Deallocate(loc_rows_idx, loc_cols_idx)
         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
       end if
 
     end subroutine testNewHermitianMatrix4proc
 #endif
 
-
-!------------------------------------------------------------------------------
-! test testNewHermitianMatrix4procDistRows
-!------------------------------------------------------------------------------
-#ifdef MPI
-    subroutine testNewHermitianMatrix4procDistRows
-      implicit none
-
-      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-
-      integer, parameter     :: nmatp = 10
-      Type (HermitianMatrix) :: matrix
-
-      integer                :: nrows_loc, ncols_loc
-
-      n_proc_rows_test = 4
-      n_proc_cols_test = 1
-      n_procs_test = n_proc_rows_test*n_proc_cols_test
-      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
-
-      if (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
-
-        Call newmatrix(matrix, nmatp, DISTRIBUTE_ROWS)
-
-        ncols_loc = nmatp
-        select case (MPIglobal%rank)
-          case (0)
-            nrows_loc = 4
-          case (1)
-            nrows_loc = 2
-          case (2)
-            nrows_loc = 2
-          case (3)
-            nrows_loc = 2
-        end select
-
-        Call assert_equals(nmatp, matrix%size, 'checking newmatrix size')
-        Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
-        Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
-        Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
-        Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
-        Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
-
-        Call deletematrix(matrix)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      end if
-
-    end subroutine testNewHermitianMatrix4procDistRows
-#endif
+! not needed, so not tested
+! !------------------------------------------------------------------------------
+! ! test testNewHermitianMatrix4procDistRows
+! !------------------------------------------------------------------------------
+! #ifdef MPI
+!     subroutine testNewHermitianMatrix4procDistRows
+!       implicit none
+! 
+!       integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+! 
+!       integer, parameter     :: nmatp = 10
+!       Type (HermitianMatrix) :: matrix
+! 
+!       integer                            :: nrows_loc, ncols_loc, i
+!       integer, dimension(:), allocatable :: loc_rows_idx, loc_cols_idx
+! 
+!       n_proc_rows_test = 4
+!       n_proc_cols_test = 1
+!       n_procs_test = n_proc_rows_test*n_proc_cols_test
+!       call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+!       MPIglobal_1D%blocksize = 2
+! 
+!       if (MPIglobal_1D%rank < n_procs_test) then
+!         Call getBlacsGridInfo(MPIglobal_1D)
+! 
+!         ncols_loc = nmatp
+!         select case (MPIglobal_1D%rank)
+!           case (0)
+!             nrows_loc = 4
+!           case (1)
+!             nrows_loc = 2
+!           case (2)
+!             nrows_loc = 2
+!           case (3)
+!             nrows_loc = 2
+!         end select
+! 
+!         Allocate(loc_rows_idx(nrows_loc), loc_cols_idx(nmatp))
+!         Select Case (MPIglobal_1D%myprocrow)
+!           Case (0)
+!             loc_rows_idx = (/1,2,9,10/)
+!           Case (1)
+!             loc_rows_idx = (/3,4/)
+!           Case (2)
+!             loc_rows_idx = (/5,6/)
+!           Case (3)
+!             loc_rows_idx = (/7,8/)
+!         End Select
+!         loc_cols_idx = (/(i,i=1,nmatp)/)
+! 
+!         Call newmatrix(matrix, nmatp, DISTRIBUTE_ROWS)
+! 
+!         Call assert_equals(nmatp, matrix%size, 'checking newmatrix size')
+!         Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
+!         Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
+!         Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
+!         Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
+!         Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+!         Call assert_equals(loc_rows_idx, matrix%my_rows_idx, nrows_loc, 'checking newmatrix local rows')
+!         Call assert_equals(loc_cols_idx, matrix%my_cols_idx, ncols_loc, 'checking newmatrix local cols')
+! 
+!         Call deletematrix(matrix)
+!         Deallocate(loc_rows_idx, loc_cols_idx)
+!         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+!       end if
+! 
+!     end subroutine testNewHermitianMatrix4procDistRows
+! #endif
 
 
 !------------------------------------------------------------------------------
@@ -523,7 +567,8 @@ module modfvsystem_test
       integer, parameter     :: nmatp = 10
       Type (HermitianMatrix) :: matrix
 
-      integer                :: nrows_loc, ncols_loc
+      integer                            :: nrows_loc, ncols_loc, i
+      integer, dimension(:), allocatable :: loc_rows_idx, loc_cols_idx
 
       n_proc_rows_test = 1
       n_proc_cols_test = 4
@@ -534,10 +579,8 @@ module modfvsystem_test
       if (MPIglobal_1D%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal_1D)
 
-        Call newmatrix(matrix, nmatp, DISTRIBUTE_COLS)
-        
         nrows_loc = nmatp
-        select case (MPIglobal%rank)
+        select case (MPIglobal_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -548,14 +591,32 @@ module modfvsystem_test
             ncols_loc = 2
         end select
 
+        Allocate(loc_rows_idx(nmatp), loc_cols_idx(ncols_loc))
+        loc_rows_idx = (/(i,i=1,nmatp)/)
+        Select Case (MPIglobal_1D%myproccol)
+          Case (0)
+            loc_cols_idx = (/1,2,9,10/)
+          Case (1)
+            loc_cols_idx = (/3,4/)
+          Case (2)
+            loc_cols_idx = (/5,6/)
+          Case (3)
+            loc_cols_idx = (/7,8/)
+        End Select
+
+        Call newmatrix(matrix, nmatp, DISTRIBUTE_COLS)
+        
         Call assert_equals(nmatp, matrix%size, 'checking newmatrix size')
         Call assert_equals(nrows_loc, matrix%nrows_loc, 'checking newmatrix nrows_loc')
         Call assert_equals(ncols_loc, matrix%ncols_loc, 'checking newmatrix ncols_loc')
         Call assert_equals(nrows_loc, size(matrix%za,1), 'checking newmatrix size rows')
         Call assert_equals(ncols_loc, size(matrix%za,2), 'checking newmatrix size cols')
         Call assert_equals(zero, sum(abs(matrix%za)), tol, 'checking newmatrix =0')
+        Call assert_equals(loc_rows_idx, matrix%my_rows_idx, nrows_loc, 'checking newmatrix local rows')
+        Call assert_equals(loc_cols_idx, matrix%my_cols_idx, ncols_loc, 'checking newmatrix local cols')
 
         Call deletematrix(matrix)
+        Deallocate(loc_rows_idx, loc_cols_idx)
         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
       end if
 
@@ -570,9 +631,10 @@ module modfvsystem_test
       implicit none
 
       integer, parameter :: nmatp = 9
-      Type (evsystem) :: system
+      integer, parameter :: ngp   = 7
+      Type (evsystem)    :: system
       
-      Call newsystem (system, nmatp)
+      Call newsystem (system, nmatp, ngp)
 
       Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
       Call assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
@@ -586,6 +648,10 @@ module modfvsystem_test
       Call assert_equals(nmatp, size(system%overlap%za,2), 'checking newsystem S size cols')
       Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
 
+      Call assert_equals(ngp, system%ngp, 'checking newsystem ngp')
+      Call assert_equals(ngp, system%ngp_loc_rows, 'checking newsystem ngp_loc_rows')
+      Call assert_equals(ngp, system%ngp_loc_cols, 'checking newsystem ngp_loc_cols')
+      
       Call deletesystem(system)
     end subroutine testNewSystemSerial
 
@@ -597,11 +663,13 @@ module modfvsystem_test
     subroutine testNewSystem1proc
       implicit none
 
-      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-
       integer, parameter :: nmatp = 9
-      Type (evsystem) :: system
+      integer, parameter :: ngp   = 7
+      Type (evsystem)    :: system
+      integer, dimension(nmatp) :: loc_idx
       
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t, i
+
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
@@ -611,20 +679,30 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
 
-        Call newsystem (system, nmatp)
+        loc_idx = (/(i,i=1,nmatp)/)
+
+        Call newsystem (system, nmatp, ngp)
 
         Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
         Call assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
         Call assert_equals(nmatp, size(system%hamilton%za,1), 'checking newsystem H size rows')
         Call assert_equals(nmatp, size(system%hamilton%za,2), 'checking newsystem H size cols')
         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
+        Call assert_equals(loc_idx, system%hamilton%my_rows_idx, nmatp, 'checking newsystem H local rows')
+        Call assert_equals(loc_idx, system%hamilton%my_cols_idx, nmatp, 'checking newsystem H local cols')
 
         Call assert_equals(nmatp, system%overlap%size,  'checking newsystem S rank')
         Call assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
         Call assert_equals(nmatp, size(system%overlap%za,1), 'checking newsystem S size rows')
         Call assert_equals(nmatp, size(system%overlap%za,2), 'checking newsystem S size cols')
         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
+        Call assert_equals(loc_idx, system%overlap%my_rows_idx, nmatp, 'checking newsystem H local rows')
+        Call assert_equals(loc_idx, system%overlap%my_cols_idx, nmatp, 'checking newsystem H local cols')
 
+        Call assert_equals(ngp, system%ngp, 'checking newsystem ngp')
+        Call assert_equals(ngp, system%ngp_loc_rows, 'checking newsystem ngp_loc_rows')
+        Call assert_equals(ngp, system%ngp_loc_cols, 'checking newsystem ngp_loc_cols')
+      
         Call deletesystem(system)
         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
       endif
@@ -639,12 +717,13 @@ module modfvsystem_test
     subroutine testNewSystem4proc
       implicit none
 
-      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
-
       integer, parameter :: nmatp = 9
+      integer, parameter :: ngp   = 7
       Type (evsystem)    :: system
 
-      integer            :: nrows_loc, ncols_loc
+      integer :: nrows_loc, ncols_loc, ngp_rows_loc, ngp_cols_loc
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      integer, dimension(:), allocatable :: loc_rows_idx, loc_cols_idx
 
       n_proc_rows_test = 2
       n_proc_cols_test = 2
@@ -655,19 +734,37 @@ module modfvsystem_test
       if (MPIglobal%rank < n_procs_test) then
         Call getBlacsGridInfo(MPIglobal)
 
-        Call newsystem (system, nmatp)
+        Call newsystem (system, nmatp, ngp)
         
         Select Case (MPIglobal%myprocrow)
           Case (0)
-            nrows_loc = 5
+            nrows_loc    = 5
+            ngp_rows_loc = 4
           Case (1)
-            nrows_loc = 4
+            nrows_loc    = 4
+            ngp_rows_loc = 3
         End Select
         Select Case (MPIglobal%myproccol)
           Case (0)
             ncols_loc = 5
+            ngp_cols_loc = 4
           Case (1)
             ncols_loc = 4
+            ngp_cols_loc = 3
+        End Select
+
+        Allocate(loc_rows_idx(nrows_loc), loc_cols_idx(ncols_loc))
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
+            loc_rows_idx = (/1,2,5,6,9,10/)
+          Case (1)
+            loc_rows_idx = (/3,4,7,8/)
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
+            loc_cols_idx = (/1,2,5,6,9,10/)
+          Case (1)
+            loc_cols_idx = (/3,4,7,8/)
         End Select
 
         Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
@@ -677,6 +774,8 @@ module modfvsystem_test
         Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking newsystem H size rows')
         Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking newsystem H size cols')
         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
+        Call assert_equals(loc_rows_idx, system%hamilton%my_rows_idx, nrows_loc, 'checking newsystem H local rows')
+        Call assert_equals(loc_cols_idx, system%hamilton%my_cols_idx, ncols_loc, 'checking newsystem H local cols')
 
         Call assert_equals(nmatp, system%overlap%size, 'checking newsystem S rank')
         Call assert_equals(nrows_loc, system%overlap%nrows_loc, 'checking newsystem S nrows_loc')
@@ -685,12 +784,106 @@ module modfvsystem_test
         Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking newsystem S size rows')
         Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking newsystem S size cols')
         Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
+        Call assert_equals(loc_rows_idx, system%overlap%my_rows_idx, nrows_loc, 'checking newsystem S local rows')
+        Call assert_equals(loc_cols_idx, system%overlap%my_cols_idx, ncols_loc, 'checking newsystem S local cols')
 
+        Call assert_equals(ngp, system%ngp, 'checking newsystem ngp')
+        Call assert_equals(ngp_rows_loc, system%ngp_loc_rows, 'checking newsystem ngp_loc_rows')
+        Call assert_equals(ngp_cols_loc, system%ngp_loc_cols, 'checking newsystem ngp_loc_cols')
+      
         Call deletesystem(system)
         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
       end if
 
     end subroutine testNewSystem4proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testNewsystem4procDistCols
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testNewSystem4procDistCols
+      implicit none
+
+      integer, parameter :: nmatp = 11
+      integer, parameter :: ngp   = 9
+      Type (evsystem)    :: system
+
+      integer :: nrows_loc, ncols_loc, ngp_rows_loc, ngp_cols_loc, i
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      integer, dimension(:), allocatable :: loc_rows_idx, loc_cols_idx
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 4
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal_1D%blocksize = 2
+
+      if (MPIglobal_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal_1D)
+
+        nrows_loc = nmatp
+        ngp_rows_loc = ngp
+        select case (MPIglobal_1D%rank)
+          case (0)
+            ncols_loc    = 4
+            ngp_cols_loc = 3
+          case (1)
+            ncols_loc    = 3
+            ngp_cols_loc = 2
+          case (2)
+            ncols_loc    = 2
+            ngp_cols_loc = 2
+          case (3)
+            ncols_loc    = 2
+            ngp_cols_loc = 2
+        end select
+
+        Allocate(loc_rows_idx(nmatp), loc_cols_idx(ncols_loc))
+        loc_rows_idx = (/(i,i=1,nmatp)/)
+        Select Case (MPIglobal_1D%myproccol)
+          Case (0)
+            loc_cols_idx = (/1,2,9,10/)
+          Case (1)
+            loc_cols_idx = (/3,4,11/)
+          Case (2)
+            loc_cols_idx = (/5,6/)
+          Case (3)
+            loc_cols_idx = (/7,8/)
+        End Select
+
+        Call newsystem (system, nmatp, ngp, DISTRIBUTE_COLS)
+        
+        Call assert_equals(nmatp, system%hamilton%size, 'checking newsystem H rank')
+        Call assert_equals(nrows_loc, system%hamilton%nrows_loc, 'checking newsystem H nrows_loc')
+        Call assert_equals(ncols_loc, system%hamilton%ncols_loc, 'checking newsystem H ncols_loc')
+        Call assert_true(.not. system%hamilton%ludecomposed, 'checking newsystem H ludecomposed')
+        Call assert_equals(nrows_loc, size(system%hamilton%za,1), 'checking newsystem H size rows')
+        Call assert_equals(ncols_loc, size(system%hamilton%za,2), 'checking newsystem H size cols')
+        Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking newsystem H=0')
+        Call assert_equals(loc_rows_idx, system%hamilton%my_rows_idx, nrows_loc, 'checking newsystem H local rows')
+        Call assert_equals(loc_cols_idx, system%hamilton%my_cols_idx, ncols_loc, 'checking newsystem H local cols')
+
+        Call assert_equals(nmatp, system%overlap%size, 'checking newsystem S rank')
+        Call assert_equals(nrows_loc, system%overlap%nrows_loc, 'checking newsystem S nrows_loc')
+        Call assert_equals(ncols_loc, system%overlap%ncols_loc, 'checking newsystem S ncols_loc')
+        Call assert_true(.not. system%overlap%ludecomposed, 'checking newsystem S ludecomposed')
+        Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking newsystem S size rows')
+        Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking newsystem S size cols')
+        Call assert_equals(zero, sum(abs(system%overlap%za)), tol, 'checking newsystem S=0')
+        Call assert_equals(loc_rows_idx, system%overlap%my_rows_idx, nrows_loc, 'checking newsystem S local rows')
+        Call assert_equals(loc_cols_idx, system%overlap%my_cols_idx, ncols_loc, 'checking newsystem S local cols')
+
+        Call assert_equals(ngp, system%ngp, 'checking newsystem ngp')
+        Call assert_equals(ngp_rows_loc, system%ngp_loc_rows, 'checking newsystem ngp_loc_rows')
+        Call assert_equals(ngp_cols_loc, system%ngp_loc_cols, 'checking newsystem ngp_loc_cols')
+      
+        Call deletesystem(system)
+        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      end if
+
+    end subroutine testNewSystem4procDistCols
 #endif
 
 
