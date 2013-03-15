@@ -20,11 +20,23 @@ Subroutine olpalon (system, is, ia, apwalm)
       Complex (8), Intent (In) :: apwalm(system%ngp_loc_rows, apwordmax, lmmaxapw, natmtot) !SPLIT first dimension over procs
 !
 ! local variables
-      Integer :: ias, ilo, io, l, m, lm, i, j_glob, j_loc
+#ifdef MPI
+      Integer :: j_loc
+      Integer :: j_glob
+#else
+      Integer, Pointer :: j_loc
+      Integer, Target  :: j_glob
+#endif
+      Integer :: ias, ilo, io, l, m, lm, i
       Complex (8) zsum
 
-      j_loc = system%ngp_loc_cols
       ias = idxas(ia, is)
+
+#ifdef MPI
+      j_loc = system%ngp_loc_cols
+#else
+      j_loc => j_glob
+#endif
 
       Do ilo = 1, nlorb (is)
          l = lorbl (ilo, is)
@@ -45,11 +57,14 @@ Subroutine olpalon (system, is, ia, apwalm)
                      zsum = zsum + Conjg(apwalm(i, io, lm, ias)) * oalo &
                      & (io, ilo, ias)
                   End Do
-#ifdef MPI
-                  system%overlap%za(i,j_loc) = system%overlap%za(i,j_loc) + zsum
-#else
-                  Call Hermitianmatrix_indexedupdate (system%overlap, j_glob, i, zsum)
-#endif
+
+                  Call Hermitianmatrix_indexedupdate (system%overlap, j_loc, i, zsum)
+!commented: performance-version for MPI
+! #ifdef MPI
+!                   system%overlap%za(i,j_loc) = system%overlap%za(i,j_loc) + zsum
+! #else
+!                   Call Hermitianmatrix_indexedupdate (system%overlap, j_glob, i, zsum)
+! #endif
                End Do
 #ifdef MPI
             End If

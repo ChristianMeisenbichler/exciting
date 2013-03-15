@@ -26,6 +26,9 @@ program testsuite
     Call runtestcase(testcaseHermitianMatrixMatrix1Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 1 proc')
     Call runtestcase(testcaseHermitianMatrixMatrix4Proc, 'modfvsystem - Hermitian matrix-matrix-multiplication on 4 procs')
 
+    Call runtestcase(testcaseHermitianmatrixIndexedUpdate1Proc, 'modfvsystem - Hermitian matrix indexed update on 1 proc')
+    Call runtestcase(testcaseHermitianmatrixIndexedUpdate4Proc, 'modfvsystem - Hermitian matrix indexed update on 4 procs')
+
     Call runtestcase(testcaseHmlaan1Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) on 1 proc')
     Call runtestcase(testcaseHmlaan4Proc, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) on 4 procs')
 
@@ -52,6 +55,7 @@ program testsuite
 #else
     Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
     Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
+    Call runtestcase(testcaseHermitianmatrixIndexedUpdateSerial, 'modfvsystem - Hermitian matrix indexed update serial')
 
     Call runtestcase(testcaseHmlaanSerial, 'modfvsystem - Hamiltonian matrix setup (the APW-APW part / hmlaan) serial')
     Call runtestcase(testcaseOlpaanSerial, 'modfvsystem - Overlap matrix setup (the APW-APW part / olpaan) serial')

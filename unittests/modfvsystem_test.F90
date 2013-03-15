@@ -134,6 +134,35 @@ module modfvsystem_test
 #endif
 
 
+    subroutine testcaseHermitianmatrixIndexedUpdateSerial
+      Implicit None
+
+      CALL set_test_name ('Trying to update whole matrix')
+      CALL testHermitianmatrixIndexedUpdateSerial
+
+    end subroutine testcaseHermitianmatrixIndexedUpdateSerial
+
+
+#ifdef MPI
+    subroutine testcaseHermitianmatrixIndexedUpdate1Proc
+      Implicit None
+
+      CALL set_test_name ('Trying to update whole matrix')
+      CALL testHermitianmatrixIndexedUpdate1Proc
+
+    end subroutine testcaseHermitianmatrixIndexedUpdate1Proc
+#endif
+
+
+#ifdef MPI
+    subroutine testcaseHermitianmatrixIndexedUpdate4Proc
+      Implicit None
+
+      CALL set_test_name ('Trying to update whole matrix')
+      CALL testHermitianmatrixIndexedUpdate4Proc
+
+    end subroutine testcaseHermitianmatrixIndexedUpdate4Proc
+#endif
 
 !------------------------------------------------------------------------------
 ! test testNewComplexMatrixserial
@@ -1924,5 +1953,158 @@ module modfvsystem_test
     end subroutine testHermitianMatrixMatrix4Proc_AxBpC_bighamiltonian
 #endif
 
+
+!------------------------------------------------------------------------------
+! test testHermitianmatrixIndexedUpdateSerial
+!------------------------------------------------------------------------------
+    subroutine testHermitianmatrixIndexedUpdateSerial
+      implicit none
+
+      integer, parameter   :: nmatp=5
+      complex(8), parameter :: I = cmplx(1,1.1D0,8), O = cmplx(0,0,8), C = cmplx(2,3,8)
+
+      Type (HermitianMatrix) :: matrix
+      complex(8), dimension(nmatp,nmatp) :: matrix_ref
+      integer :: row, col
+
+      matrix_ref(1,:) = (/ I, I, I, I, I /)
+      matrix_ref(2,:) = (/ O, I, I, I, I /)
+      matrix_ref(3,:) = (/ O, O, I, I, I /)
+      matrix_ref(4,:) = (/ O, O, O, I, I /)
+      matrix_ref(5,:) = (/ O, O, O, O, I /)
+      matrix_ref = matrix_ref + C
+      
+      Call newmatrix(matrix, nmatp)
+      matrix%za = C
+
+      do row=1,nmatp
+        do col=1,nmatp
+          call Hermitianmatrix_indexedupdate(matrix, col, row, I)
+        end do
+      end do
+
+!      Call assert_equals(matrix_ref, matrix%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+      Call assert_equals(matrix_ref, matrix%za, nmatp, nmatp, 'checking result numbers')
+
+      Call deletematrix(matrix)
+
+    end subroutine testHermitianmatrixIndexedUpdateSerial
+
+
+!------------------------------------------------------------------------------
+! test testHermitianmatrixIndexedUpdate1Proc
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianmatrixIndexedUpdate1Proc
+      implicit none
+
+      integer, parameter   :: nmatp=5
+      complex(8), parameter :: I = cmplx(1,1.1D0,8), O = cmplx(0,0,8), C = cmplx(2,3,8)
+
+      Type (HermitianMatrix) :: matrix
+      complex(8), dimension(nmatp,nmatp) :: matrix_ref
+      integer :: row, col
+
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        matrix_ref(1,:) = (/ I, I, I, I, I /)
+        matrix_ref(2,:) = (/ O, I, I, I, I /)
+        matrix_ref(3,:) = (/ O, O, I, I, I /)
+        matrix_ref(4,:) = (/ O, O, O, I, I /)
+        matrix_ref(5,:) = (/ O, O, O, O, I /)
+        matrix_ref = matrix_ref + C
+      
+        Call newmatrix(matrix, nmatp)
+        matrix%za = C
+
+        do row=1,nmatp
+          do col=1,nmatp
+            call Hermitianmatrix_indexedupdate(matrix, col, row, I)
+          end do
+        end do
+
+        Call assert_equals(matrix_ref, matrix%za, nmatp, nmatp, 'checking result numbers')
+
+        Call deletematrix(matrix)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      endif
+
+    end subroutine testHermitianmatrixIndexedUpdate1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testHermitianmatrixIndexedUpdate4Proc
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testHermitianmatrixIndexedUpdate4Proc
+      implicit none
+
+      integer, parameter    :: nmatp=5
+      complex(8), parameter :: I = cmplx(1,1.1D0,8), O = cmplx(0,0,8), C = cmplx(2,3,8)
+
+      Type (HermitianMatrix)             :: matrix_ref, matrix
+      complex(8), dimension(nmatp,nmatp) :: matrix_ref_global
+      integer :: row, col
+
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      integer :: nrows_loc, ncols_loc
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      if (MPIglobal%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+
+        matrix_ref_global(1,:) = (/ I, I, I, I, I /)
+        matrix_ref_global(2,:) = (/ O, I, I, I, I /)
+        matrix_ref_global(3,:) = (/ O, O, I, I, I /)
+        matrix_ref_global(4,:) = (/ O, O, O, I, I /)
+        matrix_ref_global(5,:) = (/ O, O, O, O, I /)
+        matrix_ref_global = matrix_ref_global + C
+        Call newmatrix(matrix_ref, nmatp)
+        Call getBlockDistributedLoc(matrix_ref_global, matrix_ref%za, MPIglobal)
+
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
+            nrows_loc = 3
+          Case (1)
+            nrows_loc = 2
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
+            ncols_loc = 3
+          Case (1)
+            ncols_loc = 2
+        End Select
+
+        Call newmatrix(matrix, nmatp)
+        matrix%za = C
+        do row=1,nrows_loc
+          do col=1,ncols_loc
+            call Hermitianmatrix_indexedupdate(matrix, col, row, I)
+          end do
+        end do
+
+        Call assert_equals(matrix_ref%za, matrix%za, nrows_loc, ncols_loc, 'checking result numbers')
+
+        Call deletematrix(matrix)
+        Call deletematrix(matrix_ref)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      endif
+
+    end subroutine testHermitianmatrixIndexedUpdate4Proc
+#endif
 
 end module modfvsystem_test

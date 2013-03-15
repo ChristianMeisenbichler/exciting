@@ -40,8 +40,13 @@ Subroutine olpistln (system, igpig)
 #ifdef MPI
       Integer, Dimension(:), Pointer :: rows_loc2glob
       Integer, Dimension(:), Pointer :: cols_loc2glob
+      Integer :: i_loc, j_loc
+      Integer :: i_glob, j_glob
+#else
+      Integer, Pointer :: i_loc, j_loc
+      Integer, Target  :: i_glob, j_glob
 #endif
-      Integer :: i_loc, i_glob, j_loc, j_glob, iv(3), ig
+      Integer :: iv(3), ig
 !
 ! calculate the matrix elements
 !$omp parallel default(shared) &
@@ -56,17 +61,21 @@ Subroutine olpistln (system, igpig)
             i_glob = rows_loc2glob(i_loc)
             if (i_glob .Le. j_glob) then 
 #else
+      i_loc => i_glob
+      j_loc => j_glob
       Do j_glob = 1, system%ngp
          Do i_glob = 1, j_glob
 #endif
           iv (:) = ivg (:, igpig(i_glob)) - ivg (:, igpig(j_glob))
           ig = ivgig (iv(1), iv(2), iv(3))
           If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
-#ifdef MPI
-               system%overlap%za(i_loc,j_loc) = system%overlap%za(i_loc,j_loc) + cfunig(ig)
-#else
-               Call Hermitianmatrix_indexedupdate (system%overlap, j_glob, i_glob, cfunig(ig))
-#endif
+               Call Hermitianmatrix_indexedupdate(system%overlap, j_loc, i_loc, cfunig(ig))
+!commented: performance-version for MPI
+! #ifdef MPI
+!                system%overlap%za(i_loc,j_loc) = system%overlap%za(i_loc,j_loc) + cfunig(ig)
+! #else
+!                Call Hermitianmatrix_indexedupdate(system%overlap, j_glob, i_glob, cfunig(ig))
+! #endif
                End If
 #ifdef MPI
             Else

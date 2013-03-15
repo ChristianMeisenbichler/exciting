@@ -80,11 +80,14 @@ Subroutine hmlistln (system, igpig, vgpc)
                If ((ig .Gt. 0) .And. (ig .Le. ngvec)) Then
                   t1 = 0.5d0 * dot_product (vgpc(:, i_glob), vgpc(:, j_glob))
                   zt = veffig (ig) + t1 * cfunig (ig)
-#ifdef MPI
-                  system%hamilton%za(i_loc,j_loc) = system%hamilton%za(i_loc,j_loc) + zt
-#else
+
                   Call Hermitianmatrix_indexedupdate(system%hamilton, j_loc, i_loc, zt)
-#endif
+!commented: performance-version for MPI
+! #ifdef MPI
+!                   system%hamilton%za(i_loc,j_loc) = system%hamilton%za(i_loc,j_loc) + zt
+! #else
+!                   Call Hermitianmatrix_indexedupdate(system%hamilton, j_loc, i_loc, zt)
+! #endif
                End If
 #ifdef MPI
             Else

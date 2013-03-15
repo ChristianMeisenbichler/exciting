@@ -300,13 +300,34 @@
 !     End Subroutine Hermitianmatrix_size2update
     !
     !
-    Subroutine Hermitianmatrix_indexedupdate (self, i, j, z)
+    Subroutine Hermitianmatrix_indexedupdate (self, col, row, z)
       Type (HermitianMatrix), Intent (Inout) :: self
-      Integer :: i, j
-      Complex (8) :: z
+      Integer, Intent(In), Target            :: col, row
+      Complex(8), Intent(In)                 :: z
 
-      If (j .Le. i) Then
-         self%za(j, i) = self%za(j, i) + z
+#ifdef MPI
+      Integer, Dimension(:), Pointer :: rows_loc2glob
+      Integer, Dimension(:), Pointer :: cols_loc2glob
+      Integer:: row_glob, col_glob
+#else
+      Integer, Pointer :: row_glob, col_glob
+#endif
+     
+! Performance in MPI-Mode???
+! indexing for each element might cost too much, maybe it's better to do without the checking
+
+#ifdef MPI
+      rows_loc2glob => self%my_rows_idx
+      cols_loc2glob => self%my_cols_idx
+      row_glob = rows_loc2glob(row)
+      col_glob = cols_loc2glob(col)
+#else
+      row_glob => row
+      col_glob => col
+#endif
+
+      If (row_glob .Le. col_glob) Then
+         self%za(row, col) = self%za(row, col) + z
       Else
          Write (*,*) "warning lower part of hamilton updated"
       End If
