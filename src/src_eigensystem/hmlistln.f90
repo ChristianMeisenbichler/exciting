@@ -41,17 +41,21 @@ Subroutine hmlistln (system, igpig, vgpc)
 ! arguments
       Type (evsystem), Intent (Inout) :: system
       Integer,         Intent (In)    :: igpig (ngkmax)
-      Real (8),        Intent (In)    :: vgpc (3, ngkmax)
+      Real(8),        Intent (In)     :: vgpc (3, ngkmax)
 !
 ! local variables
 #ifdef MPI
       Integer, Dimension(:), Pointer :: rows_loc2glob
       Integer, Dimension(:), Pointer :: cols_loc2glob
-
+      Integer :: i_loc, j_loc
+      Integer :: i_glob, j_glob
+#else
+      Integer, Pointer :: i_loc, j_loc
+      Integer, Target  :: i_glob, j_glob
 #endif
-      Complex (8) :: zt
-      Integer :: i_loc, i_glob, j_loc, j_glob, ig, iv(3)
-      Real (8) :: t1
+      Complex(8) :: zt
+      Integer    :: ig, iv(3)
+      Real(8)    :: t1
 !
 ! calculate the matrix elements
 !#$omp parallel default(shared) &
@@ -66,6 +70,8 @@ Subroutine hmlistln (system, igpig, vgpc)
             i_glob = rows_loc2glob(i_loc)
             if (i_glob .Le. j_glob) then 
 #else
+      i_loc => i_glob
+      j_loc => j_glob
       Do j_glob = 1, system%ngp
          Do i_glob = 1, j_glob
 #endif
@@ -77,11 +83,12 @@ Subroutine hmlistln (system, igpig, vgpc)
 #ifdef MPI
                   system%hamilton%za(i_loc,j_loc) = system%hamilton%za(i_loc,j_loc) + zt
 #else
-                  Call Hermitianmatrix_indexedupdate(system%hamilton, j_glob, i_glob, zt)
+                  Call Hermitianmatrix_indexedupdate(system%hamilton, j_loc, i_loc, zt)
 #endif
                End If
 #ifdef MPI
-            !TODO else skip rest of loop
+            Else
+               Exit
             End If
 #endif
          End Do

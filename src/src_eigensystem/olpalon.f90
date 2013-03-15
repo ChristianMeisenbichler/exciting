@@ -11,7 +11,7 @@ Subroutine olpalon (system, is, ia, apwalm)
       Use mod_APW_LO,      Only: apword, apwordmax, lorbl, nlorb
       Use mod_atoms,       Only: natmtot, idxas
       Use mod_eigensystem, Only: oalo, idxlo
-      Use modfvsystem,     Only: HermitianMatrix,evsystem,Hermitianmatrix_indexedupdate
+      Use modfvsystem,     Only: evsystem,Hermitianmatrix_indexedupdate
       Implicit None
 ! arguments
       Type (evsystem), Intent (Inout) :: system
@@ -20,13 +20,12 @@ Subroutine olpalon (system, is, ia, apwalm)
       Complex (8), Intent (In) :: apwalm(system%ngp_loc_rows, apwordmax, lmmaxapw, natmtot) !SPLIT first dimension over procs
 !
 ! local variables
-      Integer :: ias, ilo, io, l, m, lm, i, j_glob, j_loc, max_i
+      Integer :: ias, ilo, io, l, m, lm, i, j_glob, j_loc
       Complex (8) zsum
 
-      max_i = system%ngp_loc_rows
       j_loc = system%ngp_loc_cols
-
       ias = idxas(ia, is)
+
       Do ilo = 1, nlorb (is)
          l = lorbl (ilo, is)
          Do m = - l, l
@@ -40,7 +39,7 @@ Subroutine olpalon (system, is, ia, apwalm)
 #endif
 
 ! calculate the matrix elements
-               Do i = 1, max_i
+               Do i = 1, system%ngp_loc_rows
                   zsum = 0.d0
                   Do io = 1, apword (l, is)
                      zsum = zsum + Conjg(apwalm(i, io, lm, ias)) * oalo &

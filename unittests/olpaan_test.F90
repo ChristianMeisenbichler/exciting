@@ -118,7 +118,7 @@ module modOlpaan_test
       Integer l1,m1,lm1,g1,g2
       Complex (8), allocatable :: apwalm (:, :, :, :)
       Type(evsystem)           :: system
-      Type (HermitianMatrix)   :: overlap_ref
+      Type(HermitianMatrix)    :: overlap_ref
 
 ! initialisation of global variables
       Call InitOverlapGlobals(lmaxmat,lmaxapw,gsize)

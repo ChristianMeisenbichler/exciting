@@ -10,7 +10,7 @@ module modOlpistln_test
     Use test_helpers
     Use mod_Gkvector,    Only: ngkmax
     Use mod_Gvector,     Only: ivg,ngvec,cfunig,ngrtot,ivgig
-    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix
+    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix,evsystem,newsystem,deletesystem
 #ifdef MPI
     use modmpi
 #endif
@@ -34,6 +34,9 @@ module modOlpistln_test
     Subroutine testcaseOlpistln1Proc
       Implicit None
 
+      Call set_test_name ('Theta function / cfunig')
+      Call testOlpistln_Theta_1Proc
+
     End Subroutine testcaseOlpistln1Proc
 #endif
 
@@ -41,6 +44,9 @@ module modOlpistln_test
 #ifdef MPI
     Subroutine testcaseOlpistln4Proc
       Implicit None
+
+      Call set_test_name ('Theta function / cfunig')
+      Call testOlpistln_Theta_4Proc
 
     End Subroutine testcaseOlpistln4Proc
 #endif
@@ -89,6 +95,7 @@ module modOlpistln_test
       deallocate(ivg,ivgig,cfunig)
     End Subroutine freeGlobals
 
+
 !------------------------------------------------------------------------------
 ! test testOlpistln_Theta_Serial
 !------------------------------------------------------------------------------
@@ -104,7 +111,8 @@ module modOlpistln_test
 
       Integer :: igpig (gsize)
       Integer i,j,k
-      Type (HermitianMatrix)   ::  overlap, overlap_ref
+      Type(evsystem)          :: system
+      Type(HermitianMatrix)   :: overlap_ref
 
 ! initialisation of global variables
       Call initGlobals(maxg,gsize)
@@ -119,7 +127,7 @@ module modOlpistln_test
       EndDo
 
 ! allocate and generate complex Gaunt coefficient array
-      Call newmatrix( overlap,nmatp)
+      Call newsystem(system, nmatp, gsize)
       Call newmatrix( overlap_ref,nmatp)
 ! initialisation is finished
 
@@ -134,16 +142,194 @@ module modOlpistln_test
         enddo
       enddo
 
-      Call olpistln( overlap,gsize,igpig)
+      Call olpistln(system,igpig)
 
       Call assert_equals(gsize, j, 'Is the test itself set up properly?')
-      Call assert_equals(nmatp,  overlap%size, 'checking result rank')
-      Call assert_equals(nmatp, size( overlap%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size( overlap%za,2), 'checking result size cols')
-      Call assert_equals( overlap_ref%za,  overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp,  system%overlap%size, 'checking result rank')
+      Call assert_equals(nmatp, size( system%overlap%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size( system%overlap%za,2), 'checking result size cols')
+      Call assert_equals( overlap_ref%za,  system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
 
+! finalisation
+      Call deletesystem(system)
+      Call deletematrix(overlap_ref)
 ! deallocation of global variables   
       Call freeGlobals
     End Subroutine testOlpistln_Theta_Serial
+
+
+!------------------------------------------------------------------------------
+! test testOlpistln_Theta_1Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 1 proc
+! The purpose is to test whether the theta-function (cfunig) is handled properly.
+! The theta-function (cfunig) depends on the plane-wave index.
+#ifdef MPI
+    Subroutine testOlpistln_Theta_1Proc
+
+      Implicit None
+! Size of the tests
+      Integer gsize,nmatp,maxg,maxgk
+      parameter (maxg=3,maxgk=1,gsize=(2*maxgk+1)**3,nmatp=gsize+10)
+
+      Integer :: igpig (gsize)
+      Integer i,j,k
+      Type(evsystem)          :: system
+      Type(HermitianMatrix)   :: overlap_ref
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(maxg,gsize)
+
+! initialisation of hmlistln parameters
+         j=0
+         Do i=1,ngrtot
+            If ((ivg(1,i)**2.le.maxgk**2).and.(ivg(2,i)**2.le.maxgk**2).and.(ivg(3,i)**2.le.maxgk**2)) then
+               j=j+1
+               igpig(j)=i
+            End If
+         EndDo
+
+! allocate and generate complex Gaunt coefficient array
+         Call newsystem(system, nmatp, gsize)
+         Call newmatrix( overlap_ref,nmatp)
+! initialisation is finished
+
+         do i=1,ngrtot
+            cfunig(i)=dble(i)
+         enddo
+
+! preparation of the correct answer
+         do i=1,gsize
+            do k=1,i
+               overlap_ref%za(k,i)=ivgig(ivg(1,igpig(k))-ivg(1,igpig(i)),ivg(2,igpig(k))-ivg(2,igpig(i)),ivg(3,igpig(k))-ivg(3,igpig(i)))
+            enddo
+         enddo
+
+         Call olpistln(system,igpig)
+
+         Call assert_equals(gsize, j, 'Is the test itself set up properly?')
+         Call assert_equals(nmatp,  system%overlap%size, 'checking result rank')
+         Call assert_equals(nmatp, size( system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size( system%overlap%za,2), 'checking result size cols')
+         Call assert_equals( overlap_ref%za,  system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+
+! finalisation
+         Call deletesystem(system)
+         Call deletematrix(overlap_ref)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlpistln_Theta_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testOlpistln_Theta_4Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 4 procs
+! The purpose is to test whether the theta-function (cfunig) is handled properly.
+! The theta-function (cfunig) depends on the plane-wave index.
+#ifdef MPI
+    Subroutine testOlpistln_Theta_4Proc
+
+      Implicit None
+! Size of the tests
+      Integer gsize,nmatp,maxg,maxgk
+      parameter (maxg=3,maxgk=1,gsize=(2*maxgk+1)**3,nmatp=gsize+10) ! -> nmatp=37
+
+      Integer :: igpig (gsize)
+      Integer i,j,k
+      Type(evsystem)          :: system
+      Type(HermitianMatrix)   :: overlap_ref
+      Complex (8), Dimension(nmatp,nmatp) :: overlap_ref_global
+
+! MPI related variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      Integer :: nrows_loc, ncols_loc
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(maxg,gsize)
+
+! initialisation of hmlistln parameters
+         j=0
+         Do i=1,ngrtot
+            If ((ivg(1,i)**2.le.maxgk**2).and.(ivg(2,i)**2.le.maxgk**2).and.(ivg(3,i)**2.le.maxgk**2)) then
+               j=j+1
+               igpig(j)=i
+            End If
+         EndDo
+
+! allocate and generate complex Gaunt coefficient array
+         Call newsystem(system, nmatp, gsize)
+         Call newmatrix( overlap_ref,nmatp)
+! initialisation is finished
+
+         do i=1,ngrtot
+            cfunig(i)=dble(i)
+         enddo
+
+! preparation of the correct answer
+         do i=1,gsize
+            do k=1,i
+               overlap_ref_global(k,i)=ivgig(ivg(1,igpig(k))-ivg(1,igpig(i)),ivg(2,igpig(k))-ivg(2,igpig(i)),ivg(3,igpig(k))-ivg(3,igpig(i)))
+            enddo
+         enddo
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+
+         Select Case (MPIglobal%myprocrow)
+            Case (0)
+               nrows_loc = 19
+            Case (1)
+               nrows_loc = 18
+         End Select
+         Select Case (MPIglobal%myproccol)
+            Case (0)
+               ncols_loc = 19
+            Case (1)
+               ncols_loc = 18
+         End Select
+
+         Call olpistln(system,igpig)
+
+         Call assert_equals(gsize, j, 'Is the test itself set up properly?')
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
+
+! finalisation
+         Call deletesystem(system)
+         Call deletematrix(overlap_ref)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlpistln_Theta_4Proc
+#endif
 
 end module modOlpistln_test
