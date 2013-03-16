@@ -645,4 +645,25 @@
       End If
     End Subroutine GetLocalIndices
 
+
+    Function glob2loc(loc_indices,glob)
+      Implicit None
+! return value
+      Integer :: glob2loc
+! arguments
+      Integer, Dimension(:), Intent(In)  :: loc_indices
+      Integer,               Intent(In)  :: glob
+!
+! local variables
+      Integer :: num_loc_indices
+
+      num_loc_indices = size(loc_indices)
+
+      Do glob2loc=1,num_loc_indices
+         If (loc_indices(glob2loc) .eq. glob) Return
+      End Do
+
+    End Function glob2loc
+
+
   End Module modfvsystem

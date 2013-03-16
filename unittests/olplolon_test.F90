@@ -14,7 +14,7 @@ module modOlplolon_test
     Use mod_Gkvector,    Only: ngkmax
     Use mod_atoms,       Only: natmtot
     Use mod_eigensystem, Only: ololo, idxlo
-    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix
+    Use modfvsystem,     Only: HermitianMatrix,newmatrix,deletematrix,evsystem,newsystem,deletesystem
 #ifdef MPI
     use modmpi
 #endif
@@ -28,12 +28,10 @@ module modOlplolon_test
     Subroutine testcaseOlplolonSerial
       Implicit None
 
-      Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
-      Call testOlplolon_LO_Serial(.true.)
-      Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
-      Call testOlplolon_LO_Serial(.false.)
-
-
+!       Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
+!       Call testOlplolon_LO_Serial(.true.)
+!       Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
+!       Call testOlplolon_LO_Serial(.false.)
 
     End Subroutine testcaseOlplolonSerial
 
@@ -42,6 +40,11 @@ module modOlplolon_test
     Subroutine testcaseOlplolon1Proc
       Implicit None
 
+!       Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
+!       Call testOlplolon_LO_1Proc(.true.)
+!       Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
+!       Call testOlplolon_LO_1Proc(.false.)
+
     End Subroutine testcaseOlplolon1Proc
 #endif
 
@@ -49,6 +52,11 @@ module modOlplolon_test
 #ifdef MPI
     Subroutine testcaseOlplolon4Proc
       Implicit None
+
+      Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
+      Call testOlplolon_LO_4Proc(.true.)
+      Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
+      Call testOlplolon_LO_4Proc(.false.)
 
     End Subroutine testcaseOlplolon4Proc
 #endif
@@ -90,23 +98,23 @@ module modOlplolon_test
       
       lolmmax=25
       if (sparse) then
-        nlorb(1)=7
-        lorbl(1:7,1)=(/1,0,1,0,0,2,0/)
+         nlorb(1)=7
+         lorbl(1:7,1)=(/1,0,1,0,0,2,0/)
       else
-        nlorb(1)=10
-        lorbl(1:10,1)=(/0,0,1,0,0,0,0,0,0,1/)
+         nlorb(1)=10
+         lorbl(1:10,1)=(/0,0,1,0,0,0,0,0,0,1/)
       endif
       If (allocated(idxlo)) Deallocate (idxlo)
       Allocate (idxlo(lolmmax, nlomax, natmtot)) 
 ! copied from genidxlo
       i=0
       Do ilo = 1, nlorb (1)
-        l = lorbl (ilo, 1)
-          Do m = - l, l
+         l = lorbl (ilo, 1)
+         Do m = - l, l
             i = i + 1
             lm = idxlm (l, m) 
             idxlo (lm, ilo, 1) = i
-          End Do
+         End Do
       End Do
     End Subroutine initGlobals
 
@@ -122,9 +130,9 @@ module modOlplolon_test
 
 
 !------------------------------------------------------------------------------
-! test testHmllolon_SphSym_Serial
+! test testOlplolon_LO_Serial
 !------------------------------------------------------------------------------
-! 2nd test, serial
+! 1st test, serial
 ! The purpose is to test whether the radial integrals are handled properly.
 ! The radial integrals hlolo depend on the local orbital index ilo.
 ! The table gntyry contains Gaunt coefficients as in a normal exciting run.
@@ -138,56 +146,238 @@ module modOlplolon_test
 
       Integer :: l1,m1,lm1,l2,m2,lm2
       integer :: ilo,ilo2
-      Type (HermitianMatrix)   :: overlap,overlap_ref
+      Type(evsystem)          :: system
+      Type(HermitianMatrix)   :: overlap_ref
 
-! ! initialisation of global variables
+! initialisation of global variables
       Call initGlobals(lmaxmat,lmaxapw,gsize,sparse)
 
-      Call newmatrix(overlap,nmatp)
+      Call newsystem(system, nmatp, gsize)
       Call newmatrix(overlap_ref,nmatp)
 ! initialisation is finished
 
       ololo(:,:,:)=0d0
       Do ilo=1,nlorb (1)
-        Do ilo2=1,nlorb (1)
-          ololo(ilo,ilo2,1)=dble(ilo*ilo2)
-        EndDo
+         Do ilo2=1,nlorb (1)
+            ololo(ilo,ilo2,1)=dble(ilo*ilo2)
+         EndDo
       End Do
-
-      overlap%za(:,:)=cmplx(0,0,8)
-      overlap_ref%za(:,:)=cmplx(0,0,8)
 
 ! The answer is a diagonal matrix      
       Do ilo=1,nlorb (1)
-        l1=lorbl(ilo,1)
-        Do m1=-l1,l1       
-          lm1=idxlm(l1,m1)
-          Do ilo2=1,nlorb (1)
-            l2=lorbl(ilo2,1)
-            Do m2=-l2,l2
-              lm2=idxlm(l2,m2)
-              if ((lm1.eq.lm2).and.(idxlo(lm2,ilo2,1).le.idxlo(lm1,ilo,1))) then
-                 overlap_ref%za(gsize+idxlo(lm2,ilo2,1),gsize+idxlo(lm1,ilo,1))=cmplx(ilo*ilo2,0,8)
-              endif
+         l1=lorbl(ilo,1)
+         Do m1=-l1,l1       
+            lm1=idxlm(l1,m1)
+            Do ilo2=1,nlorb (1)
+               l2=lorbl(ilo2,1)
+               Do m2=-l2,l2
+                  lm2=idxlm(l2,m2)
+                  if ((lm1.eq.lm2).and.(idxlo(lm2,ilo2,1).le.idxlo(lm1,ilo,1))) then
+                     overlap_ref%za(gsize+idxlo(lm2,ilo2,1),gsize+idxlo(lm1,ilo,1))=cmplx(ilo*ilo2,0,8)
+                  endif
+               EndDo
             EndDo
-          EndDo
-        EndDo
+         EndDo
       End Do
 
-      Call olplolon(overlap,1,1,gsize)
+      Call olplolon(system,1,1)
 
-      Call assert_equals(nmatp, overlap%size, 'checking result rank')
-      Call assert_equals(nmatp, size(overlap%za,1), 'checking result size rows')
-      Call assert_equals(nmatp, size(overlap%za,2), 'checking result size cols')
-      Call assert_equals(overlap_ref%za, overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+      Call assert_equals(nmatp, size(system%overlap%za,1), 'checking result size rows')
+      Call assert_equals(nmatp, size(system%overlap%za,2), 'checking result size cols')
+      Call assert_equals(overlap_ref%za, system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+      Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
 
 ! finalisation
-      Call deletematrix(overlap)
+      Call deletesystem(system)
       Call deletematrix(overlap_ref)
 ! deallocation of global variables   
       Call freeGlobals
     End Subroutine testOlplolon_LO_Serial
 
 
+!------------------------------------------------------------------------------
+! test testOlplolon_LO_1Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 1 proc
+! The purpose is to test whether the radial integrals are handled properly.
+! The radial integrals hlolo depend on the local orbital index ilo.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testOlplolon_LO_1Proc(sparse)
+
+      Implicit None
+      Logical, Intent(in) :: sparse
+! Size of the tests
+      Integer lmaxmat,lmaxapw,gsize,nmatp
+      parameter (lmaxmat=5,lmaxapw=10,gsize=9,nmatp=43)
+
+      Integer :: l1,m1,lm1,l2,m2,lm2
+      integer :: ilo,ilo2
+      Type(evsystem)          :: system
+      Type(HermitianMatrix)   :: overlap_ref
+
+! MPI variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+
+      n_proc_rows_test = 1
+      n_proc_cols_test = 1
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,gsize,sparse)
+
+         Call newsystem(system, nmatp, gsize)
+         Call newmatrix(overlap_ref,nmatp)
+! initialisation is finished
+
+         ololo(:,:,:)=0d0
+         Do ilo=1,nlorb (1)
+            Do ilo2=1,nlorb (1)
+               ololo(ilo,ilo2,1)=dble(ilo*ilo2)
+            EndDo
+         End Do
+
+! The answer is a diagonal matrix      
+         Do ilo=1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do m1=-l1,l1       
+               lm1=idxlm(l1,m1)
+               Do ilo2=1,nlorb (1)
+                  l2=lorbl(ilo2,1)
+                  Do m2=-l2,l2
+                     lm2=idxlm(l2,m2)
+                     if ((lm1.eq.lm2).and.(idxlo(lm2,ilo2,1).le.idxlo(lm1,ilo,1))) then
+                        overlap_ref%za(gsize+idxlo(lm2,ilo2,1),gsize+idxlo(lm1,ilo,1))=cmplx(ilo*ilo2,0,8)
+                     endif
+                  EndDo
+               EndDo
+            EndDo
+         End Do
+
+         Call olplolon(system,1,1)
+
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nmatp, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(nmatp, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nmatp, nmatp, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
+
+! finalisation
+         Call deletesystem(system)
+         Call deletematrix(overlap_ref)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlplolon_LO_1Proc
+#endif
+
+
+!------------------------------------------------------------------------------
+! test testOlplolon_LO_1Proc
+!------------------------------------------------------------------------------
+! 1st test, MPI with 1 proc
+! The purpose is to test whether the radial integrals are handled properly.
+! The radial integrals hlolo depend on the local orbital index ilo.
+! The table gntyry contains Gaunt coefficients as in a normal exciting run.
+#ifdef MPI
+    Subroutine testOlplolon_LO_4Proc(sparse)
+
+      Implicit None
+      Logical, Intent(in) :: sparse
+! Size of the tests
+      Integer lmaxmat,lmaxapw,gsize,nmatp
+      parameter (lmaxmat=5,lmaxapw=10,gsize=9,nmatp=43)
+
+      Integer :: l1,m1,lm1,l2,m2,lm2
+      integer :: ilo,ilo2
+      Type(evsystem)          :: system
+      Type(HermitianMatrix)   :: overlap_ref
+      Complex (8), Dimension(nmatp,nmatp) :: overlap_ref_global
+
+! MPI related variables
+      Integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      Integer :: nrows_loc, ncols_loc
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      MPIglobal%blocksize = 2
+
+      If (MPIglobal%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIglobal)
+
+! initialisation of global variables
+         Call initGlobals(lmaxmat,lmaxapw,gsize,sparse)
+
+         Call newsystem(system, nmatp, gsize)
+         Call newmatrix(overlap_ref,nmatp)
+! initialisation is finished
+
+         ololo(:,:,:)=0d0
+         Do ilo=1,nlorb (1)
+            Do ilo2=1,nlorb (1)
+               ololo(ilo,ilo2,1)=dble(ilo*ilo2)
+            EndDo
+         End Do
+
+! The answer is a diagonal matrix  
+         overlap_ref_global = cmplx(0,0,8)    
+         Do ilo=1,nlorb (1)
+            l1=lorbl(ilo,1)
+            Do m1=-l1,l1       
+               lm1=idxlm(l1,m1)
+               Do ilo2=1,nlorb (1)
+                  l2=lorbl(ilo2,1)
+                  Do m2=-l2,l2
+                     lm2=idxlm(l2,m2)
+                     if ((lm1.eq.lm2).and.(idxlo(lm2,ilo2,1).le.idxlo(lm1,ilo,1))) then
+                        overlap_ref_global(gsize+idxlo(lm2,ilo2,1),gsize+idxlo(lm1,ilo,1))=cmplx(ilo*ilo2,0,8)
+                     endif
+                  EndDo
+               EndDo
+            EndDo
+         End Do
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+
+         Select Case (MPIglobal%myprocrow)
+            Case (0)
+               nrows_loc = 22
+            Case (1)
+               nrows_loc = 21
+         End Select
+         Select Case (MPIglobal%myproccol)
+            Case (0)
+               ncols_loc = 22
+            Case (1)
+               ncols_loc = 21
+         End Select
+
+         Call olplolon(system,1,1)
+
+         Call assert_equals(nmatp, system%overlap%size, 'checking result rank')
+         Call assert_equals(nrows_loc, size(system%overlap%za,1), 'checking result size rows')
+         Call assert_equals(ncols_loc, size(system%overlap%za,2), 'checking result size cols')
+         Call assert_equals(overlap_ref%za, system%overlap%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+         Call assert_equals(zero, sum(abs(system%hamilton%za)), tol, 'checking hamilton=0')
+
+! finalisation
+         Call deletesystem(system)
+         Call deletematrix(overlap_ref)
+! deallocation of global variables   
+         Call freeGlobals
+! freeing proc grid
+         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+      End If
+    End Subroutine testOlplolon_LO_4Proc
+#endif
 
 end module modOlplolon_test

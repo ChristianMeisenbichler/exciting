@@ -67,7 +67,7 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
              Call timesec (ts1)
              time_hmlalon=ts1-ts0+time_hmlalon
              Call timesec (ts0)
-            Call hmllolon (system%hamilton, is, ia, ngp)
+            Call hmllolon (system, is, ia)
              Call timesec (ts1)
              time_hmllolon=ts1-ts0+time_hmllolon
              Call timesec (ts0)
@@ -79,7 +79,7 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
              Call timesec (ts1)
              time_olpalon=ts1-ts0+time_olpalon
              Call timesec (ts0)
-            Call olplolon (system%overlap, is, ia, ngp)
+            Call olplolon (system, is, ia)
              Call timesec (ts1)
              time_olplolon=ts1-ts0+time_olplolon
          End Do
@@ -91,7 +91,7 @@ Subroutine hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
        Call timesec (ts1)
        time_hmlistln=ts1-ts0+time_hmlistln
        Call timesec (ts0)
-      Call olpistln (system%overlap, ngp, igpig)
+      Call olpistln (system, igpig)
        Call timesec (ts1)
        time_olpistln=ts1-ts0+time_olpistln
       threshold = 1e-16

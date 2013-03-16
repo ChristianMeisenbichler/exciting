@@ -41,7 +41,7 @@ Subroutine hmlistln (system, igpig, vgpc)
 ! arguments
       Type (evsystem), Intent (Inout) :: system
       Integer,         Intent (In)    :: igpig (ngkmax)
-      Real(8),        Intent (In)     :: vgpc (3, ngkmax)
+      Real(8),         Intent (In)    :: vgpc (3, ngkmax)
 !
 ! local variables
 #ifdef MPI

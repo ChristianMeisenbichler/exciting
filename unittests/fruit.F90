@@ -565,6 +565,8 @@ contains
         Call MPI_recv(message_index, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
         Call MPI_recv(successful_assert_count, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
         Call MPI_recv(failed_assert_count, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
+        Call MPI_recv(successful_case_count, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
+        Call MPI_recv(failed_case_count, 1, MPI_INTEGER, remoteproc, 0, comm, status, ierr)
         ! reallocate message buffer  
         deallocate(message_array)
         allocate(message_array(message_index-1))
@@ -589,6 +591,8 @@ contains
         Call MPI_send(message_index, 1, MPI_INTEGER, 0, 0, comm, ierr)
         Call MPI_send(successful_assert_count, 1, MPI_INTEGER, 0, 0, comm, ierr)
         Call MPI_send(failed_assert_count, 1, MPI_INTEGER, 0, 0, comm, ierr)
+        Call MPI_send(successful_case_count, 1, MPI_INTEGER, 0, 0, comm, ierr)
+        Call MPI_send(failed_case_count, 1, MPI_INTEGER, 0, 0, comm, ierr)
         
         ! send messages
         do i = 1, message_index - 1

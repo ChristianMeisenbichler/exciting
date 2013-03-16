@@ -44,7 +44,7 @@ Subroutine olpalon (system, is, ia, apwalm)
             lm = idxlm (l, m)
             j_glob = system%ngp + idxlo (lm, ilo, ias)
 #ifdef MPI
-            if (Any(j_glob .eq. system%overlap%my_cols_idx)) then
+            if (Any(j_glob .eq. system%overlap%my_cols_idx)) Then
                j_loc = j_loc+1 !!! assuming that the indexing increases
                                  ! => problem if indexing or order of loops changes
                                  ! an array linking between global and local indices would be better

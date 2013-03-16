@@ -44,7 +44,7 @@ program testsuite
     Call runtestcase(testcaseHmllolon1Proc, 'modfvsystem - Hamiltonian matrix setup (the LO-LO part / hmllolon) on 1 proc')
     Call runtestcase(testcaseHmllolon4Proc, 'modfvsystem - Hamiltonian matrix setup (the LO-LO part / hmllolon) on 4 procs')
 
-    Call runtestcase(testcaseOlplolon1Proc, 'modfvsystem - Overlap matrix setup (the LO-LO part / olplolon) on 1 proc')
+!     Call runtestcase(testcaseOlplolon1Proc, 'modfvsystem - Overlap matrix setup (the LO-LO part / olplolon) on 1 proc')
     Call runtestcase(testcaseOlplolon4Proc, 'modfvsystem - Overlap matrix setup (the LO-LO part / olplolon) on 4 procs')
 
     Call runtestcase(testcaseHmlistln1Proc, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / hmlistln) on 1 proc')

@@ -292,6 +292,7 @@ module modOlpistln_test
          enddo
 
 ! preparation of the correct answer
+         overlap_ref_global = cmplx(0,0,8)
          do i=1,gsize
             do k=1,i
                overlap_ref_global(k,i)=ivgig(ivg(1,igpig(k))-ivg(1,igpig(i)),ivg(2,igpig(k))-ivg(2,igpig(i)),ivg(3,igpig(k))-ivg(3,igpig(i)))
