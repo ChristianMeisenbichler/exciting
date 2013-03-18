@@ -665,5 +665,29 @@
 
     End Function glob2loc
 
+    
+    Subroutine RedistributeHermitianMatrix1DTo2D(self)
+      Implicit None
+! arguments
+      Type(HermitianMatrix), Intent(InOut) :: self
+! local variables
+      Type(HermitianMatrix) :: mat2D
+
+#ifdef MPI
+      Call newMatrix(mat2D, self%size, DISTRIBUTE_2D)
+      Call PZGEMR2D(self%size, self%size, self%za, 1, 1, self%desc, mat2D%za, 1, 1, mat2D%desc, MPIglobal%context)
+      
+      Deallocate(self%desc, self%za, self%my_rows_idx, self%my_cols_idx)
+      self%desc => mat2D%desc
+      self%za => mat2D%za
+      self%my_rows_idx => mat2D%my_rows_idx
+      self%my_cols_idx => mat2D%my_cols_idx
+
+     self%nrows_loc = mat2D%nrows_loc
+     self%ncols_loc = mat2D%ncols_loc
+#endif
+
+    End Subroutine RedistributeHermitianMatrix1DTo2D
+
 
   End Module modfvsystem

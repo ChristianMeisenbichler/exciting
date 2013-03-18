@@ -39,9 +39,6 @@ use modmpi
       i_loc => i_glob
       j_loc => j_glob
 #endif
-#ifdef MPI
-write (*,*) MPIglobal%rank, 'loc2glob', system%overlap%my_rows_idx
-#endif
       Do ilo1 = 1, nlorb (is)
          l = lorbl (ilo1, is)
          Do ilo2 = 1, nlorb (is)
@@ -60,7 +57,6 @@ write (*,*) MPIglobal%rank, 'loc2glob', system%overlap%my_rows_idx
                            zt = dcmplx (ololo(ilo1, ilo2, ias), 0.0)
                            Call Hermitianmatrix_indexedupdate (system%overlap, j_loc, i_loc, zt)
 #ifdef MPI
-write (*,*) MPIglobal%rank, 'glob', i_glob, j_glob, 'loc', i_loc, j_loc, 'value', zt
                         End If
                      End If
 #endif

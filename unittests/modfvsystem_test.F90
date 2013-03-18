@@ -164,6 +164,18 @@ module modfvsystem_test
     end subroutine testcaseHermitianmatrixIndexedUpdate4Proc
 #endif
 
+
+#ifdef MPI
+    subroutine testcaseRedistributeHermitianMatrix4Proc
+      Implicit None
+
+      CALL set_test_name ('Redistribution 1D to 2D')
+      CALL testRedistributeHermitianMatrix1DTo2D4Proc
+
+    end subroutine testcaseRedistributeHermitianMatrix4Proc
+#endif
+
+
 !------------------------------------------------------------------------------
 ! test testNewComplexMatrixserial
 !------------------------------------------------------------------------------
@@ -785,13 +797,13 @@ module modfvsystem_test
         Allocate(loc_rows_idx(nrows_loc), loc_cols_idx(ncols_loc))
         Select Case (MPIglobal%myprocrow)
           Case (0)
-            loc_rows_idx = (/1,2,5,6,9,10/)
+            loc_rows_idx = (/1,2,5,6,9/)
           Case (1)
             loc_rows_idx = (/3,4,7,8/)
         End Select
         Select Case (MPIglobal%myproccol)
           Case (0)
-            loc_cols_idx = (/1,2,5,6,9,10/)
+            loc_cols_idx = (/1,2,5,6,9/)
           Case (1)
             loc_cols_idx = (/3,4,7,8/)
         End Select
@@ -2106,5 +2118,96 @@ module modfvsystem_test
 
     end subroutine testHermitianmatrixIndexedUpdate4Proc
 #endif
+
+
+!------------------------------------------------------------------------------
+! test testRedistributeHermitianMatrix1DTo2D4Proc
+! testing redistribution of 1D distributed matrix to 2D
+!------------------------------------------------------------------------------
+#ifdef MPI
+    subroutine testRedistributeHermitianMatrix1DTo2D4Proc
+      implicit none
+
+      integer, parameter :: nmatp = 10
+
+      integer :: n_procs_test, n_proc_rows_test, n_proc_cols_test, ierror_t
+      integer, dimension(:), allocatable :: loc_rows_idx, loc_cols_idx
+
+      Type (HermitianMatrix)              :: A, ref
+      complex(8), dimension(nmatp,nmatp)  :: A_global
+      integer                             :: nrows_loc, ncols_loc
+
+      n_proc_rows_test = 2
+      n_proc_cols_test = 2
+      n_procs_test = n_proc_rows_test*n_proc_cols_test
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
+      call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      MPIglobal%blocksize = 2
+      MPIglobal_1D%blocksize = 2
+
+      if (MPIglobal_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIglobal)
+        Call getBlacsGridInfo(MPIglobal_1D)
+      
+        ! fill the global reference
+        Call fillComplex(A_global, nmatp, nmatp)
+
+        ! source matrix, 1D distributed
+        Call newMatrix(A, nmatp, DISTRIBUTE_COLS)
+        Call getBlockDistributedLoc(A_global, A%za, MPIglobal_1D)
+
+        ! reference, 2D distributed
+        Call newMatrix(ref, nmatp, DISTRIBUTE_2D)
+        Call getBlockDistributedLoc(A_global, ref%za, MPIglobal)
+
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
+            nrows_loc = 6
+          Case (1)
+            nrows_loc = 4
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
+            ncols_loc = 6
+          Case (1)
+            ncols_loc = 4
+        End Select
+
+        Allocate(loc_rows_idx(nrows_loc), loc_cols_idx(ncols_loc))
+        Select Case (MPIglobal%myprocrow)
+          Case (0)
+            loc_rows_idx = (/1,2,5,6,9,10/)
+          Case (1)
+            loc_rows_idx = (/3,4,7,8/)
+        End Select
+        Select Case (MPIglobal%myproccol)
+          Case (0)
+            loc_cols_idx = (/1,2,5,6,9,10/)
+          Case (1)
+            loc_cols_idx = (/3,4,7,8/)
+        End Select
+
+        Call RedistributeHermitianMatrix1DTo2D(A)
+
+        Call assert_equals(nmatp, A%size, 'checking result rank')
+        Call assert_true(.not. A%ludecomposed, 'checking result ludecomposed')
+        Call assert_equals(nrows_loc, A%nrows_loc, 'checking result nrows_loc')
+        Call assert_equals(ncols_loc, A%ncols_loc, 'checking result ncols_loc')
+        Call assert_equals(nrows_loc, size(A%za,1), 'checking result size rows')
+        Call assert_equals(ncols_loc, size(A%za,2), 'checking result size cols')
+        Call assert_equals(ref%za, A%za, nrows_loc, ncols_loc, tol, 'checking result numbers')
+        Call assert_equals(loc_rows_idx, A%my_rows_idx, nrows_loc, 'checking newsystem H local rows')
+        Call assert_equals(loc_cols_idx, A%my_cols_idx, ncols_loc, 'checking newsystem H local cols')
+
+        Call deletematrix(A)
+        Call deletematrix(ref)
+        Deallocate(loc_rows_idx, loc_cols_idx)
+        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+      end if
+
+    end subroutine testRedistributeHermitianMatrix1DTo2D4Proc
+#endif
+
 
 end module modfvsystem_test
