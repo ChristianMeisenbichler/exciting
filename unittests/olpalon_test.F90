@@ -296,11 +296,11 @@ module modOlpalon_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
@@ -346,7 +346,7 @@ module modOlpalon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlpalon_APW_1Proc
 #endif
@@ -379,11 +379,11 @@ module modOlpalon_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
@@ -434,7 +434,7 @@ module modOlpalon_test
 ! deallocation of global variables 
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlpalon_APWLO_1Proc
 #endif
@@ -474,11 +474,11 @@ module modOlpalon_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
@@ -487,9 +487,9 @@ module modOlpalon_test
          Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_2D)
 
 ! init datastructures for splitting apwalm
-         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), dummy(MPIglobal%blocksize))
-         Call getLocalIndices(gsize, MPIglobal%nproccols*MPIglobal%blocksize, apwalm1_loc2glob, dummy, MPIglobal)
+         gsize_nrows_loc = NUMROC(gsize, MPIkpt_2D%blocksize, MPIkpt_2D%myprocrow, 0, MPIkpt_2D%nprocrows)
+         allocate(apwalm1_loc2glob(gsize_nrows_loc), dummy(MPIkpt_2D%blocksize))
+         Call getLocalIndices(gsize, MPIkpt_2D%nproccols*MPIkpt_2D%blocksize, apwalm1_loc2glob, dummy, MPIkpt_2D)
 
 ! initialisation is finished
 
@@ -517,15 +517,15 @@ module modOlpalon_test
                overlap_ref_global(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1,0,8)
             enddo
          enddo
-         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 14
             Case (1)
                nrows_loc = 13
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 14
             Case (1)
@@ -547,7 +547,7 @@ module modOlpalon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlpalon_APW_4Proc
 #endif
@@ -586,11 +586,11 @@ module modOlpalon_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize)
@@ -599,9 +599,9 @@ module modOlpalon_test
          Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_2D)
 
 ! init datastructures for splitting apwalm
-         gsize_nrows_loc = NUMROC(gsize, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-         allocate(apwalm1_loc2glob(gsize_nrows_loc), dummy(MPIglobal%blocksize))
-         Call getLocalIndices(gsize, MPIglobal%nproccols*MPIglobal%blocksize, apwalm1_loc2glob, dummy, MPIglobal)
+         gsize_nrows_loc = NUMROC(gsize, MPIkpt_2D%blocksize, MPIkpt_2D%myprocrow, 0, MPIkpt_2D%nprocrows)
+         allocate(apwalm1_loc2glob(gsize_nrows_loc), dummy(MPIkpt_2D%blocksize))
+         Call getLocalIndices(gsize, MPIkpt_2D%nproccols*MPIkpt_2D%blocksize, apwalm1_loc2glob, dummy, MPIkpt_2D)
 
 ! initialisation is finished
 
@@ -634,15 +634,15 @@ module modOlpalon_test
                overlap_ref_global(g1,gsize+idxlo(lm1,ilo,1):gsize+idxlo(lm2,ilo,1))=cmplx(g1*ilo,0,8)
             enddo
          enddo
-         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 14
             Case (1)
                nrows_loc = 13
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 14
             Case (1)
@@ -664,7 +664,7 @@ module modOlpalon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlpalon_APWLO_4Proc
 #endif

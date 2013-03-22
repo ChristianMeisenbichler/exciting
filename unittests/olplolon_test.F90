@@ -28,10 +28,10 @@ module modOlplolon_test
     Subroutine testcaseOlplolonSerial
       Implicit None
 
-!       Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
-!       Call testOlplolon_LO_Serial(.true.)
-!       Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
-!       Call testOlplolon_LO_Serial(.false.)
+      Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
+      Call testOlplolon_LO_Serial(.true.)
+      Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
+      Call testOlplolon_LO_Serial(.false.)
 
     End Subroutine testcaseOlplolonSerial
 
@@ -40,10 +40,10 @@ module modOlplolon_test
     Subroutine testcaseOlplolon1Proc
       Implicit None
 
-!       Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
-!       Call testOlplolon_LO_1Proc(.true.)
-!       Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
-!       Call testOlplolon_LO_1Proc(.false.)
+      Call set_test_name ('Radial integrals for sparse overlap matrix, ololo')
+      Call testOlplolon_LO_1Proc(.true.)
+      Call set_test_name ('Radial integrals for dense overlap matrix, ololo')
+      Call testOlplolon_LO_1Proc(.false.)
 
     End Subroutine testcaseOlplolon1Proc
 #endif
@@ -223,11 +223,11 @@ module modOlplolon_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize,sparse)
@@ -274,7 +274,7 @@ module modOlplolon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlplolon_LO_1Proc
 #endif
@@ -309,11 +309,11 @@ module modOlplolon_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,gsize,sparse)
@@ -346,15 +346,15 @@ module modOlplolon_test
                EndDo
             EndDo
          End Do
-         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 22
             Case (1)
                nrows_loc = 21
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 22
             Case (1)
@@ -375,7 +375,7 @@ module modOlplolon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlplolon_LO_4Proc
 #endif

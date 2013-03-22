@@ -5,7 +5,7 @@
 ! See the file COPYING for license details.
 !
 !BOP
-! !ROUTINE: hmlaa
+! !ROUTINE: hamiltonandoverlapsetup
 ! !INTERFACE:
 !
 !

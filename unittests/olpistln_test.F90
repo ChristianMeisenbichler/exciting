@@ -183,11 +183,11 @@ module modOlpistln_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(maxg,gsize)
@@ -231,7 +231,7 @@ module modOlpistln_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlpistln_Theta_1Proc
 #endif
@@ -264,11 +264,11 @@ module modOlpistln_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(maxg,gsize)
@@ -298,15 +298,15 @@ module modOlpistln_test
                overlap_ref_global(k,i)=ivgig(ivg(1,igpig(k))-ivg(1,igpig(i)),ivg(2,igpig(k))-ivg(2,igpig(i)),ivg(3,igpig(k))-ivg(3,igpig(i)))
             enddo
          enddo
-         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 19
             Case (1)
                nrows_loc = 18
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 19
             Case (1)
@@ -328,7 +328,7 @@ module modOlpistln_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testOlpistln_Theta_4Proc
 #endif

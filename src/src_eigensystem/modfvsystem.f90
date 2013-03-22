@@ -106,25 +106,25 @@
 
       select case (self%distribute)
         case (DISTRIBUTE_2D) 
-          self%nrows_loc = NUMROC(self%nrows, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-          self%ncols_loc = NUMROC(self%ncols, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+          self%nrows_loc = NUMROC(self%nrows, MPIkpt_2D%blocksize, MPIkpt_2D%myprocrow, 0, MPIkpt_2D%nprocrows)
+          self%ncols_loc = NUMROC(self%ncols, MPIkpt_2D%blocksize, MPIkpt_2D%myproccol, 0, MPIkpt_2D%nproccols)
           CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-                        MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
-                        MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
+                        MPIkpt_2D%blocksize, MPIkpt_2D%blocksize, 0, 0, &
+                        MPIkpt_2D%context, self%nrows_loc, MPIkpt_2D%ierr)
   
 !         case (DISTRIBUTE_ROWS)
-!           self%nrows_loc = NUMROC(self%nrows, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+!           self%nrows_loc = NUMROC(self%nrows, MPIkpt_1D%blocksize, MPIkpt_1D%myprocrow, 0, MPIkpt_1D%nprocrows)
 !           self%ncols_loc = self%ncols
 !           CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-!                         MPIglobal_1D%blocksize, self%ncols, 0, 0, &
-!                         MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+!                         MPIkpt_1D%blocksize, self%ncols, 0, 0, &
+!                         MPIkpt_1D%context, self%nrows_loc, MPIkpt_1D%ierr)
 
         case (DISTRIBUTE_COLS) 
           self%nrows_loc = self%nrows
-          self%ncols_loc = NUMROC(self%ncols, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+          self%ncols_loc = NUMROC(self%ncols, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
           CALL DESCINIT(self%desc, self%nrows, self%ncols, &
-                        self%nrows, MPIglobal_1D%blocksize, 0, 0, &
-                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+                        self%nrows, MPIkpt_1D%blocksize, 0, 0, &
+                        MPIkpt_1D%context, self%nrows_loc, MPIkpt_1D%ierr)
       end select 
 
 #else
@@ -165,37 +165,37 @@
 
       select case (self%distribute)
         case (DISTRIBUTE_2D) 
-          self%nrows_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-          self%ncols_loc = NUMROC(self%size, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+          self%nrows_loc = NUMROC(self%size, MPIkpt_2D%blocksize, MPIkpt_2D%myprocrow, 0, MPIkpt_2D%nprocrows)
+          self%ncols_loc = NUMROC(self%size, MPIkpt_2D%blocksize, MPIkpt_2D%myproccol, 0, MPIkpt_2D%nproccols)
           CALL DESCINIT(self%desc, self%size, self%size, &
-                        MPIglobal%blocksize, MPIglobal%blocksize, 0, 0, &
-                        MPIglobal%context, self%nrows_loc, MPIglobal%ierr)
+                        MPIkpt_2D%blocksize, MPIkpt_2D%blocksize, 0, 0, &
+                        MPIkpt_2D%context, self%nrows_loc, MPIkpt_2D%ierr)
 
           Allocate(self%my_rows_idx(self%nrows_loc), self%my_cols_idx(self%ncols_loc))
-          Call getLocalIndices(self%my_rows_idx, self%size, MPIglobal%blocksize, MPIglobal%myprocrow, MPIglobal%nprocrows)
-          Call getLocalIndices(self%my_cols_idx, self%size, MPIglobal%blocksize, MPIglobal%myproccol, MPIglobal%nproccols)
+          Call getLocalIndices(self%my_rows_idx, self%size, MPIkpt_2D%blocksize, MPIkpt_2D%myprocrow, MPIkpt_2D%nprocrows)
+          Call getLocalIndices(self%my_cols_idx, self%size, MPIkpt_2D%blocksize, MPIkpt_2D%myproccol, MPIkpt_2D%nproccols)
 
 !         case (DISTRIBUTE_ROWS)
-!           self%nrows_loc = NUMROC(self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+!           self%nrows_loc = NUMROC(self%size, MPIkpt_1D%blocksize, MPIkpt_1D%myprocrow, 0, MPIkpt_1D%nprocrows)
 !           self%ncols_loc = self%size
 !           CALL DESCINIT(self%desc, self%size, self%size, &
-!                         MPIglobal_1D%blocksize, self%size, 0, 0, &
-!                         MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+!                         MPIkpt_1D%blocksize, self%size, 0, 0, &
+!                         MPIkpt_1D%context, self%nrows_loc, MPIkpt_1D%ierr)
 ! 
 !           Allocate(self%my_rows_idx(self%nrows_loc), self%my_cols_idx(self%ncols_loc))
-!           Call getLocalIndices(self%my_rows_idx, self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, MPIglobal_1D%nprocrows)
+!           Call getLocalIndices(self%my_rows_idx, self%size, MPIkpt_1D%blocksize, MPIkpt_1D%myprocrow, MPIkpt_1D%nprocrows)
 !           self%my_cols_idx = (/(i,i=1,self%ncols_loc)/)
 
         case (DISTRIBUTE_COLS) 
           self%nrows_loc = self%size
-          self%ncols_loc = NUMROC(self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+          self%ncols_loc = NUMROC(self%size, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
           CALL DESCINIT(self%desc, self%size, self%size, &
-                        self%size, MPIglobal_1D%blocksize, 0, 0, &
-                        MPIglobal_1D%context, self%nrows_loc, MPIglobal_1D%ierr)
+                        self%size, MPIkpt_1D%blocksize, 0, 0, &
+                        MPIkpt_1D%context, self%nrows_loc, MPIkpt_1D%ierr)
 
           Allocate(self%my_rows_idx(self%nrows_loc), self%my_cols_idx(self%ncols_loc))
           self%my_rows_idx = (/(i,i=1,self%nrows_loc)/)
-          Call getLocalIndices(self%my_cols_idx, self%size, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, MPIglobal_1D%nproccols)
+          Call getLocalIndices(self%my_cols_idx, self%size, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, MPIkpt_1D%nproccols)
 
       end select 
       
@@ -260,14 +260,14 @@
 
       select case (distribute)
         case (DISTRIBUTE_2D) 
-          self%ngp_loc_rows = NUMROC(ngp, MPIglobal%blocksize, MPIglobal%myprocrow, 0, MPIglobal%nprocrows)
-          self%ngp_loc_cols = NUMROC(ngp, MPIglobal%blocksize, MPIglobal%myproccol, 0, MPIglobal%nproccols)
+          self%ngp_loc_rows = NUMROC(ngp, MPIkpt_2D%blocksize, MPIkpt_2D%myprocrow, 0, MPIkpt_2D%nprocrows)
+          self%ngp_loc_cols = NUMROC(ngp, MPIkpt_2D%blocksize, MPIkpt_2D%myproccol, 0, MPIkpt_2D%nproccols)
 !         case (DISTRIBUTE_ROWS)
-!           self%ngp_loc_rows = NUMROC(ngp, MPIglobal_1D%blocksize, MPIglobal_1D%myprocrow, 0, MPIglobal_1D%nprocrows)
+!           self%ngp_loc_rows = NUMROC(ngp, MPIkpt_1D%blocksize, MPIkpt_1D%myprocrow, 0, MPIkpt_1D%nprocrows)
 !           self%ngp_loc_cols = ngp
         case (DISTRIBUTE_COLS) 
           self%ngp_loc_rows = ngp
-          self%ngp_loc_cols = NUMROC(ngp, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+          self%ngp_loc_cols = NUMROC(ngp, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
       end select 
       Call newmatrix (self%hamilton, size, distribute)
       Call newmatrix (self%overlap,  size, distribute)
@@ -426,7 +426,7 @@
 ! 
 !       if (redistributeA) then 
 !         Call newmatrix(tmp1, zm1%nrows, zm1%ncols, DISTRIBUTE_2D)
-!         Call PZGEMR2D(zm1%nrows, zm1%ncols, zm1%za, 1, 1, zm1%desc, tmp1%za, 1, 1, tmp1%desc, MPIglobal%context)
+!         Call PZGEMR2D(zm1%nrows, zm1%ncols, zm1%za, 1, 1, zm1%desc, tmp1%za, 1, 1, tmp1%desc, MPIkpt_2D%context)
 !         A => tmp1%za
 !         descA => tmp1%desc
 !       else 
@@ -436,7 +436,7 @@
 ! 
 !       if (redistributeB) then 
 !         Call newmatrix(tmp2, zm2%nrows, zm2%ncols, DISTRIBUTE_2D)
-!         Call PZGEMR2D(zm2%nrows, zm2%ncols, zm2%za, 1, 1, zm2%desc, tmp2%za, 1, 1, tmp2%desc, MPIglobal%context)
+!         Call PZGEMR2D(zm2%nrows, zm2%ncols, zm2%za, 1, 1, zm2%desc, tmp2%za, 1, 1, tmp2%desc, MPIkpt_2D%context)
 !         B => tmp2%za
 !         descB => tmp2%desc
 !       else 
@@ -666,6 +666,7 @@
     End Function glob2loc
 
     
+#ifdef MPI
     Subroutine RedistributeHermitianMatrix1DTo2D(self)
       Implicit None
 ! arguments
@@ -673,9 +674,8 @@
 ! local variables
       Type(HermitianMatrix) :: mat2D
 
-#ifdef MPI
       Call newMatrix(mat2D, self%size, DISTRIBUTE_2D)
-      Call PZGEMR2D(self%size, self%size, self%za, 1, 1, self%desc, mat2D%za, 1, 1, mat2D%desc, MPIglobal%context)
+      Call PZGEMR2D(self%size, self%size, self%za, 1, 1, self%desc, mat2D%za, 1, 1, mat2D%desc, MPIkpt_2D%context)
       
       Deallocate(self%desc, self%za, self%my_rows_idx, self%my_cols_idx)
       self%desc => mat2D%desc
@@ -685,9 +685,9 @@
 
      self%nrows_loc = mat2D%nrows_loc
      self%ncols_loc = mat2D%ncols_loc
-#endif
 
     End Subroutine RedistributeHermitianMatrix1DTo2D
+#endif
 
 
   End Module modfvsystem

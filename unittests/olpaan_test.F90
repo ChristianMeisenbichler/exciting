@@ -191,17 +191,17 @@ module modOlpaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
          Call InitOverlapGlobals(lmaxmat,lmaxapw,gsize)
 
          Call newsystem(system, nmatp, gsize, DISTRIBUTE_COLS)
-         Call newmatrix(overlap_ref,nmatp)
+         Call newmatrix(overlap_ref,nmatp, DISTRIBUTE_COLS)
 ! initialisation is finished
 
          allocate(apwalm (gsize, apwordmax, lmmaxapw, natmtot))      
@@ -236,7 +236,7 @@ module modOlpaan_test
 ! deallocation of global variables   
          Call FreeOverlapGlobals    
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testOlpaan_1Proc
 #endif
@@ -276,11 +276,11 @@ module modOlpaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
          Call InitOverlapGlobals(lmaxmat,lmaxapw,gsize)
@@ -289,9 +289,9 @@ module modOlpaan_test
          Call newmatrix(overlap_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 
 ! initialisation is finished
 
@@ -313,10 +313,10 @@ module modOlpaan_test
                overlap_ref_global(g1,g2)=cmplx(g1*g2,0,8)
             Enddo
          Enddo
-         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIglobal_1D)
+         Call getBlockDistributedLoc(overlap_ref_global, overlap_ref%za, MPIkpt_1D)
 
          nrows_loc = nmatp
-         select case (MPIglobal_1D%rank)
+         select case (MPIkpt_1D%rank)
             case (0)
                ncols_loc = 4
             case (1)
@@ -342,7 +342,7 @@ module modOlpaan_test
 ! deallocation of global variables   
          Call FreeOverlapGlobals    
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testOlpaan_4Proc
 #endif

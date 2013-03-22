@@ -688,14 +688,11 @@ module modHmlaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -757,8 +754,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_EkinSurfaceSumL_1Proc
 #endif
@@ -791,14 +787,11 @@ module modHmlaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -855,8 +848,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_EkinSurfaceSumM_1Proc
 #endif
@@ -891,14 +883,11 @@ module modHmlaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -951,8 +940,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmSumL_1Proc
 #endif
@@ -986,14 +974,11 @@ module modHmlaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1042,8 +1027,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmSumM_1Proc
 #endif
@@ -1081,14 +1065,11 @@ module modHmlaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1154,8 +1135,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmAsymGnt_1Proc
 #endif
@@ -1191,14 +1171,11 @@ module modHmlaan_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal%blocksize = 2
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal)
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1254,8 +1231,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmAsymSumLm1Lm3_1Proc
 #endif
@@ -1299,11 +1275,11 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1315,9 +1291,9 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 
 ! initialisation is finished
 
@@ -1352,10 +1328,10 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_1D)
 
         nrows_loc = nmatp
-        select case (MPIglobal_1D%rank)
+        select case (MPIkpt_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -1381,7 +1357,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_EkinSurfaceSumL_4Proc
 #endif
@@ -1419,11 +1395,11 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1435,9 +1411,9 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 ! initialisation is finished
 
 ! The line below makes sure that other terms apart from the surface kinetic energy 
@@ -1468,10 +1444,10 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_1D)
 
         nrows_loc = nmatp
-        select case (MPIglobal_1D%rank)
+        select case (MPIkpt_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -1497,7 +1473,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_EkinSurfaceSumM_4Proc
 #endif
@@ -1536,11 +1512,11 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1552,9 +1528,9 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 
 ! initialisation is finished
 
@@ -1588,10 +1564,10 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_1D)
 
         nrows_loc = nmatp
-        select case (MPIglobal_1D%rank)
+        select case (MPIkpt_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -1617,7 +1593,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmSumL_4Proc
 #endif
@@ -1656,11 +1632,11 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1672,9 +1648,9 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 
 ! initialisation is finished
 
@@ -1705,10 +1681,10 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_1D)
 
         nrows_loc = nmatp
-        select case (MPIglobal_1D%rank)
+        select case (MPIkpt_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -1734,7 +1710,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmSumM_4Proc
 #endif
@@ -1776,11 +1752,11 @@ module modHmlaan_test
       Complex(8), External :: gauntyry
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1792,9 +1768,9 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 
 ! initialisation is finished
 
@@ -1838,10 +1814,10 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=test
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_1D)
 
         nrows_loc = nmatp
-        select case (MPIglobal_1D%rank)
+        select case (MPIkpt_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -1867,7 +1843,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmAsymGnt_4Proc
 #endif
@@ -1908,11 +1884,11 @@ module modHmlaan_test
       Integer, External   :: NUMROC
 
       n_procs_test = 4
-      Call setupProcGrid(1, n_procs_test, MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
-      MPIglobal_1D%blocksize = 2
+      Call setupProcGrid(1, n_procs_test, MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
+      MPIkpt_1D%blocksize = 2
 
-      If (MPIglobal_1D%rank < n_procs_test) then
-        Call getBlacsGridInfo(MPIglobal_1D)
+      If (MPIkpt_1D%rank < n_procs_test) then
+        Call getBlacsGridInfo(MPIkpt_1D)
 
 ! initialisation of global variables
         Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -1924,9 +1900,9 @@ module modHmlaan_test
         Call newmatrix(hamilton_ref, nmatp, DISTRIBUTE_COLS)
 
 ! init datastructures for splitting apwalm
-        gsize_loc = NUMROC(gsize, MPIglobal_1D%blocksize, MPIglobal_1D%myproccol, 0, MPIglobal_1D%nproccols)
+        gsize_loc = NUMROC(gsize, MPIkpt_1D%blocksize, MPIkpt_1D%myproccol, 0, MPIkpt_1D%nproccols)
         allocate(dummy(gsize), apwalm1_loc2glob(gsize_loc))
-        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIglobal_1D)
+        Call getLocalIndices(gsize, gsize, dummy, apwalm1_loc2glob, MPIkpt_1D)
 
 ! initialisation is finished
 
@@ -1951,7 +1927,7 @@ module modHmlaan_test
         Enddo
 
         ! prefactor depends on an element of apwalm which is located at first proc!!
-        if (MPIglobal_1D%rank .eq. 0) then
+        if (MPIkpt_1D%rank .eq. 0) then
           prefactor=cmplx(0,0,8)
           Do lm2=1,lmmaxmat
             Do lm1=1,lmmaxmat
@@ -1959,7 +1935,7 @@ module modHmlaan_test
             Enddo
           Enddo
         end if
-        Call MPI_BCAST(prefactor, 2, MPI_DOUBLE_PRECISION, 0, MPIglobal_1D%comm, ierror_t) 
+        Call MPI_BCAST(prefactor, 2, MPI_DOUBLE_PRECISION, 0, MPIkpt_1D%comm, ierror_t) 
 
         hamilton_ref_global = Cmplx(0,0,8)
         Do g2=1,gsize
@@ -1967,10 +1943,10 @@ module modHmlaan_test
             hamilton_ref_global(g1,g2)=cmplx(g1*g2,0,8)*prefactor
           Enddo
         Enddo
-        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal_1D)
+        Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_1D)
 
         nrows_loc = nmatp
-        select case (MPIglobal_1D%rank)
+        select case (MPIkpt_1D%rank)
           case (0)
             ncols_loc = 4
           case (1)
@@ -1996,7 +1972,7 @@ module modHmlaan_test
 ! deallocation of global variables   
         Call freeGlobals    
 ! freeing proc grid
-        Call finalizeProcGrid(MPIglobal_1D%comm, MPIglobal_1D%context, ierror_t)
+        Call finalizeProcGrid(MPIkpt_1D%comm, MPIkpt_1D%context, ierror_t)
       End If
     End Subroutine testHmlaan_SpherSymmAsymSumLm1Lm3_4Proc
 #endif

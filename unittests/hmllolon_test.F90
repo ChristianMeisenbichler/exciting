@@ -411,11 +411,11 @@ module modHmllolon_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -467,7 +467,7 @@ module modHmllolon_test
 ! deallocation of global variables   
          Call freeGlobals    
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testHmllolon_Gnt_1Proc
 #endif
@@ -502,11 +502,11 @@ module modHmllolon_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -546,7 +546,7 @@ module modHmllolon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testHmllolon_SphSym_1Proc
 #endif
@@ -581,11 +581,11 @@ module modHmllolon_test
       n_proc_rows_test = 1
       n_proc_cols_test = 1
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -641,7 +641,7 @@ module modHmllolon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testHmllolon_SphSymAsym_1Proc
 #endif
@@ -679,11 +679,11 @@ module modHmllolon_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -721,15 +721,15 @@ module modHmllolon_test
                End Do
             End Do
          End Do
-         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 22
             Case (1)
                nrows_loc = 21
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 22
             Case (1)
@@ -750,7 +750,7 @@ module modHmllolon_test
 ! deallocation of global variables   
          Call freeGlobals    
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testHmllolon_Gnt_4Proc
 #endif
@@ -787,11 +787,11 @@ module modHmllolon_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -817,15 +817,15 @@ module modHmllolon_test
                hamilton_ref_global(gsize+idxlo(lm1,ilo,1),gsize+idxlo(lm1,ilo,1))=cmplx(ilo,0,8)
             Enddo
          End Do
-         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 22
             Case (1)
                nrows_loc = 21
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 22
             Case (1)
@@ -846,7 +846,7 @@ module modHmllolon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testHmllolon_SphSym_4Proc
 #endif
@@ -883,11 +883,11 @@ module modHmllolon_test
       n_proc_rows_test = 2
       n_proc_cols_test = 2
       n_procs_test = n_proc_rows_test*n_proc_cols_test
-      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIglobal%comm, MPIglobal%context, ierror_t)
-      MPIglobal%blocksize = 2
+      Call setupProcGrid(n_proc_rows_test, n_proc_cols_test, MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
+      MPIkpt_2D%blocksize = 2
 
-      If (MPIglobal%rank < n_procs_test) then
-         Call getBlacsGridInfo(MPIglobal)
+      If (MPIkpt_2D%rank < n_procs_test) then
+         Call getBlacsGridInfo(MPIkpt_2D)
 
 ! initialisation of global variables
          Call initGlobals(lmaxmat,lmaxapw,lmaxvr,gsize)
@@ -929,15 +929,15 @@ module modHmllolon_test
                End Do
             End Do
          End Do
-         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIglobal)
+         Call getBlockDistributedLoc(hamilton_ref_global, hamilton_ref%za, MPIkpt_2D)
 
-         Select Case (MPIglobal%myprocrow)
+         Select Case (MPIkpt_2D%myprocrow)
             Case (0)
                nrows_loc = 12
             Case (1)
                nrows_loc = 11
          End Select
-         Select Case (MPIglobal%myproccol)
+         Select Case (MPIkpt_2D%myproccol)
             Case (0)
                ncols_loc = 12
             Case (1)
@@ -958,7 +958,7 @@ module modHmllolon_test
 ! deallocation of global variables   
          Call freeGlobals
 ! freeing proc grid
-         Call finalizeProcGrid(MPIglobal%comm, MPIglobal%context, ierror_t)
+         Call finalizeProcGrid(MPIkpt_2D%comm, MPIkpt_2D%context, ierror_t)
       End If
     End Subroutine testHmllolon_SphSymAsym_4Proc
 #endif

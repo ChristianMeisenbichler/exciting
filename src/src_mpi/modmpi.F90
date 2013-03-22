@@ -40,37 +40,38 @@ implicit none
 
       Logical       :: splittfile
       Type(MPIinfo) :: MPIglobal
-      Type(MPIinfo) :: MPIglobal_1D
+      Type(MPIinfo) :: MPIkpt_1D, MPIkpt_2D
 
 Contains
       Subroutine initMPI
 #ifdef MPI
     !        mpi init
-         Call mpi_init (MPIglobal%ierr)
+         Call mpi_init(MPIglobal%ierr)
 
          MPIglobal%comm = mpi_comm_world
          Call mpi_comm_size (mpi_comm_world, MPIglobal%procs, MPIglobal%ierr)
          Call mpi_comm_rank (mpi_comm_world, MPIglobal%rank,  MPIglobal%ierr)
 
-         MPIglobal_1D%comm  = mpi_comm_world
-         MPIglobal_1D%procs = MPIglobal%procs
-         MPIglobal_1D%rank  = MPIglobal%rank
-
          splittfile = .True.
 
-!TODO: decent processor grid initialization
-         ! now just init 1x1 procgrid
-         MPIglobal%nprocrows = 1
-         MPIglobal%nproccols = 1
-         Call BLACS_GET(0, 0, MPIglobal%context)
-         Call BLACS_GRIDINIT(MPIglobal%context,'r', MPIglobal%nprocrows, MPIglobal%nproccols) 
-         Call BLACS_GRIDINFO(MPIglobal%context, MPIglobal%nprocrows, MPIglobal%nproccols, MPIglobal%myprocrow, MPIglobal%myproccol)
+!TODO: decent processor grid initialization based on splitting procs over k-points
+         MPIkpt_2D%comm  = mpi_comm_world
+         MPIkpt_2D%procs = MPIglobal%procs
+         MPIkpt_2D%rank  = MPIglobal%rank
+         Call set_processorYdefault(MPIkpt_2D%procs, MPIkpt_2D%nprocrows)
+         MPIkpt_2D%nproccols = MPIkpt_2D%procs/MPIkpt_2D%nprocrows
+         Call BLACS_GET(0, 0, MPIkpt_2D%context)
+         Call BLACS_GRIDINIT(MPIkpt_2D%context,'r', MPIkpt_2D%nprocrows, MPIkpt_2D%nproccols) 
+         Call BLACS_GRIDINFO(MPIkpt_2D%context, MPIkpt_2D%nprocrows, MPIkpt_2D%nproccols, MPIkpt_2D%myprocrow, MPIkpt_2D%myproccol)
 
-         MPIglobal_1D%nprocrows = 1
-         MPIglobal_1D%nproccols = 1
-         Call BLACS_GET(0, 0, MPIglobal_1D%context)
-         Call BLACS_GRIDINIT(MPIglobal_1D%context,'r', MPIglobal_1D%nprocrows, MPIglobal_1D%nproccols) 
-         Call BLACS_GRIDINFO(MPIglobal_1D%context, MPIglobal_1D%nprocrows, MPIglobal_1D%nproccols, MPIglobal_1D%myprocrow, MPIglobal_1D%myproccol)
+         MPIkpt_1D%comm  = mpi_comm_world
+         MPIkpt_1D%procs = MPIglobal%procs
+         MPIkpt_1D%rank  = MPIglobal%rank
+         MPIkpt_1D%nprocrows = 1
+         MPIkpt_1D%nproccols = MPIglobal%procs
+         Call BLACS_GET(0, 0, MPIkpt_1D%context)
+         Call BLACS_GRIDINIT(MPIkpt_1D%context,'r', MPIkpt_1D%nprocrows, MPIkpt_1D%nproccols) 
+         Call BLACS_GRIDINFO(MPIkpt_1D%context, MPIkpt_1D%nprocrows, MPIkpt_1D%nproccols, MPIkpt_1D%myprocrow, MPIkpt_1D%myproccol)
 #else
          MPIglobal%comm  = 0
          MPIglobal%procs = 1
@@ -81,8 +82,8 @@ Contains
 !
       Subroutine finitMPI
 #ifdef MPI
-         Call BLACS_GRIDEXIT(MPIglobal%context)
-         Call BLACS_GRIDEXIT(MPIglobal_1D%context)
+         Call BLACS_GRIDEXIT(MPIkpt_2D%context)
+         Call BLACS_GRIDEXIT(MPIkpt_1D%context)
          Call MPI_Finalize(MPIglobal%ierr)
 #endif
       End Subroutine finitMPI
