@@ -282,7 +282,7 @@ module test_helpers
         n_cols_cut = min(100,n_cols)
         Do i=1,n_rows
           row(1:n_cols_cut) = matrix(i,1:n_cols_cut)
-          write (*,"(100f9.3)") row(1:n_cols_cut)
+          write (*,"(100f6.1)") row(1:n_cols_cut)
         End Do
 #ifdef MPI
       End If

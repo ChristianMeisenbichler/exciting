@@ -683,8 +683,8 @@
       self%my_rows_idx => mat2D%my_rows_idx
       self%my_cols_idx => mat2D%my_cols_idx
 
-     self%nrows_loc = mat2D%nrows_loc
-     self%ncols_loc = mat2D%ncols_loc
+      self%nrows_loc = mat2D%nrows_loc
+      self%ncols_loc = mat2D%ncols_loc
 
     End Subroutine RedistributeHermitianMatrix1DTo2D
 #endif
