@@ -10,6 +10,7 @@ program testsuite
     use modOlplolon_test
     use modHmlistln_test
     use modOlpistln_test
+    use modHamiltonandoverlapsetup_test
 #ifdef MPI
     use modmpi
 
@@ -54,6 +55,10 @@ program testsuite
 
     Call runtestcase(testcaseOlpistln1Proc, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / olpistln) on 1 proc')
     Call runtestcase(testcaseOlpistln4Proc, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / olpistln) on 4 procs')
+
+    Call runtestcase(testcaseHamiltonandoverlapsetup1Proc, 'hamiltonandoverlapsetup on 1 proc')
+    Call runtestcase(testcaseHamiltonandoverlapsetup4Proc, 'hamiltonandoverlapsetup on 4 procs')
+
 #else
     Call runtestcase(testcaseSystemSerial, 'modfvsystem - System construction serial')
     Call runtestcase(testcaseHermitianMatrixMatrixSerial, 'modfvsystem - Hermitian matrix-matrix-multiplication serial')
@@ -67,6 +72,9 @@ program testsuite
     Call runtestcase(testcaseOlplolonSerial, 'modfvsystem - Overlap matrix setup (the LO-LO part / olplolon) serial')
     Call runtestcase(testcaseHmlistlnSerial, 'modfvsystem - Hamiltonian matrix setup (the PW-PW part / hmlistln) serial')
     Call runtestcase(testcaseOlpistlnSerial, 'modfvsystem - Overlap matrix setup (the PW-PW part / olpistln) serial')
+
+    Call runtestcase(testcaseHamiltonandoverlapsetupSerial, 'hamiltonandoverlapsetup serial')
+
     
 #endif
 
