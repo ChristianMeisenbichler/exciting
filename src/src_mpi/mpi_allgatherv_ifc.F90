@@ -1,7 +1,7 @@
- module mpi_allgatherv_ifc_module
- #ifdef MPI
+module mpi_allgatherv_ifc_module
+#ifdef MPI
  use mpi
- #endif
+#endif
  contains
  subroutine mpi_allgatherv_ifc(set,rlen,ibuf,rbuf,zbuf)
         use modmpi , only: MPIglobal

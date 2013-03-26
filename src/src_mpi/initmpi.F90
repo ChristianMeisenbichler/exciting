@@ -1,6 +1,7 @@
   Subroutine initMPI
+   Use modmpi_types
 #ifdef MPI
-    Use modmpi_types
+
     !        mpi init
          Call mpi_init(MPIglobal%ierr)
 
