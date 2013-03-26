@@ -11,6 +11,7 @@ Subroutine scrcoulint
       Use modmain
       Use modinput
       Use modmpi
+      use mpi_allgatherv_ifc_module
       Use modxs
       Use summations
       Use m_xsgauntgen

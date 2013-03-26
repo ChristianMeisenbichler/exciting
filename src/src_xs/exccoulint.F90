@@ -11,6 +11,7 @@ Subroutine exccoulint
       Use modmain
       Use modinput
       Use modmpi
+       use mpi_allgatherv_ifc_module
       Use modxs
       Use ioarray
       Use m_xsgauntgen

@@ -1173,6 +1173,14 @@
           </xs:complexType>
         </xs:element>
       </xs:all>
+      <xs:attribute name="SCLPGroups" default="1" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            Gives the number of Scalapack working groups. Each group will calculate 1 k-point for the ground state.
+            
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute ex:importance="expert" ex:unit="" name="do" default="fromscratch">
         <xs:annotation>
           <xs:appinfo>
