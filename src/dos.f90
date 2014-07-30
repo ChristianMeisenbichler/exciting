@@ -10,6 +10,7 @@ Subroutine dos
       Use modinput
       Use modmain
       Use FoX_wxml
+      Use modmpi, Only: splittfile
 ! !DESCRIPTION:
 !   Produces a total and partial density of states (DOS) for plotting. The total
 !   DOS is written to the file {\tt TDOS.OUT} while the partial DOS is written
@@ -60,9 +61,10 @@ Subroutine dos
       Complex (8), Allocatable :: evecfv (:, :, :)
       Complex (8), Allocatable :: evecsv (:, :)
 ! initialise universal variables
+      splittfile=.false.
       Call init0
       Call init1
-      lmax = Min (3, input%groundstate%lmaxapw)
+      lmax = Min (4, input%groundstate%lmaxapw)
       lmmax = (lmax+1) ** 2
 ! allocate local arrays
       Allocate (e(nstsv, nkpt, nspinor))
@@ -123,29 +125,28 @@ Subroutine dos
 ! loop over k-points
       Do ik = 1, nkpt
 ! get the eigenvalues/vectors from file
-         Call getevalsv (vkl(:, ik), evalsv(:, ik))
-         Call getevecfv (vkl(:, ik), vgkl(:, :, :, ik), evecfv)
-         Call getevecsv (vkl(:, ik), evecsv)
+         Call getevalsv (vkl(1, ik), evalsv(1, ik))
+         Call getevecfv (vkl(1, ik), vgkl(:, :, :, ik), evecfv)
+         Call getevecsv (vkl(1, ik), evecsv)
 ! find the matching coefficients
          Do ispn = 1, nspnfv
-            Call match (ngk(ispn, ik), gkc(:, ispn, ik), tpgkc(:, :, &
-           & ispn, ik), sfacgk(:, :, ispn, ik), apwalm(:, :, :, :, &
-           & ispn))
+            Call match(ngk(ispn,ik), gkc(:,ispn,ik), &
+           & tpgkc(:,:,ispn,ik), sfacgk(:,:,ispn,ik), apwalm(:,:,:,:,ispn))
          End Do
          Do is = 1, nspecies
             Do ia = 1, natoms (is)
                ias = idxas (ia, is)
 ! generate the density matrix
-               Call gendmat (.False., .False., 0, lmax, is, ia, ngk(:, &
-              & ik), apwalm, evecfv, evecsv, lmmax, dmat)
+               Call gendmat (.False., .False., 0, lmax, is, ia, &
+              & ngk(:, ik), apwalm, evecfv, evecsv, lmmax, dmat)
 ! convert (l,m) part to an irreducible representation if required
                If (input%properties%dos%lmirep) Then
                   Do ist = 1, nstsv
                      Do ispn = 1, nspinor
                         Do jspn = 1, nspinor
                            Call zgemm ('N', 'N', lmmax, lmmax, lmmax, &
-                          & zone, ulm(:, :, ias), lmmax, dmat(:, :, &
-                          & ispn, jspn, ist), lmmax, zzero, a, lmmax)
+                          & zone, ulm(:, :, ias), lmmax, dmat(:,:,ispn,jspn,ist), &
+                          & lmmax, zzero, a, lmmax)
                            Call zgemm ('N', 'C', lmmax, lmmax, lmmax, &
                           & zone, a, lmmax, ulm(:, :, ias), lmmax, &
                           & zzero, dmat(:, :, ispn, jspn, ist), lmmax)
@@ -154,8 +155,7 @@ Subroutine dos
                   End Do
                End If
 ! spin rotate the density matrices to desired spin-quantisation axis
-               If (associated(input%groundstate%spin) .And. ( .Not. &
-              & tsqaz)) Then
+               If (associated(input%groundstate%spin) .And. ( .Not. tsqaz)) Then
                   Do ist = 1, nstsv
                      Do lm = 1, lmmax
                         dm1 (:, :) = dmat (lm, lm, :, :, ist)
@@ -187,24 +187,32 @@ Subroutine dos
             End Do
          End If
       End Do
+
 ! generate energy grid
       dw = (input%properties%dos%winddos(2)-input%properties%dos%winddos(1)) / dble (input%properties%dos%nwdos)
       Do iw = 1, input%properties%dos%nwdos
          w (iw) = dw * dble (iw-1) + input%properties%dos%winddos (1)
       End Do
 ! number of subdivisions used for interpolation
-      nsk (:) = Max &
-     & (input%properties%dos%ngrdos/input%groundstate%ngridk(:), 1)
-!--------------------------!
-!     output total DOS     !
-!--------------------------!
-      Call xml_OpenFile ("dos.xml", xf, replace=.True., &
-     & pretty_print=.True.)
+      nsk (:) = Max(input%properties%dos%ngrdos/input%groundstate%ngridk(:), 1)
+
+!-------------------------------------!
+!     calculate and output total DOS  !
+!-------------------------------------!
       Open (50, File='TDOS.OUT', Action='WRITE', Form='FORMATTED')
+      Call xml_OpenFile ("dos.xml", xf, replace=.True., pretty_print=.True.)
       Call xml_NewElement (xf, "dos")
       Call xml_NewElement (xf, "title")
       Call xml_AddCharacters (xf, trim(input%title))
       Call xml_endElement (xf, "title")
+      Call xml_NewElement (xf, "axis")
+      Call xml_AddAttribute (xf, "label", 'Energy')
+      Call xml_AddAttribute (xf, "unit", 'Hartree')
+      Call xml_endElement (xf, "axis")
+      Call xml_NewElement (xf, "axis")
+      Call xml_AddAttribute (xf, "label", 'DOS')
+      Call xml_AddAttribute (xf, "unit", 'states/Hartree/unit cell')
+      Call xml_endElement (xf, "axis")
       Call xml_NewElement (xf, "totaldos")
       Do ispn = 1, nspinor
          Call xml_NewElement (xf, "diagram")
@@ -221,62 +229,54 @@ Subroutine dos
 ! subtract the Fermi energy
                e (ist, ik, ispn) = evalsv (ist, ik) - efermi
 ! correction for scissors operator
-               If (e(ist, ik, ispn) .Gt. 0.d0) e (ist, ik, ispn) = e &
-              & (ist, ik, ispn) + input%properties%dos%scissor
+               If (e(ist, ik, ispn) .Gt. 0.d0) e (ist, ik, ispn) = &
+              & e (ist, ik, ispn) + input%properties%dos%scissor
 ! use diagonal of spin density matrix for weight
                f (ist, ik) = dble (sdmat(ispn, ispn, ist, ik))
             End Do
          End Do
+! BZ integration
          Call brzint (input%properties%dos%nsmdos, &
         & input%groundstate%ngridk, nsk, ikmap, &
-        & input%properties%dos%nwdos, input%properties%dos%winddos, nstsv, nstsv, e(:, :, &
-        & ispn), f, g(:, ispn))
+        & input%properties%dos%nwdos, input%properties%dos%winddos, nstsv, nstsv, &
+        & e(:,:,ispn), f, g(:,ispn))
 ! multiply by the maximum occupancy (spin-polarised: 1, unpolarised: 2)
          g (:, ispn) = occmax * g (:, ispn)
          Do iw = 1, input%properties%dos%nwdos
             Write (50, '(2G18.10)') w (iw), t1 * g (iw, ispn)
             Call xml_NewElement (xf, "point")
             Write (buffer, '(G18.10)') w (iw)
-            Call xml_AddAttribute (xf, "e", &
-           & trim(adjustl(buffer)))
+            Call xml_AddAttribute (xf, "e", trim(adjustl(buffer)))
             Write (buffer, '(G18.10)') g (iw, ispn)
-            Call xml_AddAttribute (xf, "dos", &
-           & trim(adjustl(buffer)))
-!
+            Call xml_AddAttribute (xf, "dos", trim(adjustl(buffer)))
             Call xml_endElement (xf, "point")
-!
          End Do
          Write (50, '("     ")')
          Call xml_endElement (xf, "diagram")
       End Do
       Close (50)
       Call xml_endElement (xf, "totaldos")
+
 !----------------------------!
 !     output partial DOS     !
 !----------------------------!
+
+      If (input%properties%dos%lmirep) Then
 !
-!
-      Do is = 1, nspecies
-         Do ia = 1, natoms (is)
+        Do is = 1, nspecies
+          Do ia = 1, natoms (is)
             Call xml_NewElement (xf, "partialdos")
             Call xml_AddAttribute (xf, "type", "partial")
-            Call xml_AddAttribute (xf, "speciessym", trim(adjustl(input%structure%speciesarray(is)%species%chemicalSymbol)))
+            Call xml_AddAttribute (xf, "speciessym", &
+           &  trim(adjustl(input%structure%speciesarray(is)%species%chemicalSymbol)))
             Write (buffer,*) is
-            Call xml_AddAttribute (xf, "speciesrn", &
-           & trim(adjustl(buffer)))
+            Call xml_AddAttribute (xf, "speciesrn", trim(adjustl(buffer)))
             Write (buffer,*) ia
             Call xml_AddAttribute (xf, "atom", trim(adjustl(buffer)))
-!
             ias = idxas (ia, is)
-            Write (fname, '("PDOS_S", I2.2, "_A", I4.4, ".OUT")') is, &
-           & ia
-            Open (50, File=trim(fname), Action='WRITE', Form='FORMATTED&
-           &')
-!
+            Write (fname, '("PDOS_S", I2.2, "_A", I4.4, ".OUT")') is, ia
+            Open (50, File=trim(fname), Action='WRITE', Form='FORMATTED')
             Do ispn = 1, nspinor
-
-!
-
                If (ispn .Eq. 1) Then
                   t1 = 1.d0
                Else
@@ -291,149 +291,135 @@ Subroutine dos
                         End Do
                      End Do
                      Call brzint (input%properties%dos%nsmdos, &
-                    & input%groundstate%ngridk, nsk, ikmap, &
-                    & input%properties%dos%nwdos, input%properties%dos%winddos, nstsv, nstsv, &
-                    & e(:, :, ispn), f, gp)
+                    &  input%groundstate%ngridk, nsk, ikmap, &
+                    &  input%properties%dos%nwdos, input%properties%dos%winddos, &
+                    &  nstsv, nstsv, e(:, :, ispn), f, gp)
                      gp (:) = occmax * gp (:)
                      Call xml_NewElement (xf, "diagram")
-                       Write (buffer,*) ispn
-               Call xml_AddAttribute (xf, "nspin", &
-              & trim(adjustl(buffer)))
-                 	 Write (buffer,*) l
-            	     Call xml_AddAttribute (xf, "l", &
-             			 & trim(adjustl(buffer)))
-             			 Write (buffer,*) m
-            	     Call xml_AddAttribute (xf, "m", &
-             			 & trim(adjustl(buffer)))
-
+                     Write (buffer,*) ispn
+                     Call xml_AddAttribute (xf, "nspin", trim(adjustl(buffer)))
+                     Write (buffer,*) l
+            	     Call xml_AddAttribute (xf, "l", trim(adjustl(buffer)))
+                     Write (buffer,*) m
+            	     Call xml_AddAttribute (xf, "m", trim(adjustl(buffer)))
                      Do iw = 1, input%properties%dos%nwdos
                         Call xml_NewElement (xf, "point")
                         Write (buffer, '(G18.10)') w (iw)
-                        Call xml_AddAttribute (xf, "e", &
-                       & trim(adjustl(buffer)))
+                        Call xml_AddAttribute (xf, "e", trim(adjustl(buffer)))
                         Write (buffer, '(G18.10)') gp (iw)
-                        Call xml_AddAttribute (xf, "dos", &
-                       & trim(adjustl(buffer)))
-!
+                        Call xml_AddAttribute (xf, "dos", trim(adjustl(buffer)))
                         Call xml_endElement (xf, "point")
                         Write (50, '(2G18.10)') w (iw), t1 * gp (iw)
-! interstitial DOS
                         g (iw, ispn) = g (iw, ispn) - gp (iw)
                      End Do
                      Write (50, '("     ")')
                    Call xml_endElement (xf, "diagram")
                   End Do
                End Do
-
             End Do
             Close (50)
             Call xml_endElement (xf, "partialdos")
-         End Do
-      End Do
+          End Do
+        End Do
 !
-!
-      If (input%properties%dos%lmirep) Then
-         Open (50, File='ELMIREP.OUT', Action='WRITE', Form='FORMATTED')
-         Call xml_NewElement (xf, "limrep")
-         Do is = 1, nspecies
-            Call xml_NewElement (xf, "species")
-            Call xml_AddAttribute (xf, "speciessym", trim(adjustl(input%structure%speciesarray(is)%species%chemicalSymbol)))
-            Do ia = 1, natoms (is)
-               Call xml_NewElement (xf, "atom")
-               ias = idxas (ia, is)
-               Write (50,*)
-               Write (50, '("Species : ", I4, " (", A, "), atom : ", I4&
-              &)') is, trim (spsymb(is)), ia
-               Do l = 0, lmax
-                  Do m = - l, l
-                     lm = idxlm (l, m)
-                     Call xml_NewElement (xf, "orb")
-                     Write (50, '(" l = ", I2, ", m = ", I2, ", lm= ", &
-                    &I3, " : ", G18.10)') l, m, lm, elm (lm, ias)
-                     Write (buffer,*) l
-                     Call xml_AddAttribute (xf, "l", &
-                    & trim(adjustl(buffer)))
-                     Write (buffer,*) m
-                     Call xml_AddAttribute (xf, "m", &
-                    & trim(adjustl(buffer)))
-                     Write (buffer,*) lm
-                     Call xml_AddAttribute (xf, "lm", &
-                    & trim(adjustl(buffer)))
-                     Write (buffer, '(G18.10)') elm (lm, ias)
-                     Call xml_AddAttribute (xf, "elm", &
-                    & trim(adjustl(buffer)))
-                     Call xml_endElement (xf, "orb")
-                  End Do
+        Open (50, File='ELMIREP.OUT', Action='WRITE', Form='FORMATTED')
+        Call xml_NewElement (xf, "limrep")
+        Do is = 1, nspecies
+          Call xml_NewElement (xf, "species")
+          Call xml_AddAttribute (xf, "speciessym", trim(adjustl(input%structure%speciesarray(is)%species%chemicalSymbol)))
+          Do ia = 1, natoms (is)
+            Call xml_NewElement (xf, "atom")
+            ias = idxas (ia, is)
+            Write (50,*)
+            Write (50, '("Species : ", I4, " (", A, "), atom : ", I4)') &
+           &  is, trim (spsymb(is)), ia
+            Do l = 0, lmax
+               Do m = - l, l
+                  lm = idxlm (l, m)
+                  Call xml_NewElement (xf, "orb")
+                  Write (50, '(" l = ", I2, ", m = ", I2, ", lm= ", I3, &
+                 & " : ", G18.10)') l, m, lm, elm (lm, ias)
+                  Write (buffer,*) l
+                  Call xml_AddAttribute (xf, "l", trim(adjustl(buffer)))
+                  Write (buffer,*) m
+                  Call xml_AddAttribute (xf, "m", trim(adjustl(buffer)))
+                  Write (buffer,*) lm
+                  Call xml_AddAttribute (xf, "lm", trim(adjustl(buffer)))
+                  Write (buffer, '(G18.10)') elm (lm, ias)
+                  Call xml_AddAttribute (xf, "elm", trim(adjustl(buffer)))
+                  Call xml_endElement (xf, "orb")
                End Do
-               Call xml_endElement (xf, "atom")
             End Do
-            Call xml_endElement (xf, "species")
-         End Do
-         Call xml_endElement (xf, "limrep")
-         Close (50)
-      End If
-!
+            Call xml_endElement (xf, "atom")
+          End Do
+          Call xml_endElement (xf, "species")
+        End Do
+        Call xml_endElement (xf, "limrep")
+        Close (50)
+
 !---------------------------------!
 !     output interstitial DOS     !
 !---------------------------------!
-      Call xml_NewElement (xf, "interstitialdos")
-      Open (50, File='IDOS.OUT', Action='WRITE', Form='FORMATTED')
-!
-      Do ispn = 1, nspinor
-         Call xml_NewElement (xf, "diagram")
-         Call xml_AddAttribute (xf, "type", "interstitial")
-         Write (buffer,*) ispn
-         Call xml_AddAttribute (xf, "nspin", trim(adjustl(buffer)))
-         If (ispn .Eq. 1) Then
+
+        Call xml_NewElement (xf, "interstitialdos")
+        Open (50, File='IDOS.OUT', Action='WRITE', Form='FORMATTED')
+        Do ispn = 1, nspinor
+          Call xml_NewElement (xf, "diagram")
+          Call xml_AddAttribute (xf, "type", "interstitial")
+          Write (buffer,*) ispn
+          Call xml_AddAttribute (xf, "nspin", trim(adjustl(buffer)))
+          If (ispn .Eq. 1) Then
             t1 = 1.d0
-         Else
+          Else
             t1 = - 1.d0
-         End If
-         Do iw = 1, input%properties%dos%nwdos
+          End If
+          Do iw = 1, input%properties%dos%nwdos
             Call xml_NewElement (xf, "point")
             Write (buffer, '(G18.10)') w (iw)
-            Call xml_AddAttribute (xf, "e", &
-           & trim(adjustl(buffer)))
+            Call xml_AddAttribute (xf, "e", trim(adjustl(buffer)))
             Write (buffer, '(G18.10)') g (iw, ispn)
-            Call xml_AddAttribute (xf, "dos", &
-           & trim(adjustl(buffer)))
+            Call xml_AddAttribute (xf, "dos", trim(adjustl(buffer)))
             Call xml_endElement (xf, "point")
             Write (50, '(2G18.10)') w (iw), t1 * g (iw, ispn)
-         End Do
-         Call xml_endElement (xf, "diagram")
-      End Do
-      Call xml_endElement (xf, "interstitialdos")
+          End Do
+          Call xml_endElement (xf, "diagram")
+        End Do
+        Call xml_endElement (xf, "interstitialdos")
+
+      End If ! lmirep
+
+! close files
       Close (50)
+      Call xml_endElement (xf, "dos")
       Call xml_close (xf)
-      Write (*,*)
-      Write (*, '("Info(dos):")')
-      Write (*, '(" Total density of states written to TDOS.OUT")')
-      Write (*,*)
-      Write (*, '(" Partial density of states written to PDOS_Sss_Aaaaa&
-     &.OUT")')
-      Write (*, '(" for all species and atoms")')
-      If (input%properties%dos%lmirep) Then
-         Write (*,*)
-         Write (*, '(" Eigenvalues of a random matrix in the (l, m) bas&
-        &is symmetrised")')
-         Write (*, '(" with the site symmetries written to ELMIREP.OUT &
-        &for all")')
-         Write (*, '(" species and atoms. Degenerate eigenvalues corres&
-        &pond to")')
-         Write (*, '(" irreducible representations of each site symmetr&
-        &y group")')
-      End If
-      Write (*,*)
-      Write (*, '(" Interstitial density of states written to IDOS.OUT"&
-     &)')
-      Write (*,*)
-      Write (*, '(" Fermi energy is at zero in plot")')
-      Write (*,*)
-      Write (*, '(" DOS units are states/Hartree/unit cell")')
-      Write (*,*)
+      
       Deallocate (e, f, w, g, gp, bc)
       If (input%properties%dos%lmirep) deallocate (elm, ulm, a)
       Deallocate (dmat, sdmat, apwalm, evecfv, evecsv)
+
+!-----------------------------------
+! Screen info
+!-----------------------------------
+      Write(*,*)
+      Write(*, '("Info(dos):")')
+      Write(*, '("   Total density of states written to TDOS.OUT")')
+      Write(*,*)
+      If (input%properties%dos%lmirep) Then
+         Write(*, '("   Partial density of states written to PDOS_Sss_Aaaaa.OUT")')
+         Write(*, '("   for all species and atoms")')
+         Write(*,*)
+         Write(*, '("   Eigenvalues of a random matrix in the (l, m) basis symmetrised")')
+         Write(*, '("   with the site symmetries written to ELMIREP.OUT for all")')
+         Write(*, '("   species and atoms. Degenerate eigenvalues correspond to")')
+         Write(*, '("   irreducible representations of each site symmetry group")')
+         Write(*,*)
+         Write(*, '("   Interstitial density of states written to IDOS.OUT")')
+         Write(*,*)
+      End If
+      Write(*, '("   Fermi energy is at zero in plot")')
+      Write(*,*)
+      Write(*, '("   DOS units are states/Hartree/unit cell")')
+      Write(*,*)
       Return
 End Subroutine
 !EOC

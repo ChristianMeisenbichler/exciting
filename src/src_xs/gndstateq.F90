@@ -16,23 +16,38 @@ Contains
     ! local varialbes
          Character (256) :: filext_save
          Real (8) :: vkloff_save (3)
-         Integer :: task_save, maxscl_save
+!         Real (8) ::  bfieldc_save(3)
+         Integer :: task_save
+!         Integer :: maxscl_save
     ! save original values
          filext_save = trim (filext)
          vkloff_save = input%groundstate%vkloff
+!         If (associated(input%groundstate%spin)) Then
+!            bfieldc_save = input%groundstate%spin%bfieldc
+!         End If
          task_save = task
-         maxscl_save = input%groundstate%maxscl
+ !        maxscl_save = input%groundstate%maxscl
     ! one iteration, new offset, special file extension
          filext = trim (filxt)
          input%groundstate%vkloff = voff
          task = 1
-         input%groundstate%maxscl = 1
+
+         !ran gs from scratch if spin polarized calculation is needed.
+         If (input%xs%dogroundstate .Eq. "fromscratch") Then
+           task=0
+         End If
     ! call with the above parameters changed
          Call gndstate
+         Call rewritesorted
     ! restore original parameters
-         filext = trim (filext_save)
+         If (input%xs%dogroundstate .Ne. "fromscratch") Then
+            filext = trim (filext_save)
+         End If
          input%groundstate%vkloff = vkloff_save
+  !       If (associated(input%groundstate%spin)) Then
+  !          input%groundstate%spin%bfieldc = bfieldc_save
+  !       End If
          task = task_save
-         input%groundstate%maxscl = maxscl_save
+!         input%groundstate%maxscl = maxscl_save
       End Subroutine gndstateq
 End Module m_gndstateq

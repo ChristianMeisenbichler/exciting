@@ -8,6 +8,7 @@
 !
 Subroutine phdisp
       Use modmain
+      use modmpi
       Implicit None
 ! local variables
       Integer :: iq, i, n, iv
@@ -18,9 +19,13 @@ Subroutine phdisp
       Complex (8), Allocatable :: dynq (:, :, :)
       Complex (8), Allocatable :: dynp (:, :)
       Complex (8), Allocatable :: dynr (:, :, :)
+! writeout only in master process
+      if (rank .ne. 0) goto 10
 ! initialise universal variables
       Call init0
       Call init2
+      nvp1d = size(input%phonons%phonondispplot%plot1d%path%pointarray)
+      npp1d = input%phonons%phonondispplot%plot1d%path%steps
       n = 3 * natmtot
       Allocate (wp(n, npp1d))
       Allocate (ev(n, n))
@@ -34,8 +39,6 @@ Subroutine phdisp
 ! Fourier transform the dynamical matrices to real-space
       Call dynqtor (dynq, dynr)
 ! generate a set of q-point vectors along a path in the Brillouin zone
-      nvp1d = size(input%phonons%phonondispplot%plot1d%path%pointarray)
-      npp1d = input%phonons%phonondispplot%plot1d%path%steps
       If (allocated(dvp1d)) deallocate (dvp1d)
       Allocate (dvp1d(nvp1d))
       If (allocated(vplp1d)) deallocate (vplp1d)
@@ -81,5 +84,9 @@ Subroutine phdisp
       Write (*, '(" vertex location lines written to PHDLINES.OUT")')
       Write (*,*)
       Deallocate (wp, ev, dynq, dynp, dynr)
+10    continue
+#ifdef MPI
+      call MPI_Barrier(MPI_Comm_World, ierr)
+#endif
       Return
 End Subroutine

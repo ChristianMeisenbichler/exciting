@@ -8,7 +8,7 @@
 !
 Subroutine readdyn (tsym,dynq)
       Use modmain
-      Use modinput
+      !Use modinput
       Implicit None
 ! arguments
       logical, intent(in) :: tsym
@@ -19,16 +19,17 @@ Subroutine readdyn (tsym,dynq)
       Integer :: ip, jp, i, j
       Real (8) :: a, b
       Character (256) :: fext
+      Character (256) :: chdummy
 ! external functions
-      Integer :: gcd
-      External gcd
+      !Integer :: gcd
+      !External gcd
       Do iq = 1, nqpt
          i = 0
          Do is = 1, nspecies
             Do ia = 1, natoms (is)
                Do ip = 1, 3
                   i = i + 1
-                  Call phfext (iq, is, ia, ip, fext)
+                  Call phfext (iq, is, ia, ip, 0, 1, chdummy, fext, chdummy)
                   Inquire (File='DYN'//trim(fext), Exist=Exist)
                   If ( .Not. exist) Then
                      Write (*,*)

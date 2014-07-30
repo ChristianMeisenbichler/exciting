@@ -18,6 +18,7 @@ Subroutine init2
 #ifdef XS
       Real (8) :: v (3), t1
       Integer :: iq, iv (3)
+      Character (256) :: filex
 #endif
 
       Call timesec (ts0)
@@ -42,11 +43,10 @@ Subroutine init2
             vqlwrt(:,iq) = input%phonons%qpointset%qpoint(:, iq)
           end do
       end if
-! check if the system is an isolated molecule
-      If (input%structure%molecule) ngridq (:) = 1
+
 ! OEP, Hartree-Fock or RDMFT
-      If ((input%groundstate%xctypenumber .Lt. 0) .Or. (task .Eq. 5) &
-     & .Or. (task .Eq. 6) .Or. (task .Eq. 300)) Then
+      If (associated(input%groundstate%OEP) .Or. (task .Eq. 300) &
+      & .Or. (associated(input%groundstate%HartreeFock))) Then 
          ngridq (:) = input%groundstate%ngridk(:)
          redq = .False.
       End If
@@ -182,7 +182,7 @@ Subroutine init2
         & boxl, nqpt, iqmap, ivq, vql, vqc, wqpt)
          nqptr = nqpt
       End If
-      If ((task .Eq. 440) .Or. (task .Eq. 441) .Or. (task .Eq. 445) &
+      If ((task .Eq. 440) .Or. (task .Eq. 441) .Or. (task .Eq. 445) .Or. (task .Eq. 446) &
      & .Or. (task .Eq. 450) .Or. (task .Eq. 451) .Or. (task .Eq. 499) &
      & .Or. (task .Eq. 700)) Then
          If (allocated(ivqr)) deallocate (ivqr)
@@ -312,7 +312,17 @@ Subroutine init2
 !------------------------!
 ! read density and potentials from file (STATE.OUT) exclusively
       isreadstate0 = .True.
-      Call readstate
+      If (input%xs%dogroundstate .Ne. "fromscratch") Then 
+         Call readstate
+      Else
+         If(task .Ne. 301) Then 
+            isreadstate0 = .False.
+            filex = trim(filext)
+            filext = '_QMT001.OUT'
+            Call readstate
+            filext = trim(filex)
+         End If
+      End If
       isreadstate0 = .False.
 ! find the new linearisation energies
       Call linengy
@@ -328,13 +338,16 @@ Subroutine init2
 !     OEP, Hartree-Fock and RDMFT variables     !
 !-----------------------------------------------!
       If ((input%groundstate%xctypenumber .Lt. 0) .Or. (task .Eq. 5) &
-     & .Or. (task .Eq. 6) .Or. (task .Eq. 300)) Then
+     & .Or. (task .Eq. 6) .Or. (task .Eq. 300) .Or.  (xctype(2) .Ge. 400)&
+     &.Or.  (xctype(1) .Ge. 400)) Then
 ! determine the 1/q^2 integral weights if required
          Call genwiq2
 ! output the 1/q^2 integrals to WIQ2.OUT
          Call writewiq2
       End If
-      If (input%groundstate%xctypenumber .Lt. 0) Then
+!      If ((input%groundstate%xctypenumber .Lt. 0) .Or.  (xctype(2) .Ge. 400)&
+!     &.Or.  (xctype(1) .Ge. 400)) Then
+      If (associated(input%groundstate%OEP)) Then
 ! initialise OEP residual magnitude
          resoep = 1.d0
 ! find maximum core states over all species
@@ -383,7 +396,7 @@ Subroutine init2
       End If
 !
       Call timesec (ts1)
-      timeinit = timeinit + ts1 - ts0
+!      timeinit = timeinit + ts1 - ts0
 !
       Return
 End Subroutine

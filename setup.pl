@@ -1,6 +1,8 @@
 #! /usr/bin/perl
 # setupscript
 # setupscript for the exciting code
+$num_args = $#ARGV + 1;
+if ($num_args == 0) {
 print "---------------------------------------------------------\n";
 
 opendir(PDIR, "build/platforms") || die("Cannot open directory");
@@ -48,18 +50,7 @@ while($selected==0){
 	$MPI=<>;
 	if($MPI=~m/yes/i){
 		$selected=1;
-		system("echo \"BUILDMPI=true\">>build/make.inc");
-print "Select the mechanism to include MPI interface variables\n";
-print "    1 use MPI module (f90 interfaces) recommended if available\n";
-print "    2 use #include <mpif.h> required by some MPI implementations 
-     (edit path in build mpiconf.inc if mpif.h is not in your includepath)\n";
-print "    Note: if you do not have istalled MPI-2 include '-DMPI1'
-    in your compiler options (MPIF90_OPTS) in the
-    'build/make.inc' file after finishing this setup script.\n";
-$mpiinclude=<>;
-if($mpiinclude==1) {$includefile="mpiconf.inc.module";}
-if($mpiinclude==2) {$includefile="mpiconf.inc.include";}
-system(("cp", "build/platforms/$includefile", "build/mpiconf.inc"));
+		system("echo \"BUILDMPI=true\">>build/make.inc"); 
 
 	}elsif($MPI=~m/no/i) {
 		system("echo \"BUILDMPI=false\">>build/make.inc");
@@ -87,4 +78,29 @@ if($SMP=~m/yes/i){
 		
 }
 }
+}
 
+if ($num_args == 2) {
+    if($ARGV[0] == "tidy") {
+$selected=0;
+while($selected==0){
+    print "\nWARNING:";
+    print "\n \"make tidy\" is an experimental feature. Running it fixes indentation \n";
+    print "of all src files in the program, among other things. Use with caution. \n";
+    print "Backup all files before use.\n\n";
+    print "Do you really want to run \"make tidy\"? (yes/No) ";
+    $TIDY=<STDIN>;
+    if($TIDY=~m/yes/i){
+	system("cd build/serial && ${ARGV[1]} -f ../Make.common tidy");
+	$selected=1;
+    }elsif ($TIDY=~m/no/i)
+    {
+	$selected=1;
+    }else{
+	print "please chose yes or no";
+		
+    }
+}
+
+}
+}

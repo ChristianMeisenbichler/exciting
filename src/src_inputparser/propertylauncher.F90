@@ -1,4 +1,3 @@
-
 ! Copyright (C) 2009-2010 C. Meisenbichler, S. Sagmeister and C. Ambrosch-Draxl.
 ! This file is distributed under the terms of the GNU General Public License.
 ! See the file COPYING for license details.
@@ -9,10 +8,13 @@ Subroutine propertylauncher
       Use modmain, Only: task
       Use modmpi, Only: rank
       Implicit None
+      integer :: l, a, b, c
+      
+      call delete_warnings
 
 ! properties which depend on the ground state only
 
-      If (associated(input%properties%bandstructure) .And. rank .Eq. 0) Then
+      If (associated(input%properties%bandstructure)) Then
          call rereadinput
          ! tasks are: 20, 21
          task = 20
@@ -20,7 +22,7 @@ Subroutine propertylauncher
       End If
       If (associated(input%properties%fermisurfaceplot) .And. rank .Eq. 0) Then
          call rereadinput
-         If (input%properties%fermisurfaceplot%separate) Then
+         if (associated(input%properties%fermisurfaceplot%plot2d)) then
             task = 101
             Call fermisurf
          Else
@@ -37,9 +39,9 @@ Subroutine propertylauncher
 #define NOTSTM .false.
          Call wfplot (NOTSTM)
       End If
-      If (associated(input%properties%STM) .And. rank .Eq. 0) Then
+      If (associated(input%properties%stm) .And. rank .Eq. 0) Then
 #define STM .true.
-         Call wfplot (STM)
+         Call stm
       End If
       If (associated(input%properties%LSJ) .And. rank .Eq. 0) Then
          call rereadinput
@@ -110,36 +112,36 @@ Subroutine propertylauncher
       If (associated(input%properties%elnes) .And. rank .Eq. 0) Then
          Call elnes
       End If
-      If (associated(input%properties%momentummatrix) .And. rank .Eq. 0) Then
+
+! calculate and print the momentum matrix elements
+      If (associated(input%properties%momentummatrix)) Then
          call rereadinput
-         task = 120
-         Call writepmatxs
+         Call writepmat
       End If
 
-! properties which depend on the ground state and/or on the outputs of other properties
+! IP-RPA dielectric tensor      
+      If (associated(input%properties%dielmat)) Then
+         call rereadinput
+         call dielmat
+      End If    
 
-      If (associated(input%properties%dielectric) .And. rank .Eq. 0) Then
+! MOKE effect      
+      If (associated(input%properties%moke)) Then
          call rereadinput
-         ! set the default values if dos element not present
-         if (.not.associated(input%properties%dos)) &
-           input%properties%dos => getstructdos (emptynode)
-         ! this task depends on the results triggered by
-         ! "input%properties%momentummatrix"
-         task = 121
-         Call dielectric
+         call moke
       End If
-      If (associated(input%properties%moke) .And. rank .Eq. 0) Then
+
+! Nonlinear optics: Second Harmonic Generation 
+      If (associated(input%properties%shg)) Then
          call rereadinput
-         ! set the default values if dos element not present
-         if (.not.associated(input%properties%dos)) &
-           input%properties%dos => getstructdos (emptynode)
-         ! set the default values if dielectric element not present
-         if (.not.associated(input%properties%dielectric)) &
-           input%properties%dielectric => getstructdielectric (emptynode)
-         ! this task depends on the results triggered by
-         ! "input%properties%momentummatrix"
-         Call moke
+         do l = 1, size(input%properties%shg%chicomp,2)
+           a = input%properties%shg%chicomp(1,l)
+           b = input%properties%shg%chicomp(2,l)
+           c = input%properties%shg%chicomp(3,l)
+           call shg(a,b,c)
+         end do
       End If
+
       If (associated(input%properties%eliashberg) .And. rank .Eq. 0) Then
          ! this task depends on the results triggered by
          ! "input%properties%phonon"
@@ -155,6 +157,13 @@ Subroutine propertylauncher
          ! Eliashberg function
          task=250
          Call alpha2f
+      End If
+
+      ! Raman scattering      
+      ! the subroutine raman triggers a phonon calculation, if requested there, and
+      ! requires the input of element xs
+      If (associated(input%properties%raman)) Then
+         call raman
       End If
 
 End Subroutine propertylauncher

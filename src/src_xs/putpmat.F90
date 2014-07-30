@@ -20,7 +20,7 @@ Contains
     ! true if absolut record position is ik
          Logical, Intent (In) :: tarec
          Character (*), Intent (In) :: filnam
-         Complex (8), Intent (In) :: pm (:, :, :)
+         Complex (8), Intent (InOut) :: pm (:, :, :)
     ! local variables
          Integer :: un, recl, ikr
          Logical :: tarect
@@ -32,6 +32,7 @@ Contains
          Inquire (IoLength=Recl) vkl (:, ik), nstsv, pm
          Call getunit (un)
 #ifdef MPI
+
          tag = 77
          If (rank .Ne. 0) Call mpi_send (pm, size(pm), &
         & MPI_DOUBLE_COMPLEX, 0, tag, MPI_COMM_WORLD, ierr)

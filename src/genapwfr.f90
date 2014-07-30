@@ -37,10 +37,11 @@ Subroutine genapwfr
 ! automatic arrays
       Real (8) :: vr (nrmtmax), fr (nrmtmax), gr (nrmtmax), cf (3, &
      & nrmtmax)
-      Real (8) :: p0 (nrmtmax, apwordmax), p1 (nrmtmax), p1s &
+      Real (8) :: p0 (nrmtmax, apwordmax), p1 (nrmtmax, apwordmax), p1s &
      & (apwordmax)
       Real (8) :: q0 (nrmtmax, apwordmax), q1 (nrmtmax, apwordmax)
       Real (8) :: hp0 (nrmtmax)
+      
       Do is = 1, nspecies
          nr = nrmt (is)
          Do ia = 1, natoms (is)
@@ -50,16 +51,17 @@ Subroutine genapwfr
                Do io1 = 1, apword (l, is)
 ! integrate the radial Schrodinger equation
                   Call rschroddme (apwdm(io1, l, is), l, 0, apwe(io1, &
-                 & l, ias), input%groundstate%nprad, nr, spr(:, is), &
-                 & vr, nn, p0(:, io1), p1, q0(:, io1), q1(:, io1))
+                 & l, ias), nr, spr(:, is), &
+                 & vr, nn, p0(:, io1), p1(:, io1), q0(:, io1), q1(:, io1))
 ! normalise radial functions
                   Do ir = 1, nr
                      fr (ir) = p0 (ir, io1) ** 2
                   End Do
                   Call fderiv (-1, nr, spr(:, is), fr, gr, cf)
                   t1 = 1.d0 / Sqrt (Abs(gr(nr)))
+                  p1s (io1) = t1 * p1 (nr, io1)
                   p0 (1:nr, io1) = t1 * p0 (1:nr, io1)
-                  p1s (io1) = t1 * p1 (nr)
+                  p1 (1:nr, io1) = t1 * p1 (1:nr, io1)
                   q0 (1:nr, io1) = t1 * q0 (1:nr, io1)
                   q1 (1:nr, io1) = t1 * q1 (1:nr, io1)
 ! subtract linear combination of previous vectors
@@ -69,13 +71,11 @@ Subroutine genapwfr
                      End Do
                      Call fderiv (-1, nr, spr(:, is), fr, gr, cf)
                      t1 = gr (nr)
-                     p0 (1:nr, io1) = p0 (1:nr, io1) - t1 * p0 (1:nr, &
-                    & io2)
                      p1s (io1) = p1s (io1) - t1 * p1s (io2)
-                     q0 (1:nr, io1) = q0 (1:nr, io1) - t1 * q0 (1:nr, &
-                    & io2)
-                     q1 (1:nr, io1) = q1 (1:nr, io1) - t1 * q1 (1:nr, &
-                    & io2)
+                     p0 (1:nr, io1) = p0 (1:nr, io1) - t1 * p0 (1:nr,io2)
+                     p1 (1:nr, io1) = p1 (1:nr, io1) - t1 * p1 (1:nr,io2)
+                     q0 (1:nr, io1) = q0 (1:nr, io1) - t1 * q0 (1:nr,io2)
+                     q1 (1:nr, io1) = q1 (1:nr, io1) - t1 * q1 (1:nr,io2)
                   End Do
 ! normalise radial functions
                   Do ir = 1, nr
@@ -95,25 +95,35 @@ Subroutine genapwfr
                      Stop
                   End If
                   t1 = 1.d0 / Sqrt (t1)
-                  p0 (1:nr, io1) = t1 * p0 (1:nr, io1)
                   p1s (io1) = t1 * p1s (io1)
+                  p0 (1:nr, io1) = t1 * p0 (1:nr, io1)
+                  p1 (1:nr, io1) = t1 * p1 (1:nr, io1)
                   q0 (1:nr, io1) = t1 * q0 (1:nr, io1)
                   q1 (1:nr, io1) = t1 * q1 (1:nr, io1)
+                  if (input%groundstate%SymmetricKineticEnergy) then
+                    Do ir = 1, nr
+                       t1 = 1.d0 / spr (ir, is)
+                       apwfr (ir, 1, io1, l, ias) = t1 * p0 (ir, io1)
+                       apwfr (ir, 2, io1, l, ias) = (p1(ir,io1)-p0(ir, io1)*t1) * t1
+                    End Do
+                  else
 ! apply the Hamiltonian
-                  Call rschrodapp (l, nr, spr(:, is), vr, p0(:, io1), &
-                 & q0(:, io1), q1(:, io1), hp0)
+                    Call rschrodapp (l, nr, spr(:, is), vr, p0(:, io1), &
+                   & q0(:, io1), q1(:, io1), hp0)
 ! divide by r and store in global array
-                  Do ir = 1, nr
-                     t1 = 1.d0 / spr (ir, is)
-                     apwfr (ir, 1, io1, l, ias) = t1 * p0 (ir, io1)
-                     apwfr (ir, 2, io1, l, ias) = t1 * hp0 (ir)
-                  End Do
+                    Do ir = 1, nr
+                       t1 = 1.d0 / spr (ir, is)
+                       apwfr (ir, 1, io1, l, ias) = t1 * p0 (ir, io1)
+                       apwfr (ir, 2, io1, l, ias) = t1 * hp0 (ir)
+                    End Do
 ! derivative at the muffin-tin surface
-                  apwdfr (io1, l, ias) = (p1s(io1)-p0(nr, io1)*t1) * t1
+                    apwdfr (io1, l, ias) = (p1s(io1)-p0(nr, io1)*t1) * t1
+                  endif
                End Do
             End Do
          End Do
       End Do
+!      write(*,*)
       Return
 End Subroutine
 !EOC

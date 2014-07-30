@@ -4,18 +4,23 @@
 ! See the file COPYING for license details.
 
 Subroutine tasklauncher
-      Use modinput
-      Implicit None
+    Use modinput
+    Implicit None
+    
 ! Note that the order of the calls below may be important!
-      If (associated(input%groundstate)) &
+    If (associated(input%groundstate)) &
         call groundstatetasklauncher()
 
-      If (associated(input%properties)) &
+    If (associated(input%properties)) &
         Call propertylauncher()
 
-      If (associated(input%phonons)) &
+    If (associated(input%phonons)) &
         call phononstasklauncher()
 
-      If (associated(input%xs)) &
+    If (associated(input%gw)) &
+        Call gwtasklauncher ()
+
+    If (associated(input%xs)) &
         Call xstasklauncher ()
+
 End Subroutine

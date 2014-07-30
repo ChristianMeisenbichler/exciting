@@ -10,13 +10,14 @@
 ! !INTERFACE:
 !
 !
-Subroutine rschroddme (m, l, k, e, np, nr, r, vr, nn, p0, p1, q0, q1)
+Subroutine rschroddme (m, l, k, e, nr, r, vr, nn, p0, p1, q0, q1)
+use mod_timing
+use modinput
 ! !INPUT/OUTPUT PARAMETERS:
 !   m   : order of energy derivative (in,integer)
 !   l   : angular momentum quantum number (in,integer)
 !   k   : quantum number k, zero if Dirac eqn. is not to be used (in,integer)
 !   e   : energy (in,real)
-!   np  : order of predictor-corrector polynomial (in,integer)
 !   nr  : number of radial mesh points (in,integer)
 !   r   : radial mesh (in,real(nr))
 !   vr  : potential on radial mesh (in,real(nr))
@@ -38,7 +39,6 @@ Subroutine rschroddme (m, l, k, e, np, nr, r, vr, nn, p0, p1, q0, q1)
       Integer, Intent (In) :: l
       Integer, Intent (In) :: k
       Real (8), Intent (In) :: e
-      Integer, Intent (In) :: np
       Integer, Intent (In) :: nr
       Real (8), Intent (In) :: r (nr)
       Real (8), Intent (In) :: vr (nr)
@@ -51,12 +51,16 @@ Subroutine rschroddme (m, l, k, e, np, nr, r, vr, nn, p0, p1, q0, q1)
       Integer :: im, kpa, ir
 ! fine-structure constant
       Real (8), Parameter :: alpha = 1.d0 / 137.03599911d0
-      Real (8) :: rm
+      Real (8) :: rm,rm0,rmfactor
 ! allocatable arrays
-      Real (8), Allocatable :: p0p (:)
+      Real (8), Allocatable :: p0p (:),q0p(:),pe(:,:),qe(:,:)
       Real (8), Allocatable :: g0 (:), g1 (:)
       Real (8), Allocatable :: f0 (:), f1 (:)
       Real (8), Allocatable :: cf (:, :)
+! timer
+      Real (8) ts0, ts1
+
+      call timesec(ts0)
       If (nr .Le. 0) Then
          Write (*,*)
          Write (*, '("Error(rschroddme): invalid nr : ", I8)') nr
@@ -70,19 +74,94 @@ Subroutine rschroddme (m, l, k, e, np, nr, r, vr, nn, p0, p1, q0, q1)
          Stop
       End If
       If (k .Eq. 0) Then
-! use the scalar relativistic Schrodinger equation
-         Allocate (p0p(nr))
-         If (m .Eq. 0) Then
-            Call rschrodint (m, l, e, np, nr, r, vr, nn, p0p, p0, p1, &
-           & q0, q1)
-         Else
-            Do im = 0, m
-               Call rschrodint (im, l, e, np, nr, r, vr, nn, p0p, p0, &
-              & p1, q0, q1)
+         if ((input%groundstate%ValenceRelativity.eq."zora").or.(input%groundstate%ValenceRelativity.eq."none")) then
+! ZORA
+#ifdef SPECIES
+           rmfactor=1d0
+#else
+           if (input%groundstate%ValenceRelativity.eq."zora") then
+           rmfactor=1d0
+           else
+             rmfactor=0d0
+           endif
+#endif
+           Allocate (p0p(nr))
+           If (m .Eq. 0) Then
+             Call rschrodint (m, l, e, nr, r, vr, nn, rmfactor, p0p, p0, p1, q0, q1)
+           Else
+             Do im = 0, m
+               Call rschrodint (im, l, e, nr, r, vr, nn, rmfactor, p0p, p0, p1, q0, q1)
                p0p (:) = p0 (:)
-            End Do
-         End If
-         Deallocate (p0p)
+             End Do
+           End If
+           Deallocate (p0p)
+         elseif ((input%groundstate%ValenceRelativity.eq."kh*").or.(input%groundstate%ValenceRelativity.eq."kh")) then
+! Koelling-Harmon with or without small component
+           Allocate (p0p(nr))
+           Allocate (q0p(nr))
+           if (m.eq.0) then 
+             call rkhint (0, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+           elseif (m.eq.1) then
+             call rkhint (0, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+             p0p (:) = p0 (:)
+             q0p (:) = q0 (:)
+             call rkhint (1, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+           else
+             write(*,*) 'Error(rschroddme): energy derivative',m,'not implemented.'
+             stop
+           endif
+           Deallocate (p0p,q0p)
+         elseif ((input%groundstate%ValenceRelativity.eq."iora").or.(input%groundstate%ValenceRelativity.eq."iora*")) then
+! IORA with or without small component
+           Allocate (p0p(nr),q0p(nr))
+          
+           if (m.le.3) then
+             call rlkhint (0, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+             if (m.gt.0) then
+               Allocate(pe(nr,m),qe(nr,m))
+               pe(:,1)=p0(:)
+               qe(:,1)=q0(:)
+               do ir=1,nr
+                 rm0 = 1.d0 - 0.5d0 * (alpha**2) *  vr(ir)
+                 rm = rm0/(1d0 - 0.5d0*e*(alpha**2)/rm0)
+                 q0p(ir)=(alpha*rm/rm0)**2*qe(ir,1)
+                 p0p(ir)=(1d0+dble(l*(l+1))*(alpha/(2d0*rm0*r(ir)))**2)*pe(ir,1)
+               enddo
+               call rlkhint (1, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+               if (m.gt.1) then
+                 pe(:,2)=p0(:)
+                 qe(:,2)=q0(:)
+                 do ir=1,nr
+                   rm0 = 1.d0 - 0.5d0 * (alpha**2) *  vr(ir)
+                   rm = rm0/(1d0 - 0.5d0*e*(alpha**2)/rm0)
+                   q0p(ir)=2d0*(alpha*rm/rm0)**2*qe(ir,2)+(alpha*rm/rm0)**4/rm*qe(ir,1)
+                   p0p(ir)=2d0*(1d0+dble(l*(l+1))*(alpha/(2d0*rm0*r(ir)))**2)*pe(ir,2)
+                 enddo
+                 call rlkhint (2, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+                 if (m.gt.2) then
+                   pe(:,3)=p0(:)
+                   qe(:,3)=q0(:)
+                   do ir=1,nr
+                     rm0 = 1.d0 - 0.5d0 * (alpha**2) *  vr(ir)
+                     rm = rm0/(1d0 - 0.5d0*e*(alpha**2)/rm0)
+                     q0p(ir)=3d0*(alpha*rm/rm0)**2*qe(ir,3)+2d0*(alpha*rm/rm0)**4/rm*qe(ir,2)+1.5d0*(alpha*rm/rm0)**6/(rm**2)*qe(ir,1)
+                     p0p(ir)=3d0*(1d0+dble(l*(l+1))*(alpha/(2d0*rm0*r(ir)))**2)*pe(ir,3)
+                   enddo
+                   call rlkhint (3, l, e, nr, r, vr, nn, p0p, q0p, p0, p1, q0, q1)
+                 endif 
+               endif
+               deallocate(pe,qe)
+             endif
+           else
+             write(*,*) 'Error(rschroddme): energy derivative',m,'not implemented.'
+             stop
+           endif
+           Deallocate (p0p,q0p)
+         else  
+           write(*,*) 'Error(rschroddme):',input%groundstate%ValenceRelativity,' not implemented.'
+           write(*,*) 'case sensitivity issue?'
+           stop
+         endif
       Else
 ! use the Dirac equation
          Allocate (g0(nr), g1(nr))
@@ -99,7 +178,7 @@ Subroutine rschroddme (m, l, k, e, np, nr, r, vr, nn, p0, p1, q0, q1)
             Write (*,*)
             Stop
          End If
-         Call rdiracdme (m, kpa, e, np, nr, r, vr, nn, g0, g1, f0, f1)
+         Call rdiracdme (m, kpa, e, nr, r, vr, nn, g0, g1, f0, f1)
 ! determine equivalent scalar relativistic functions
          Do ir = 1, nr
             rm = 1.d0 - 0.5d0 * (alpha**2) * vr (ir)
@@ -110,6 +189,8 @@ Subroutine rschroddme (m, l, k, e, np, nr, r, vr, nn, p0, p1, q0, q1)
          Call fderiv (1, nr, r, q0, q1, cf)
          Deallocate (g0, g1, f0, f1, cf)
       End If
+      call timesec(ts1)
+      time_rschrod=ts1-ts0+time_rschrod
       Return
 End Subroutine
 !EOC

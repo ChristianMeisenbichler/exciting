@@ -5,8 +5,8 @@
 ! This file is distributed under the terms of the GNU General Public License.
 ! See the file COPYING for license details.
 !
-!
-Subroutine exxengyk (ikp, evv, ecv)
+! Modified March 2014  (UW)
+Subroutine exxengyk ( evv, ecv, ikp)
       Use modmain
       Use modinput
       Implicit None
@@ -153,10 +153,8 @@ Subroutine exxengyk (ikp, evv, ecv)
                     & zvclir)
                      t1 = cfq * wiq2 (iq) * &
                     & (dble(zrho0)**2+aimag(zrho0)**2)
-!$OMP CRITICAL
                      evv = evv - 0.5d0 * occmax * wkpt (ikp) * &
                     & (wkptnr(ik)*dble(zt1)+t1)
-!$OMP END CRITICAL
 ! end loop over ist
                   End If
                End Do
@@ -200,9 +198,7 @@ Subroutine exxengyk (ikp, evv, ecv)
                           & input%groundstate%lmaxvr, nrc, rcmt(:, is), &
                           & lmmaxvr, zrhomt(:, :, ias), zvclmt(:, :, &
                           & ias))
-!$OMP CRITICAL
                            ecv = ecv - occmax * wkpt (ikp) * dble (zt1)
-!$OMP END CRITICAL
 ! end loop over ist
                         End If
                      End Do

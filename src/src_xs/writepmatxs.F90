@@ -100,12 +100,12 @@ Subroutine writepmatxs
       end if
       if (fast) then
          If (allocated(apwcmt)) deallocate (apwcmt)
-         Allocate (apwcmt(nstsv, apwordmax, lmmaxapw, natmtot))
+         Allocate (apwcmt(nstfv, apwordmax, lmmaxapw, natmtot))
          If (allocated(ripaa)) deallocate (ripaa)
          Allocate (ripaa(apwordmax, lmmaxapw, apwordmax, lmmaxapw,natmtot, 3))
          If (nlotot .Gt. 0) Then
             If (allocated(locmt)) deallocate (locmt)
-            Allocate (locmt(nstsv, nlomax,-lolmax:lolmax, natmtot))
+            Allocate (locmt(nstfv, nlomax,-lolmax:lolmax, natmtot))
             If (allocated(ripalo)) deallocate (ripalo)
             Allocate (ripalo(apwordmax, lmmaxapw, nlomax,-lolmax:lolmax, natmtot, 3))
             If (allocated(riploa)) deallocate (riploa)
@@ -146,9 +146,12 @@ Subroutine writepmatxs
          else
      ! parallel write
            Call putpmat (ik, .True., trim(fnpmat), pmat)
+        !    write(*,*)"putpmat ik ",ik,"done"
          end if
       End Do
       Call barrier
+
+      Inquire (IoLength=Recl) vkl (:, ik), nstsv, pmat
       Deallocate (apwalmt, evecfvt, evecsvt, pmat)
       If (fast) Then
          Deallocate (apwcmt)
@@ -159,12 +162,17 @@ Subroutine writepmatxs
          End If
       End If
       Call barrier
+      !  write(*,*)"cp pmat"
+      if (.not. input%sharedfs) call  cpFileToNodes( trim(fnpmat))
+
       if (task .eq. 120) then
         close(50)
-        Write (*,*)
-        Write (*, '("Info(writepmatxs):")')
-        Write (*, '(" momentum matrix elements written to file PMAT.OUT")')
-        Write (*,*)
+        if (rank==0) then
+          Write (*,*)
+          Write (*, '("Info(writepmatxs):")')
+          Write (*, '(" momentum matrix elements written to file PMAT.OUT")')
+          Write (*,*)
+        end if
       else
         Write (unitout, '(a)') "Info(writepmatxs): momentum matrix elements finished"
       end if

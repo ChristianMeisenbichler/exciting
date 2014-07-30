@@ -6,7 +6,9 @@
 Subroutine xstasklauncher
       Use modinput
       Use modmain, Only: task
+      Use modxs, only: dgrid, nksubpt, iksubpt, temat, doscreen0, vkloff_xs_b
       Use inputdom
+
 !
       If ( .Not. (associated(input%xs%tddft))) Then
   ! set the default values if tddft element not present
@@ -57,7 +59,9 @@ Subroutine xstasklauncher
 !
          task = 330
          Call xsinit
-         Call writeemat
+         If(temat) Then
+            Call writeemat
+         End If
          Call xsfinit
 !
          If (input%xs%tddft%fxctypenumber .Eq. 7 .Or. &
@@ -111,6 +115,27 @@ Subroutine xstasklauncher
 !
       Else If (trim(input%xs%xstype) .Eq. "BSE") Then
 !
+! STK
+! apply double grid technique if requested
+       if (any(input%xs%BSE%ngridksub .gt. 1)) then
+          dgrid = .true.
+       else
+          dgrid = .false.
+          nksubpt = 1
+       endif
+       if (dgrid) then
+          ! append XS output
+          input%xs%tappinfo = .true.
+          ! backup input XS vkloff (it will be added to all generated grids)
+          vkloff_xs_b(:) = input%xs%vkloff(:)
+          ! save screening status for later use
+          doscreen0 = input%xs%screening%do
+          ! generate subgrid
+          call genksubpts
+       endif
+       do iksubpt = 1, nksubpt
+         if (dgrid) call bsedgridinit
+!
          task = 301
          Call xsinit
          Call xsgeneigvec
@@ -159,6 +184,18 @@ Subroutine xstasklauncher
          Call xsinit
          Call BSE
          Call xsfinit
+!
+         if (dgrid) input%xs%screening%do = "skip"
+!
+       enddo
+!
+       if (dgrid) then
+          call bsedgrid
+          ! restore input settings
+          input%xs%vkloff(:) = vkloff_xs_b(:)
+          input%xs%screening%do = doscreen0
+       endif
+!
       Else
          Write (*,*) "error xstasklauncher"
          Write (*,*) trim (input%xs%xstype), "no valid xstype"

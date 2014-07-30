@@ -349,6 +349,8 @@ Module modxs
       Character (256) :: fnloss
   ! optical conductivity
       Character (256) :: fnsigma
+  ! MOKE spectrum
+      Character (256) :: fnmoke
   ! sumrules for optics
       Character (256) :: fnsumrules
 
@@ -378,6 +380,10 @@ Module modxs
       Real (8) :: swidth_b
       Integer :: lmaxapw_b
       Integer :: lmaxmat_b
+  ! maximum self-consistency steps
+      Integer :: maxscl_b
+  ! bfieldc
+      Real (8) :: bfieldc_b (3)
 
   !------------------------------!
   !     parallel environment     !
@@ -439,5 +445,41 @@ Module modxs
   ! STATE.OUT file (no other file extension allowed)
       Logical :: isreadstate0
       Data isreadstate0 / .False. /
+  ! true if calculation of matrix elements of exponential expression
+  ! is needed
+      Logical :: temat
+      Data temat / .True. /
+
+!STK: include variables necessary for double grid computations
+
+  !---------------------------------------------!
+  !     sub-grid k-vectors for double grids     !
+  !---------------------------------------------!
+  ! number of sub k-points
+      Integer :: nksubpt
+  ! sub kpt that is worked on
+      Integer :: iksubpt
+  ! sub k-points in lattice coordinates
+      Real (8), Allocatable :: vksubl (:, :)
+  ! sub k-points in cartesian coordinates
+      Real (8), Allocatable :: vksubc (:, :)
+  ! k-point weights
+      Real (8), Allocatable :: wksubpt (:)
+  ! locations of k-points on integer grid
+      Integer, Allocatable :: ivksub (:, :)
+  ! map from non-reduced grid to reduced set
+      Integer, Allocatable :: iksubmap (:, :, :)
+
+  !---------------------------------------!
+  !     other double grid variables       !
+  !---------------------------------------!
+  ! are we doing a double grid run?
+      Logical :: dgrid
+  ! backup input%xs%screening%do 
+      Character (11) :: doscreen0
+  ! backup for XS vkloff
+      Real (8) :: vkloff_xs_b(3)
+      
+
 
 End Module modxs

@@ -10,14 +10,13 @@ Subroutine phdos
       Use modmain
       Use modinput
       Use FoX_wxml
+      use modmpi
       Implicit None
 ! local variables
-! number of temperature values
-      Integer, Parameter :: ntemp = 10
       Integer :: n, iq, i, iw
       Integer :: i1, i2, i3
       Real (8) :: wmin, wmax, wd, dw
-      Real (8) :: tmax, temp (ntemp), s (ntemp)
+      Real (8) :: tmax, temp (input%phonons%phonondos%ntemp), s (input%phonons%phonondos%ntemp)
       Real (8) :: v (3), t1, t2
       Type (xmlf_t), Save :: xf
       Character (256) :: buffer
@@ -30,6 +29,8 @@ Subroutine phdos
       Complex (8), Allocatable :: dynr (:, :, :)
       Complex (8), Allocatable :: dynp (:, :)
       Complex (8), Allocatable :: ev (:, :)
+! do this only in master process
+      if (rank .ne. 0) goto 10
 ! initialise universal variables
       Call init0
       Call init2
@@ -109,8 +110,8 @@ Subroutine phdos
 ! maximum temperature
       tmax = wmax / kboltz
 ! temperature grid
-      Do i = 1, ntemp
-         temp (i) = tmax * dble (i) / dble (ntemp)
+      Do i = 1, input%phonons%phonondos%ntemp
+         temp (i) = tmax * dble (i) / dble (input%phonons%phonondos%ntemp)
       End Do
       Open (50, File='THERMO.OUT', Action='WRITE', Form='FORMATTED')
       Call xml_OpenFile ("thermo.xml", xf, replace=.True., pretty_print=.True.)
@@ -120,7 +121,7 @@ Subroutine phdos
          f (iw) = gw (iw) * w (iw)
       End Do
       Call fderiv (-1, input%phonons%phonondos%nwdos, w, f, g, cf)
-      t1 = 0.5d0 * dble (natmtot) * g (input%phonons%phonondos%nwdos)
+      t1 = 0.5d0 * g (input%phonons%phonondos%nwdos)
       Write (50,*)
       Write (50, '("Zero-point energy : ", G18.10)') t1
       Call xml_NewElement (xf, "zeropointenergy")
@@ -143,7 +144,7 @@ Subroutine phdos
       Call xml_AddAttribute (xf, "unit", "Hartree")
       Call xml_endElement (xf, "function1")
       Call xml_endElement (xf, "mapdef")
-      Do i = 1, ntemp
+      Do i = 1, input%phonons%phonondos%ntemp
          Do iw = 1, input%phonons%phonondos%nwdos
             t1 = w (iw) / (2.d0*kboltz*temp(i))
             If (t1 .Gt. 0.d0) Then
@@ -153,7 +154,7 @@ Subroutine phdos
             End If
          End Do
          Call fderiv (-1, input%phonons%phonondos%nwdos, w, f, g, cf)
-         t1 = 0.5d0 * dble (natmtot) * g (input%phonons%phonondos%nwdos)
+         t1 = 0.5d0 * g (input%phonons%phonondos%nwdos)
          Write (50, '(2G18.10)') temp (i), t1
          Call xml_NewElement (xf, "map")
          Write (buffer, '(4g18.10)') temp(i)
@@ -178,7 +179,7 @@ Subroutine phdos
       Call xml_AddAttribute (xf, "unit", "Hartree")
       Call xml_endElement (xf, "function1")
       Call xml_endElement (xf, "mapdef")
-      Do i = 1, ntemp
+      Do i = 1, input%phonons%phonondos%ntemp
          Do iw = 1, input%phonons%phonondos%nwdos
             t1 = 2.d0 * Sinh (w(iw)/(2.d0*kboltz*temp(i)))
             If (t1 .Gt. 0.d0) Then
@@ -188,7 +189,7 @@ Subroutine phdos
             End If
          End Do
          Call fderiv (-1, input%phonons%phonondos%nwdos, w, f, g, cf)
-         t1 = dble (natmtot) * kboltz * temp (i) * g &
+         t1 = kboltz * temp (i) * g &
         & (input%phonons%phonondos%nwdos)
          Write (50, '(2G18.10)') temp (i), t1
          Call xml_NewElement (xf, "map")
@@ -215,7 +216,7 @@ Subroutine phdos
       Call xml_AddAttribute (xf, "unit", "Hartree/Kelvin")
       Call xml_endElement (xf, "function1")
       Call xml_endElement (xf, "mapdef")
-      Do i = 1, ntemp
+      Do i = 1, input%phonons%phonondos%ntemp
          Write (50, '(2G18.10)') temp (i), s (i)
          Call xml_NewElement (xf, "map")
          Write (buffer, '(4g18.10)') temp(i)
@@ -236,10 +237,10 @@ Subroutine phdos
       Call xml_endElement (xf, "variable1")
       Call xml_NewElement (xf, "function1")
       Call xml_AddAttribute (xf, "name", "heat capacity")
-      Call xml_AddAttribute (xf, "unit", "Hartree")
+      Call xml_AddAttribute (xf, "unit", "Hartree/Kelvin")
       Call xml_endElement (xf, "function1")
       Call xml_endElement (xf, "mapdef")
-      Do i = 1, ntemp
+      Do i = 1, input%phonons%phonondos%ntemp
          Do iw = 1, input%phonons%phonondos%nwdos
             t1 = w (iw) / (kboltz*temp(i))
             t2 = Exp (t1) - 1.d0
@@ -250,7 +251,7 @@ Subroutine phdos
             End If
          End Do
          Call fderiv (-1, input%phonons%phonondos%nwdos, w, f, g, cf)
-         t1 = dble (natmtot) * kboltz * g (input%phonons%phonondos%nwdos)
+         t1 = kboltz * g (input%phonons%phonondos%nwdos)
          Write (50, '(2G18.10)') temp (i), t1
          Call xml_NewElement (xf, "map")
          Write (buffer, '(4g18.10)') temp(i)
@@ -266,5 +267,9 @@ Subroutine phdos
       Write (*, '(" thermodynamic properties written to THERMO.OUT")')
       Write (*,*)
       Deallocate (wp, w, gw, f, g, cf, dynq, dynr, dynp, ev)
+10    continue
+#ifdef MPI
+      call MPI_Barrier(MPI_Comm_World, ierr)
+#endif
       Return
 End Subroutine

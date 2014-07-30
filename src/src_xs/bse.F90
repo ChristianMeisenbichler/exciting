@@ -87,6 +87,7 @@ Subroutine bse
 !   Addition of explicit energy ranges for states below and above the Fermi
 !      level for the treatment of core excitations (using local orbitals).
 !      October 2010 (Weine Olovsson)
+!   Added possibility to compute off-diagonal optical components, Dec 2013 (Stefan Kontur, STK)
 !EOP
 !BOC
       Implicit None
@@ -94,24 +95,30 @@ Subroutine bse
       Integer, Parameter :: iqmt = 0
       Integer, Parameter :: noptcmp = 3
       Real (8), Parameter :: epsortho = 1.d-12
-      Character (256) :: fnexc, fnexcs
+      Character (256) :: fnexc, fnexcs, dotext
       Integer :: iknr, jknr, iqr, iq, iw, iv2 (3), s1, s2, hamsiz, &
      & nexc, ne
-      Integer :: unexc, ist1, ist2, ist3, ist4, ikkp, oct, iv, ic, &
+      Integer :: unexc, ist1, ist2, ist3, ist4, ikkp, iv, ic, &
      & nvdif, ncdif, optcompt(3), ist, jst
+      integer :: oct1, oct2, octu, octl
       Integer :: sta1, sto1, sta2, sto2, nsta1, nsto1, nsta2, nsto2, &
      & rnst1, rnst2, rnst3, rnst4, nrnst1, nrnst2, nrnst3, nrnst4
       Real (8) :: de, egap, ts0, ts1, sumrls(3)
   ! allocatable arrays
       Integer, Allocatable :: sor (:)
-      Real (8), Allocatable :: beval (:), w (:), oszsa (:), loss(:), &
-     & docc(:,:), kdocc (:)
+      Real (8), Allocatable :: beval (:), w (:), oszsa (:), loss(:, :, :), &
+     & docc(:,:), kdocc (:), eval0(:,:)
       Complex (8), Allocatable :: excli (:, :, :, :), sccli (:, :, :, &
      & :), ham (:, :)
-      Complex (8), Allocatable :: bevec (:, :), pm (:, :, :), pmat (:), &
-     & oszs (:), spectr (:), sigma(:), buf(:,:,:)
+      Complex (8), Allocatable :: bevec (:, :), pm (:, :, :), pmat (:, :), &
+     & oszs (:, :), spectr (:), sigma(:), buf(:,:,:)
   ! external functions
       Integer, External :: l2int
+
+      integer :: Recl, nstsv_
+      real(8) :: vkl_(3)
+      
+      
   ! routine not yet parallelized
   if (rank .ne. 0) goto 10
   !---------------------------!
@@ -188,10 +195,26 @@ Subroutine bse
   ! allocate BSE-Hamiltonian (large matrix, up to several GB)
       Allocate (ham(hamsiz, hamsiz))
       ham (:, :) = zzero
-  ! read in energies
+
+  ! read KS energies
       Do iknr = 1, nkptnr
-         Call getevalsv (vkl(1, iknr), evalsv(1, iknr))
+        Call getevalsv (vkl(1, iknr), evalsv(1, iknr))
       End Do
+
+      if (associated(input%gw)) then
+        ! to KS eigenvalues to use them later for renormalizing PMAT
+        allocate(eval0(nstsv,nkptnr))
+        eval0(:,:)=evalsv(:,:)
+        ! if scissor correction is presented, one should nullify it
+        input%xs%scissor=0.0d0
+        ! Read QP Fermi energies and eigenvalues from file
+        call getevalqp(nkptnr,vkl,evalsv)
+        Write(unitout,'("  Quasi particle energies are read from EVALQP.OUT")')
+        !do ist1 = 1, nstsv
+        !  write(*,*) ist1, evalsv(ist1,1)
+        !end do
+      end if ! GW
+
   ! read mean value of diagonal of direct term
       bsed = 0.d0
       If ((trim(input%xs%bse%bsetype) .Eq. 'singlet') .Or. &
@@ -252,7 +275,7 @@ Subroutine bse
                        & nrnst3)
                         s2 = hamidx (ist2-nsta1+1, ist4-nsta2+1, jknr, nrnst2, &
                        & nrnst4)
-					    kdocc (s1) = docc (ist1-nsta1+1, ist3-nsta2+1)
+			kdocc (s1) = docc (ist1-nsta1+1, ist3-nsta2+1)
                      ! add diagonal term
                         If (s1 .Eq. s2) Then
                            de = evalsv (ist3+istl3-1, iknr) - evalsv &
@@ -261,23 +284,22 @@ Subroutine bse
                           & bsed
                         End If
                     ! write partially occupied states in the output    
-						If (kdocc (s1) .Gt. input%groundstate%epsocc .And. kdocc (s1) &
-						  .Lt. 2.d0-input%groundstate%epsocc) Then
-							Write (*,*) 'kdocc s1', kdocc(s1), s1
-						End If
+			If (kdocc (s1) .Gt. input%groundstate%epsocc .And. kdocc (s1) &
+			  .Lt. 2.d0-input%groundstate%epsocc) Then
+			   Write (*,*) 'kdocc s1', kdocc(s1), s1
+			End If
                     ! add exchange term
                         Select Case (trim(input%xs%bse%bsetype))
                         Case ('RPA', 'singlet')
-                        	ham (s1, s2) = ham (s1, s2) + 2.0d0 * excli &
-                           & (ist1, ist3, ist2, ist4) * &
+                           ham (s1, s2) = ham (s1, s2) + 2.0d0 * excli &
+                           & (ist1-nsta1+1, ist3-nsta2+1, ist2-nsta1+1, ist4-nsta2+1) * &
                            & kdocc (s1) * 0.5
                         End Select
                     ! add correlation term
                         Select Case (trim(input%xs%bse%bsetype))
                         Case ('singlet', 'triplet')
-                        	ham (s1, s2) = ham (s1, s2) - sccli (ist1, &
-                           & ist3, ist2, ist4) * &
-                           & kdocc (s1)	* 0.5						
+                           ham (s1, s2) = ham (s1, s2) - sccli (ist1-nsta1+1, &
+                           & ist3-nsta2+1, ist2-nsta1+1, ist4-nsta2+1) * kdocc (s1) * 0.5
                         End Select
                      End Do
                   End Do
@@ -305,45 +327,45 @@ Subroutine bse
       Write (unitout, '(" timing (in seconds)	   :", f12.3)') ts1 - ts0
   ! number of excitons to consider
       nexc = hamsiz
-      Allocate (oszs(nexc), oszsa(nexc), sor(nexc), pmat(hamsiz))
+      Allocate (oszs(nexc, 3), oszsa(nexc), sor(nexc), pmat(hamsiz, 3))
       Allocate (w(input%xs%energywindow%points), spectr(input%xs%energywindow%points))
       Allocate (buf(3,3,input%xs%energywindow%points))
-      Allocate (loss(input%xs%energywindow%points), sigma(input%xs%energywindow%points))
+      Allocate (loss(3, 3, input%xs%energywindow%points), sigma(input%xs%energywindow%points))
       Call genwgrid (input%xs%energywindow%points, input%xs%energywindow%intv, &
      & input%xs%tddft%acont, 0.d0, w_real=w)
-     buf(:,:,:)=zzero
-      Do oct = 1, noptcmp
-         optcompt = (/ oct, oct, 0 /)
-         oszs (:) = zzero
-         Call genfilname (basename='EXCITON', tq0=.True., oc1=oct, &
-        & oc2=oct, bsetype=input%xs%bse%bsetype, &
-        & scrtype=input%xs%screening%screentype, nar= .Not. &
-        & input%xs%bse%aresbse, filnam=fnexc)
-         Call genfilname (basename='EXCITON_SORTED', tq0=.True., &
-        & oc1=oct, oc2=oct, bsetype=input%xs%bse%bsetype, &
-        & scrtype=input%xs%screening%screentype, nar= .Not. &
-        & input%xs%bse%aresbse, filnam=fnexcs)
+      buf(:,:,:)=zzero
+
+      do oct1 = 1, noptcmp
      ! read momentum matrix elements
          Allocate (pm(3, nstsv, nstsv))
          Do iknr = 1, nkptnr
-            Call getpmat (iknr, vkl, 1, nstsv, 1, nstsv, .True., 'PMAT_XS.OUT',&
-            & pm)
+            Call getpmat (iknr, vkl, 1, nstsv, 1, nstsv, .True., &
+           & 'PMAT_XS.OUT', pm)
             Do ist1 = nsta1, nsto1
                Do ist2 = istl3 + nsta2 - 1, istl3 + nsto2 - 1
+! DIN: Renormalize pm according to DelSole PRB48, 11789 (1993)
+                  if (associated(input%gw)) then
+                     pm(1:3,ist1,ist2)=pm(1:3,ist1,ist2)  * &
+                    &  (evalsv(ist2,iknr)-evalsv(ist1,iknr)) / &
+                    &   (eval0(ist2,iknr)- eval0(ist1,iknr))
+                  end if 
+! DIN
                   s1 = hamidx (ist1-nsta1+1, ist2-istl3-nsta2+2,&
                  & iknr, nrnst1, nrnst3)              
-                  	pmat (s1) = pm (oct, ist1, ist2)
+                  pmat (s1, oct1) = pm (oct1, ist1, ist2)
                End Do
             End Do
          End Do
          Deallocate (pm)
+
      ! calculate oscillators for spectrum
+         oszs (:, oct1) = zzero
          Do s1 = 1, nexc
             Do iknr = 1, nkptnr
                Do iv = 1, nrnst1
-                  Do ic = 1, nrnst3				
+                  Do ic = 1, nrnst3
                      s2 = hamidx (iv, ic, iknr, nrnst1, nrnst3)
-                     oszs (s1) = oszs (s1) + bevec (s2, s1) * pmat (s2) &
+                     oszs (s1, oct1) = oszs (s1, oct1) + bevec (s2, s1) * pmat (s2, oct1) &
                     & * kdocc (s2) * 0.5 & 
                     & / (evalsv(ic+istl3-1+nsta2-1, iknr)- &
                     evalsv(iv+nsta1-1, iknr))
@@ -351,37 +373,43 @@ Subroutine bse
                End Do
             End Do
          End Do
-         spectr (:) = zzero
-         Do iw = 1, input%xs%energywindow%points
-            Do s1 = 1, nexc
-           ! Lorentzian lineshape
-               spectr (iw) = spectr (iw) + Abs (oszs(s1)) ** 2 * &
-              & (1.d0/(w(iw)-(beval(s1)+egap-bsed)+zi*input%xs%broad))             
-               If (input%xs%bse%aresbse) spectr (iw) = spectr (iw) + &
-              & Abs (oszs(s1)) ** 2 * &
-              & (1.d0/(-w(iw)-(beval(s1)+egap-bsed)-zi*input%xs%broad))
-            End Do
-         End Do
-         spectr (:) = l2int (oct .Eq. oct) * 1.d0 - spectr (:) * 8.d0 * &
-        & pi / omega / nkptnr
-         buf(oct,oct,:)=spectr(:)
+     ! STK: add case of double grid
+         if (dgrid) then 
+            Write (dotext, '("_SG", I3.3, ".OUT")') iksubpt
+            Call genfilname (basename='EXCITON', tq0=.True., oc1=oct1, &
+        &    oc2=oct1, bsetype=input%xs%bse%bsetype, &
+        &    scrtype=input%xs%screening%screentype, nar= .Not. &
+        &    input%xs%bse%aresbse, dotext=dotext, filnam=fnexc)
+            Call genfilname (basename='EXCITON_SORTED', tq0=.True., &
+        &    oc1=oct1, oc2=oct1, bsetype=input%xs%bse%bsetype, &
+        &    scrtype=input%xs%screening%screentype, nar= .Not. &
+        &    input%xs%bse%aresbse, dotext=dotext, filnam=fnexcs)
+         else
+            Call genfilname (basename='EXCITON', tq0=.True., oc1=oct1, &
+        &    oc2=oct1, bsetype=input%xs%bse%bsetype, &
+        &    scrtype=input%xs%screening%screentype, nar= .Not. &
+        &    input%xs%bse%aresbse, filnam=fnexc)
+            Call genfilname (basename='EXCITON_SORTED', tq0=.True., &
+        &    oc1=oct1, oc2=oct1, bsetype=input%xs%bse%bsetype, &
+        &    scrtype=input%xs%screening%screentype, nar= .Not. &
+        &    input%xs%bse%aresbse, filnam=fnexcs)
+         endif
      ! oscillator strengths
          Call getunit (unexc)
          Open (unexc, File=fnexc, Form='formatted', Action='write', &
         & Status='replace')
          Do s2 = 1, hamsiz
-            Write (unexc, '(i8, 5g18.10)') s2, &
+            Write (unexc, '(i8, 6g18.10)') s2, &
            & (beval(s2)+egap-dble(bsed)) * escale, &
-           & (beval(s2)+dble(bsed)) * escale, Abs (oszs(s2))
+           & (beval(s2)+dble(bsed)) * escale, abs(oszs(s2, oct1)), dble(oszs(s2, oct1)), aimag(oszs(s2, oct1))
          End Do
-         Write (unexc, '("# Nr.  E		      E - E_gap        |Osc.Str.|")&
+         Write (unexc, '("# Nr.  E		      E - E_gap        |Osc.Str.|      Re      Im")&
         &')
          Write (unexc, '("# E_gap : ", g18.10)') egap * escale
-         If (input%xs%tevout) write (unexc, '("# energies are in electr&
-        &on volts")')
+         If (input%xs%tevout) write (unexc, '("# energies are in electron volts")')
          Close (unexc)
      ! oscillator strengths sorted
-         oszsa = Abs (oszs)
+         oszsa(:) = Abs (oszs(:, oct1))
          Call sortidx (hamsiz, oszsa, sor)
          sor = sor (hamsiz:1:-1)
          Open (unexc, File=fnexcs, Form='formatted', Action='write', &
@@ -390,46 +418,96 @@ Subroutine bse
             s2 = sor (s1)
             Write (unexc, '(i8, 4g18.10)') s1, &
            & (beval(s2)+egap-dble(bsed)) * escale, &
-           & (beval(s2)+dble(bsed)) * escale, Abs (oszs(s2))
+           & (beval(s2)+dble(bsed)) * escale, Abs (oszs(s2, oct1))
          End Do
          Write (unexc, '("#	  Nr.	E		  E - E_gap	   |Osc.Str.|")')
          Write (unexc, '("# E_gap : ", g18.10)') egap * escale
          If (input%xs%tevout) write (unexc, '("# energies are in electr&
         &on volts")')
          Close (unexc)
-     ! end loop over optical components
+      enddo
+
+! STK: if run is within a double grid loop stop here
+      if (dgrid) goto 10
+
+      Do oct1 = 1, noptcmp
+! STK: compute off-diagonal optical components if requested
+       If (input%xs%dfoffdiag) Then
+             octl = 1
+             octu = noptcmp
+       Else
+             octl = oct1
+             octu = oct1
+       End If
+        Do oct2 = octl, octu
+         optcompt = (/ oct1, oct2, 0 /)
+         spectr (:) = zzero
+         Do iw = 1, input%xs%energywindow%points
+            Do s1 = 1, nexc
+           ! Lorentzian lineshape
+               spectr (iw) = spectr (iw) + & !Abs (oszs(s1)) ** 2 * &
+! STK
+              & oszs(s1, oct1) * conjg(oszs(s1, oct2)) * &
+              & (1.d0/(w(iw)-(beval(s1)+egap-bsed)+zi*input%xs%broad))             
+               If (input%xs%bse%aresbse) spectr (iw) = spectr (iw) + &
+! STK
+              & oszs(s1, oct1) * conjg(oszs(s1, oct2)) * &
+!             & Abs (oszs(s1)) ** 2 * &
+              & (1.d0/(-w(iw)-(beval(s1)+egap-bsed)-zi*input%xs%broad))
+            End Do
+         End Do
+! STK
+         spectr (:) = l2int (oct1 .Eq. oct2) * 1.d0 - spectr (:) * 8.d0 * &
+        & pi / omega / nkptnr
+         buf(oct1,oct2,:)=spectr(:)
+     ! end loops over optical components
+        enddo
       End Do
-      Do oct = 1, noptcmp
-         optcompt = (/ oct, oct, 0 /)
-         Call genfilname (basename='EPSILON', tq0=.True., oc1=oct, &
-        & oc2=oct, bsetype=input%xs%bse%bsetype, &
+! STK
+      call genloss (buf, loss, noptcmp)
+!
+      Do oct1 = 1, noptcmp
+       If (input%xs%dfoffdiag) Then
+             octl = 1
+             octu = noptcmp
+       Else
+             octl = oct1
+             octu = oct1
+       End If
+        Do oct2 = octl, octu
+         optcompt = (/ oct1, oct2, 0 /)
+         Call genfilname (basename='EPSILON', tq0=.True., oc1=oct1, &
+        & oc2=oct2, bsetype=input%xs%bse%bsetype, &
         & scrtype=input%xs%screening%screentype, nar= .Not. &
         & input%xs%bse%aresbse, filnam=fneps)
-         Call genfilname (basename='LOSS', tq0=.True., oc1=oct, &
-        & oc2=oct, bsetype=input%xs%bse%bsetype, &
+         Call genfilname (basename='LOSS', tq0=.True., oc1=oct1, &
+        & oc2=oct2, bsetype=input%xs%bse%bsetype, &
         & scrtype=input%xs%screening%screentype, nar= .Not. &
         & input%xs%bse%aresbse, filnam=fnloss)
-         Call genfilname (basename='SIGMA', tq0=.True., oc1=oct, &
-        & oc2=oct, bsetype=input%xs%bse%bsetype, &
+         Call genfilname (basename='SIGMA', tq0=.True., oc1=oct1, &
+        & oc2=oct2, bsetype=input%xs%bse%bsetype, &
         & scrtype=input%xs%screening%screentype, nar= .Not. &
         & input%xs%bse%aresbse, filnam=fnsigma)
-         Call genfilname (basename='SUMRULES', tq0=.True., oc1=oct, &
-        & oc2=oct, bsetype=input%xs%bse%bsetype, &
+         Call genfilname (basename='SUMRULES', tq0=.True., oc1=oct1, &
+        & oc2=oct2, bsetype=input%xs%bse%bsetype, &
         & scrtype=input%xs%screening%screentype, nar= .Not. &
         & input%xs%bse%aresbse, filnam=fnsumrules)
      ! symmetrize the macroscopic dielectric function tensor
-         Call symt2app (oct, oct, input%xs%energywindow%points, symt2, buf, spectr)
+         Call symt2app (oct1, oct2, input%xs%energywindow%points, symt2, buf, spectr)
      ! generate optical functions
-         Call genloss (spectr, loss)
+! STK
+!        Call genloss (spectr, loss)
          Call gensigma (w, spectr, optcompt, sigma)
          Call gensumrls (w, spectr, sumrls)
      ! write optical functions to file
-         Call writeeps (iq, oct, oct, w, spectr, trim(fneps))
-         Call writeloss (iq, w, loss, trim(fnloss))
+         Call writeeps (iq, oct1, oct2, w, spectr, trim(fneps))
+         Call writeloss (iq, w, loss(oct1, oct2, :), trim(fnloss))
          Call writesigma (iq, w, sigma, trim(fnsigma))
          Call writesumrls (iq, sumrls, trim(fnsumrules))
+        enddo
       end do
       deallocate(beval,bevec,oszs,oszsa,sor,pmat,w,spectr,loss,sigma,buf)
+      if (associated(input%gw)) deallocate(eval0)
 10 continue
       call barrier      
 Contains

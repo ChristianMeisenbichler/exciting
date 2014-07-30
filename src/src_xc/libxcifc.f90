@@ -52,6 +52,9 @@ subroutine xcifc_libxc(xctype,n,rho,rhoup,rhodn,grho2,gup2,gdn2,gupdn,ex,ec, &
 ! !REVISION HISTORY:
 !   Created April 2009 (Tyrel McQueen)
 !   Modified September 2009 (JKD and TMQ)
+!   Modified September 2012 (UW)
+!   Modified Januar 2013(UW)
+!   Modified Oktober 2013 (UW)
 !EOP
 !BOC
 implicit none
@@ -88,6 +91,7 @@ integer nspin,xcf,id,i,k
 real(8) r(2),v(2),sigma(3),vsigma(3)
 type(xc_f90_pointer_t) p
 type(xc_f90_pointer_t) info
+
 if (present(rho)) then
   nspin=XC_UNPOLARIZED
 else if (present(rhoup).and.present(rhodn)) then
@@ -191,17 +195,25 @@ do k=2,3
       ex(1:n)=0.d0
       if (present(rho)) then
         vx(1:n)=0.d0
+        if (present(dxdg2))  dxdg2(1:n)=0.d0
       else
         vxup(1:n)=0.d0
         vxdn(1:n)=0.d0
+        if (present(dxdgu2))  dxdgu2(1:n)=0.d0
+        if (present(dxdgd2))  dxdgd2(1:n)=0.d0
+        if (present(dxdgud))  dxdgud(1:n)=0.d0
       end if
     else
       ec(1:n)=0.d0
       if (present(rho)) then
         vc(1:n)=0.d0
+        if (present(dcdg2)) dcdg2(1:n)=0.d0
       else
         vcup(1:n)=0.d0
         vcdn(1:n)=0.d0
+        if (present(dcdgu2))  dcdgu2(1:n)=0.d0
+        if (present(dcdgd2))  dcdgd2(1:n)=0.d0
+        if (present(dcdgud))  dcdgud(1:n)=0.d0
       end if
     end if
   end if
@@ -212,7 +224,7 @@ return
 
 end subroutine
 
-subroutine xcdata_libxc(xctype,xcdescr,xcspin,xcgrad)
+subroutine xcdata_libxc(xctype,xcdescr,xcspin,xcgrad,ex_coef)
 
 implicit none
 ! arguments
@@ -220,6 +232,7 @@ integer, intent(in) :: xctype(3)
 character(512), intent(out) :: xcdescr
 integer, intent(out) :: xcspin
 integer, intent(out) :: xcgrad
+real(8), intent(out) :: ex_coef
 #ifdef LIBXC
 
 ! local variables
@@ -246,9 +259,17 @@ do k=2,3
       end if
       call xc_f90_info_name(info,name)
       call xc_f90_func_end(p)
-    case(XC_FAMILY_GGA,XC_FAMILY_HYB_GGA)
+    case(XC_FAMILY_GGA)
       call xc_f90_func_init(p,info,id,XC_UNPOLARIZED)
       call xc_f90_info_name(info,name)
+      call xc_f90_func_end(p)
+! post-processed gradients required
+      xcgrad=2
+    case(XC_FAMILY_HYB_GGA)
+      call xc_f90_func_init(p,info,id,XC_UNPOLARIZED)
+      call xc_f90_info_name(info,name)
+! get mixing coefficient for exchange
+      call xc_f90_hyb_exx_coef(p, ex_coef) 
       call xc_f90_func_end(p)
 ! post-processed gradients required
       xcgrad=2

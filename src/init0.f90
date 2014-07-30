@@ -31,7 +31,7 @@ Subroutine init0
       Integer :: is, js, ia, ias
       Integer :: ist, l, m, lm, iv (3)
       Real (8) :: ts0, ts1, tv3 (3)
-!
+
 !-------------------------------!
 !     zero timing variables     !
 !-------------------------------!
@@ -42,8 +42,24 @@ Subroutine init0
       timerho = 0.d0
       timepot = 0.d0
       timefor = 0.d0
+      timeio=0d0
+      timemt=0d0
+      timemixer=0d0
+      timematch=0d0
+      time_hmlaan=0d0
+      time_hmlalon=0d0
+      time_hmllolon=0d0
+      time_olpaan=0d0
+      time_olpalon=0d0
+      time_olplolon=0d0
+      time_hmlistln=0d0
+      time_olpistln=0d0
+      time_rdirac=0d0
+      time_rschrod=0d0
+      time_oepvnl=0.0d0
+      time_oep_iter=0.0d0
       Call timesec (ts0)
-!
+
 !------------------------------------!
 !     angular momentum variables     !
 !------------------------------------!
@@ -87,11 +103,7 @@ Subroutine init0
 !------------------------------------!
 !     index to atoms and species     !
 !------------------------------------!
-! check if the system is an isolated molecule
-      If (input%structure%molecule) Then
-         input%structure%primcell = .False.
-         input%structure%tshift = .False.
-      End If
+
 ! find primitive cell if required
       If (input%structure%primcell) Call findprim
       natmmax = 0
@@ -119,7 +131,7 @@ Subroutine init0
             Write (*,*)
             Stop
          End Select
-         If (input%groundstate%xctypenumber .Lt. 0) Then
+          If (associated(input%groundstate%OEP)) Then
             Write (*,*)
             Write (*, '("Error(init0): spin-spirals do not work with th&
            &e OEP method")')
@@ -150,8 +162,25 @@ Subroutine init0
       If ((task .Eq. 5) .Or. (task .Eq. 6) .Or. (task .Eq. 300)) &
      & input%groundstate%tevecsv = .True.
 ! get exchange-correlation functional data
-      Call getxcdata ( xctype, xcdescr, xcspin, &
-     & xcgrad)
+      If  (associated(input%groundstate%HartreeFock) .And. &
+     & associated(input%groundstate%OEP)) Then
+         Write (*,*)
+         Write (*, '("Error(init0): illegal choice for exact exchange")')
+         Write (*, '("You cannot use HF and OEP simultaneously")')
+         Write (*,*)
+         Stop
+      End If
+      If  (associated(input%groundstate%Hybrid)) Then
+          ex_coef=input%groundstate%Hybrid%excoeff
+      Else
+          ex_coef=1.0          
+      End If
+      Call getxcdata (xctype, xcdescr, xcspin, xcgrad, ex_coef)
+! reset input%groundstate%Hybrid%excoeff to ex_coef
+! in case of libxc: overwritten by ex_coef as defined by libxc
+      If (associated(input%groundstate%Hybrid)) Then
+        input%groundstate%Hybrid%excoeff=ex_coef 
+      End If
       If ((associated(input%groundstate%spin)) .And. (xcspin .Eq. 0)) &
      & Then
          Write (*,*)
@@ -161,6 +190,7 @@ Subroutine init0
          Write (*,*)
          Stop
       End If
+      
 ! check for collinearity in the z-direction and set the dimension of the
 ! magnetisation and exchange-correlation vector fields
       If (associated(input%groundstate%spin)) Then
@@ -183,6 +213,7 @@ Subroutine init0
       Else
          ndmag = 0
       End If
+      
 ! set the non-collinear flag
       If (ndmag .Eq. 3) Then
          ncmag = .True.
@@ -190,9 +221,8 @@ Subroutine init0
          ncmag = .False.
       End If
       If ((ncmag) .And. (xcgrad .Gt. 0)) Then
-         Write (*,*)
-         Write (*, '("Warning(init0): GGA inconsistent with non-colline&
-        &ar magnetism")')
+         call warning('Warning(init0):')
+         call warning(' GGA inconsistent with non-collinear magnetism')
       End If
 ! set fixed spin moment effective field to zero
       bfsmc (:) = 0.d0
@@ -211,7 +241,7 @@ Subroutine init0
       Do is = 1, nspecies
          Do ia = 1, natoms (is)
 ! map atomic lattice coordinates to [0,1) if not in molecule mode
-            If ( .Not. input%structure%molecule) Call r3frac (input%structure%epslat, &
+             If ( .Not. input%structure%cartesian) Call r3frac (input%structure%epslat, &
            & input%structure%speciesarray(is)%species%atomarray(ia)%atom%coord(:), iv)
 ! determine atomic Cartesian coordinates
             Call r3mv (input%structure%crystal%basevect, input%structure%speciesarray(is)%species%atomarray(ia)%atom%coord(:), &
@@ -340,7 +370,7 @@ Subroutine init0
       If (init0symonly) Go To 10
 #endif
 ! solve the Kohn-Sham-Dirac equations for all atoms
-      Call allatoms
+      Call allatoms(1)
 ! allocate core state eigenvalue array and set to default
       If (allocated(evalcr)) deallocate (evalcr)
       Allocate (evalcr(spnstmax, natmtot))
@@ -382,6 +412,8 @@ Subroutine init0
       Allocate (vclmt(lmmaxvr, nrmtmax, natmtot))
       If (allocated(vclir)) deallocate (vclir)
       Allocate (vclir(ngrtot))
+      If (allocated(vmad)) deallocate (vmad)
+      Allocate (vmad(natmtot))
 ! exchange-correlation potential
       If (allocated(vxcmt)) deallocate (vxcmt)
       Allocate (vxcmt(lmmaxvr, nrmtmax, natmtot))
@@ -407,10 +439,15 @@ Subroutine init0
 ! effective potential
       If (allocated(veffmt)) deallocate (veffmt)
       Allocate (veffmt(lmmaxvr, nrmtmax, natmtot))
+!      If (allocated(vrefmt)) deallocate (vrefmt)
+!      Allocate (vrefmt(lmmaxvr, nrmtmax, natmtot))
+
       If (allocated(veffir)) deallocate (veffir)
       Allocate (veffir(ngrtot))
       If (allocated(veffig)) deallocate (veffig)
       Allocate (veffig(ngvec))
+!      If (allocated(vrefig)) deallocate (vrefig)
+!      Allocate (vrefig(ngvec))
 ! allocate muffin-tin charge and moment arrays
       If (allocated(chgmt)) deallocate (chgmt)
       Allocate (chgmt(natmtot))
@@ -426,20 +463,24 @@ Subroutine init0
       Allocate (forcecr(3, natmtot))
       If (allocated(forceibs)) deallocate (forceibs)
       Allocate (forceibs(3, natmtot))
-      If (allocated(forcetot)) deallocate (forcetot)
-      Allocate (forcetot(3, natmtot))
-      If (allocated(forcetp)) deallocate (forcetp)
-      Allocate (forcetp(3, natmtot))
-      If (allocated(tauatm)) deallocate (tauatm)
-      Allocate (tauatm(natmtot))
+!      If (allocated(forcetot)) deallocate (forcetot)
+!      Allocate (forcetot(3, natmtot))
+!      If (allocated(forcetp)) deallocate (forcetp)
+!      Allocate (forcetp(3, natmtot))
+!      If (allocated(tauatm)) deallocate (tauatm)
+!      Allocate (tauatm(natmtot))
+!      If (allocated(tauxyz)) deallocate (tauxyz)
+!      Allocate (tauxyz(3, natmtot))
 ! initialise the previous force
-      forcetp (:, :) = 0.d0
+!      forcetp (:, :) = 0.d0
 ! initial step sizes
-      If (associated(input%structureoptimization)) Then
-         tauatm (:) = input%structureoptimization%tau0atm
-      Else
-         tauatm (:) = 0
-      End If
+!      If (associated(input%relax)) Then
+!         tauatm (:) = input%relax%taunewton
+!         tauxyz (:, :) = input%relax%taunewton
+!      Else
+!         tauatm (:) = 0
+!         tauxyz (:, :) = 0
+!      End If
 !
 !-------------------------!
 !     LDA+U variables     !
@@ -485,7 +526,7 @@ Subroutine init0
       tlast = .False.
 !
       Call timesec (ts1)
-      timeinit = timeinit + ts1 - ts0
+!!      timeinit = timeinit + ts1 - ts0
 !
       Return
 End Subroutine

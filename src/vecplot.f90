@@ -13,6 +13,7 @@
 Subroutine vecplot
 ! !DESCRIPTION:
       Use modinput
+      use modplotlabels
 !   Outputs a 2D or 3D vector field for plotting. The vector field can be the
 !   magnetisation vector field, ${\bf m}$; the exchange-correlation magnetic
 !   field, ${\bf B}_{\rm xc}$; or the electric field
@@ -35,6 +36,9 @@ Subroutine vecplot
       Integer :: is, ia, ias, ir, lm
       Real (8) :: vl1 (3), vl2 (3), vc1 (3), vc2 (3), vc3 (3), vc4 (3), &
      & t1
+     type(plotlabels),pointer ::labels
+     type(plot2d_type),pointer::plot2ddef
+     type(plot3d_type),pointer::plot3ddef
 ! allocatable arrays
       Real (8), Allocatable :: rvfmt (:, :, :, :)
       Real (8), Allocatable :: rvfir (:, :)
@@ -136,62 +140,89 @@ Subroutine vecplot
             rvfir (ir, 3) = dot_product (vc4(:), vc3(:))
          End Do
          If (task .Eq. 72) Then
-            Open (50, File='MAG2d.xml', Action='WRITE', Form='FORMATTED&
-           &')
+         plot2ddef=>input%properties%mvecfield%plot2d
+         labels=>create_plotlablels("MAG","MAG2D",2)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"Magnetization","????","graceunit")
          Else If (task .Eq. 82) Then
-            Open (50, File='BXC2d.xml', Action='WRITE', Form='FORMATTED&
-           &')
+
+             labels=>create_plotlablels("BXC","MAG2D",2)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"BXC","????","graceunit")
+		 plot2ddef=>input%properties%xcmvecfield%plot2d
          Else If (task .Eq. 142) Then
-            Open (50, File='EF2d.xml', Action='WRITE', Form='FORMATTED')
+           labels=>create_plotlablels("EF","EF2D",2)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"EF2","????","graceunit")
+         plot2ddef=>input%properties%electricfield%plot2d
          Else
-            Open (50, File='MCBXC2d.xml', Action='WRITE', Form='FORMATT&
-           &ED')
+          write(*,*) "error in vecplot 2d selection"
+
          End If
-         Call plot2d (50, 3, input%groundstate%lmaxvr, lmmaxvr, rvfmt, &
-        & rvfir)
-         Close (50)
+         Call plot2d (labels, 3, input%groundstate%lmaxvr, lmmaxvr, rvfmt, &
+        & rvfir, plot2ddef)
+       call destroy_plotlablels(labels)
          Write (*,*)
          Write (*, '("Info(vecplot):")')
          If (task .Eq. 72) Then
-            Write (*, '(" 2D magnetisation density written to MAG2d.xml&
-           &")')
+            Write (*, '(" 2D magnetisation density written to MAG2D.xml")')
          Else If (task .Eq. 82) Then
-            Write (*, '(" 2D exchange-correlation field written to BXC2&
-           &D.OUT")')
+            Write (*, '(" 2D exchange-correlation field written to BXC2D.xml")')
          Else If (task .Eq. 142) Then
-            Write (*, '(" 2D electric field written to EF2d.xml")')
+            Write (*, '(" 2D electric field written to EF2D.xml")')
          Else
-            Write (*, '(" 2D m(r) x B_xc(r) written to MCBXC2d.xml")')
+            Write (*, '(" 2D m(r) x B_xc(r) written to MCBXC2D.xml")')
          End If
          Write (*,*)
       Case (73, 83, 143, 153)
          If (task .Eq. 73) Then
-            Open (50, File='MAG3d.xml', Action='WRITE', Form='FORMATTED&
-           &')
+         labels=>create_plotlablels("MAG","MAG3D",3)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"c","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,4,"Magnetization","????","graceunit")
+           plot3ddef=>input%properties%mvecfield%plot3d
          Else If (task .Eq. 83) Then
-            Open (50, File='BXC3d.xml', Action='WRITE', Form='FORMATTED&
-           &')
+
+         labels=>create_plotlablels("BXC","BXC3D",3)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"c","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,4,"BXC","????","graceunit")
+           plot3ddef=>input%properties%xcmvecfield%plot3d
          Else If (task .Eq. 143) Then
-            Open (50, File='EF3d.xml', Action='WRITE', Form='FORMATTED')
+            labels=>create_plotlablels("EF","EF3D",3)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"c","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,4,"EF","????","graceunit")
+		  plot3ddef=>input%properties%electricfield%plot3d
          Else
-            Open (50, File='MCBXC3d.xml', Action='WRITE', Form='FORMATT&
-           &ED')
+
+            labels=>create_plotlablels("MCBXC","MCBXC3D",3)
+		 call set_plotlabel_axis(labels,1,"a","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,2,"b","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,3,"c","lattice coordinate","graceunit")
+		 call set_plotlabel_axis(labels,4,"MCBXC","????","graceunit")
          End If
-         Call plot3d (50, 3, input%groundstate%lmaxvr, lmmaxvr, rvfmt, &
-        & rvfir)
-         Close (50)
+
+         Call plot3d (labels, 3, input%groundstate%lmaxvr, lmmaxvr, rvfmt, &
+        & rvfir,plot3ddef)
+          call destroy_plotlablels(labels)
+
          Write (*,*)
          Write (*, '("Info(vecplot):")')
          If (task .Eq. 73) Then
-            Write (*, '(" 3D magnetisation density written to MAG3d.xml&
-           &")')
+            Write (*, '(" 3D magnetisation density written to MAG3D.xml")')
          Else If (task .Eq. 83) Then
-            Write (*, '(" 3D exchange-correlation field written to BXC3&
-           &D.OUT")')
+            Write (*, '(" 3D exchange-correlation field written to BXC3D.xml")')
          Else If (task .Eq. 143) Then
-            Write (*, '(" 3D electric field written to EF3d.xml")')
+            Write (*, '(" 3D electric field written to EF3D.xml")')
          Else
-            Write (*, '(" 3D m(r) x B_xc(r) written to MCBXC3d.xml")')
+            Write (*, '(" 3D m(r) x B_xc(r) written to MCBXC3D.xml")')
          End If
          Write (*,*)
       End Select

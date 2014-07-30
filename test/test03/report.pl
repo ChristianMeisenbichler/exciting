@@ -17,10 +17,10 @@ while (<INFO>) {
 	if (m/\| EXCITING.+stopped/) {
 		$status = "passed";
 	}
-	if (m/Iteration number :\s*(\d+)/) {
+	if (m/ SCF iteration number :\s*(\d+)/) {
 		$iterations = $1;
 	}
-	if (m/Using Adaptive step size linear potential mixing/) {
+	if (m/Using adaptive step size linear potential mixing/) {
 		$rightmixer = 'passed';
 	}
 }
@@ -45,7 +45,7 @@ Test::writetestreport(
 	$writer
 );
 
-$iterationsref = 17;
+$iterationsref = 38;
 if   ( $iterations < $iterationsref+5 &&  
 	 $iterations > $iterationsref-5) { $status = "passed"; }
 else                                   { $status = "failed"; }
@@ -71,7 +71,7 @@ while (<INFO>) {
 	if (m/Iteration number :\s*(\d+)/) {
 		$iterations = $1;
 	}
-	if (m/Using Multisecant Broyden/) {
+	if (m/Using multisecant Broyden potential mixing/) {
 		$rightmixer = 'passed';
 	}
 }
@@ -95,7 +95,7 @@ Test::writetestreport(
 	$writer
 );
 
-$iterationsref = 10;
+$iterationsref = 12;
 if   ( $iterations <= $iterationsref ) { $status = 'passed'; }
 else                                   { $status = "failed"; }
 
@@ -146,7 +146,7 @@ Test::writetestreport(
 	$writer
 );
 
-$iterationsref = 10;
+$iterationsref = 12;
 if   ( $iterations <= $iterationsref ) { $status = 'passed'; }
 else                                   { $status = "failed"; }
 

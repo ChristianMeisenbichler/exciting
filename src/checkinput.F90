@@ -8,6 +8,7 @@ subroutine checkinput
   use modinput
   implicit none
   integer :: is,i
+  character(1024) :: message
   if (input%structure%epslat.le.0.d0) then
     write(*,*)
     write(*,'("Error(checkinput): /input/structure/@epslat <= 0 : ",G18.10)') input%structure%epslat
@@ -18,14 +19,6 @@ subroutine checkinput
     if (input%groundstate%radkpt.le.0.d0) then
       write(*,*)
       write(*,'("Error(checkinput): /input/groundstate/@radkpt <= 0 : ",G18.10)') input%groundstate%radkpt
-      write(*,*)
-      stop
-    end if
-  end if
-  if (associated(input%groundstate))then
-    if ((input%groundstate%ngridk(1).le.0).or.(input%groundstate%ngridk(2).le.0).or.(input%groundstate%ngridk(3).le.0)) then
-      write(*,*)
-      write(*,'("Error(checkinput): invalid /input/groundstate/@ngridk : ",3I8)') input%groundstate%ngridk
       write(*,*)
       stop
     end if
@@ -275,12 +268,6 @@ subroutine checkinput
       stop
     end if
   end if
-  if (input%structure%vacuum.lt.0.d0) then
-    write(*,*)
-    write(*,'("Error(checkinput): /input/structure/@vacuum < 0 : ",G18.10)') input%structure%vacuum
-    write(*,*)
-    stop
-  end if
   if (associated(input%structure%speciesarray)) then
     if (size(input%structure%speciesarray).gt.maxspecies) then ! (nspecies > maxspecies)
       write(*,*)
@@ -356,24 +343,6 @@ subroutine checkinput
       stop
     end if
   end if
-  if (associated(input%properties)) then
-    if (associated(input%properties%dielectric)) then
-      do i=1,size(input%properties%dielectric%optcomp,2)
-        if ((input%properties%dielectric%optcomp(1,i).lt.1).or. &
-         (input%properties%dielectric%optcomp(1,i).gt.3).or. &
-         (input%properties%dielectric%optcomp(2,i).lt.1).or. &
-         (input%properties%dielectric%optcomp(2,i).gt.3).or. &
-         (input%properties%dielectric%optcomp(3,i).lt.1).or. &
-         (input%properties%dielectric%optcomp(3,i).gt.3)) then
-         write(*,*)
-         write(*,'("Error(checkinput): invalid /input/properties/linresponsetensor/optcomp : ",3I8)') &
-           input%properties%dielectric%optcomp(:,i)
-         write(*,*)
-         stop
-        end if
-      end do
-    end if
-  end if
   if (associated(input%groundstate)) then
     if (associated(input%groundstate%solver)) then
       if (input%groundstate%solver%evaltol.le.0.d0) then
@@ -403,15 +372,15 @@ subroutine checkinput
     end if
   end if
   if (associated(input%groundstate)) then
-    if (input%groundstate%rmtapm(1).lt.0.d0) then
+    if (input%structure%rmtapm(1).lt.0.d0) then
       write(*,*)
-      write(*,'("Error(checkinput): /input/groundstate/@rmtapm(1) < 0 : ",G18.10)') input%groundstate%rmtapm(1)
+      write(*,'("Error(checkinput): /input/groundstate/@rmtapm(1) < 0 : ",G18.10)') input%structure%rmtapm(1)
       write(*,*)
       stop
     end if
-    if ((input%groundstate%rmtapm(2).le.0.d0).or.(input%groundstate%rmtapm(2).gt.1.d0)) then
+    if ((input%structure%rmtapm(2).le.0.d0).or.(input%structure%rmtapm(2).gt.1.d0)) then
       write(*,*)
-      write(*,'("Error(checkinput): /input/groundstate/@rmtapm(2) not in (0,1] : ",G18.10)') input%groundstate%rmtapm(2)
+      write(*,'("Error(checkinput): /input/groundstate/@rmtapm(2) not in (0,1] : ",G18.10)') input%structure%rmtapm(2)
       write(*,*)
       stop
     end if
@@ -524,6 +493,16 @@ subroutine checkinput
         write(*,*)
         stop
       end if
+    end if
+  end if
+! ngridk optional
+  if (associated(input%groundstate)) then
+    if(any(input%groundstate%ngridk .le. 0) .and. (.not.input%groundstate%autokpt) .and. (input%groundstate%nktot .eq. 0)) then
+      write(*,*)
+      write(*,'("Error(checkinput): components in /input/groundstate/@ngridk < 1 : ",3I10)') input%groundstate%ngridk
+      write(*,'("specifiy either /input/groundstate/@ngridk or /input/groundstate/@autokpt or /input/groundstate/@nktot ")')
+      write(*,*)
+      stop
     end if
   end if
 

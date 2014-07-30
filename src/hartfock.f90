@@ -6,17 +6,29 @@
 ! See the file COPYING for license details.
 !
 !
+!BOP
+! !ROUTINE: hartfock
+! !INTERFACE:
 Subroutine hartfock
+! !USES:
       Use modmain
       Use modinput
+! !DESCRIPTION:
+!  Computes the self-consistent Hartree Fock ground state.
+!
+! !REVISION HISTORY:
+!  ... 
+!EOP
+!BOC
       Implicit None
 ! local variables
       Logical :: exist
-      Integer :: ik, is, ia, idm
-      Real (8) :: etp, de
+      Integer :: ik, is, ia, idm, Recl
+      Real(8) :: etp, de
+      character*(77) :: string
 ! allocatable arrays
-      Complex (8), Allocatable :: evecfv (:, :, :)
-      Complex (8), Allocatable :: evecsv (:, :)
+      Complex(8), Allocatable :: evecfv (:, :, :)
+      Complex(8), Allocatable :: evecsv (:, :)
 ! initialise universal variables
       Call init0
       Call init1
@@ -47,6 +59,7 @@ Subroutine hartfock
       Call poteff
 ! Fourier transform effective potential to G-space
       Call genveffig
+      Call genmeffig
 ! generate the core wavefunctions and densities
       Call gencore
 ! find the new linearisation energies
@@ -57,6 +70,7 @@ Subroutine hartfock
       Call genlofr
 ! compute the overlap radial integrals
       Call olprad
+      Call hmlint
 ! compute the Hamiltonian radial integrals
       Call hmlrad
 ! generate the kinetic matrix elements
@@ -83,9 +97,9 @@ Subroutine hartfock
             Write (60, '("Reached self-consistent loops maximum")')
             tlast = .True.
          End If
-!$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(evecsv)
-!$OMP DO
+!x$OMP PARALLEL DEFAULT(SHARED) &
+!x$OMP PRIVATE(evecsv)
+!x$OMP DO
          Do ik = 1, nkpt
             Allocate (evecsv(nstsv, nstsv))
             Call getevecsv (vkl(:, ik), evecsv)
@@ -96,8 +110,8 @@ Subroutine hartfock
             Call putevecsv (ik, evecsv)
             Deallocate (evecsv)
          End Do
-!$OMP END DO
-!$OMP END PARALLEL
+!x$OMP END DO
+!x$OMP END PARALLEL
 ! find the occupation numbers and Fermi energy
          Call occupy
 ! write out the eigenvalues and occupation numbers
@@ -164,7 +178,7 @@ Subroutine hartfock
          Write (62, '(G18.10)') fermidos
          Call flushifc (62)
 ! output charges and moments
-         Call writechg (60)
+         Call writechg (60,input%groundstate%outputlevelnumber)
 ! write total moment to MOMENT.OUT and flush
          If (associated(input%groundstate%spin)) Then
             Write (63, '(3G18.10)') momtot (1:ndmag)
@@ -177,14 +191,14 @@ Subroutine hartfock
             Write (60,*)
             Write (60, '("Relative change in total energy (target) : ",&
            & G18.10, " (", G18.10, ")")') de, &
-           & input%groundstate%HartreeFock%epsengy
-            If (de .Lt. input%groundstate%HartreeFock%epsengy) Then
+           & input%groundstate%epsengy
+            If (de .Lt. input%groundstate%epsengy) Then
                Write (60,*)
                Write (60, '("Energy convergence target achieved")')
                tlast = .True.
             End If
-            Write (65, '(G18.10)') de
-            Call flushifc (65)
+!            Write (65, '(G18.10)') de
+!            Call flushifc (65)
          End If
          etp = engytot
 ! check for STOP file
@@ -214,55 +228,13 @@ Subroutine hartfock
       If (( .Not. tstop) .And. (input%groundstate%tforce)) Then
          Call force
 ! output forces to INFO.OUT
-         Call writeforce (60)
+         Call writeforce(60,input%groundstate%outputlevelnumber)
 ! write maximum force magnitude to FORCEMAX.OUT
-         Write (64, '(G18.10)') forcemax
-         Call flushifc (64)
+!         Write (64, '(G18.10)') forcemax
+!         Call flushifc (64)
       End If
-!---------------------------------------!
-!     perform structural relaxation     !
-!---------------------------------------!
-      If (( .Not. tstop) .And. (task .Eq. 6)) Then
-         Write (60,*)
-         Write (60, '("Maximum force magnitude (target) : ", G18.10, " &
-        &(", G18.10, ")")') forcemax, &
-        & input%structureoptimization%epsforce
-         Call flushifc (60)
-! check force convergence
-         If (forcemax .Le. input%structureoptimization%epsforce) Then
-            Write (60,*)
-            Write (60, '("Force convergence target achieved")')
-            Go To 30
-         End If
-! update the atomic positions if forces are not converged
-         Call updatpos
-         Write (60,*)
-         Write (60, '("+--------------------------+")')
-         Write (60, '("| Updated atomic positions |")')
-         Write (60, '("+--------------------------+")')
-         Do is = 1, nspecies
-            Write (60,*)
-            Write (60, '("Species : ", I4, " (", A, ")")') is, trim &
-           & (input%structure%speciesarray(is)%species%chemicalSymbol)
-            Write (60, '(" atomic positions (lattice) :")')
-            Do ia = 1, natoms (is)
-               Write (60, '(I4, " : ", 3F14.8)') ia, input%structure%speciesarray(is)%species%atomarray(ia)%atom%coord(:)
-            End Do
-         End Do
-! add blank line to TOTENERGY.OUT, FERMIDOS.OUT, MOMENT.OUT and DENERGY.OUT
-         Write (61,*)
-         Write (62,*)
-         If (associated(input%groundstate%spin)) write (63,*)
-         Write (65,*)
-! begin new self-consistent loop with updated positions
-         Go To 10
-      End If
-30    Continue
-      Write (60,*)
-      Write (60, '("+----------------------------------+")')
-      Write (60, '("| EXCITING version ", I1.1, ".", I1.1, ".", I3.3, "&
-     & stopped |")') version
-      Write (60, '("+----------------------------------+")')
+      write(string,'("EXCITING ", a, " stopped")') trim(versionname)
+      call printbox(60,"=",string)
 ! close the INFO.OUT file
       Close (60)
 ! close the TOTENERGY.OUT file
@@ -275,5 +247,18 @@ Subroutine hartfock
       If (input%groundstate%tforce) close (64)
 ! close the DENERGY.OUT file
       Close (65)
+
+!----------------------------------------
+! Save HF energies into binary file
+!----------------------------------------
+
+      Inquire (IoLength=Recl) nkpt, nstsv, vkl(:,1), evalsv(:,1)
+      Open (70, File='EVALHF.OUT', Action='WRITE', Form='UNFORMATTED', &
+     &   Access='DIRECT', status='REPLACE', Recl=Recl)
+      do ik = 1, nkpt
+        write(70, Rec=ik) nkpt, nstsv, vkl(:,ik), evalsv(:,ik)-efermi
+      end do ! ik
+      Close(70)
+      
       Return
 End Subroutine

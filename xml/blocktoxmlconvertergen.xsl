@@ -2,7 +2,7 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xsl:output method="text"></xsl:output>
   <xsl:template match="/">
-    use lib "../test/perl/"; use lib "../test/perl/lib"; use lib "../utilities/lib"; use XML::Writer; use IO::File; use Switch; $npt="[-+]?[0-9]*\.?[0-9]*";
+    use lib "../test/perl/"; use lib "../test/perl/lib"; use lib "../build/utilities/lib"; use XML::Writer; use IO::File; use Switch; $npt="[-+]?[0-9]*\.?[0-9]*";
     local $/ = undef; open BLOCKINPUT, $ARGV[0] or die "Couldn't open file:$ARGV[0] $!"; binmode BLOCKINPUT; $blockinput = &lt;BLOCKINPUT&gt;."\n\n";
 $blockinput=~s/[!:](.*)\n/\n/g;
 $/="\n";
@@ -66,7 +66,7 @@ if(getvalue("<xsl:value-of select="(@name|@ref|*/*/oldname)[last()]"/>"))
 my $output = new IO::File(">input.xml");
 my $writer = new XML::Writer(DATA_MODE => 1);
 $writer->xmlDecl("UTF-8");
-$writer->pi('xml-stylesheet', 'href="inputtohtml.xsl" type="text/xsl"');
+$writer->pi('xml-stylesheet', 'href="xmlinput2html.xsl" type="text/xsl"');
 
 $writer->startTag("input", 
     "xsi:noNamespaceSchemaLocation"=>"excitinginput.xsd",
@@ -133,8 +133,8 @@ switch ($1) {
 	  $writer->endTag("groundstate");
 	  if($1==2||$1==3)
 	    {
-	    $writer->startTag("structureoptimization",%atthashstructureoptimization);
-	    $writer->endTag("structureoptimization");
+	    $writer->startTag("relax",%atthashrelax);
+	    $writer->endTag("relax");
 	    }
 	  }
     case [200, 201]

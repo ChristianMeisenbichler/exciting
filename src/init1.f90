@@ -20,6 +20,8 @@ Subroutine init1
 #ifdef XS
       Use modxs
 #endif
+      Use modgw
+      use modfvsystem
 ! !DESCRIPTION:
 !   Generates the $k$-point set and then allocates and initialises global
 !   variables which depend on the $k$-point set.
@@ -33,10 +35,15 @@ Subroutine init1
       Integer :: ik, is, ia, ias, io, ilo
       Integer :: i1, i2, i3, ispn, iv (3)
       Integer :: l1, l2, l3, m1, m2, m3, lm1, lm2, lm3
-      Integer :: n1, n2, n3
+      Integer :: n1, n2, n3, nonzcount
       Real (8) :: vl (3), vc (3), boxl (3, 4), lambda
       Real (8) :: ts0, ts1
+      real (8) :: vl1(3),vl2(3),vc1(3),vc2(3)
+      real (8) :: d1,d2,d12,t1,t2
       Real (8) :: blen(3), lambdab
+      integer(4) :: nsym, isym, lspl
+      integer(4), allocatable :: symmat(:,:,:)
+      
 ! external functions
       Complex (8) gauntyry
       External gauntyry
@@ -46,17 +53,27 @@ Subroutine init1
 !---------------------!
 !     k-point set     !
 !---------------------!
-! check if the system is an isolated molecule
-      If (input%structure%molecule) Then
-         input%groundstate%ngridk (:) = 1
-         input%groundstate%vkloff (:) = 0.d0
-         input%groundstate%autokpt = .False.
+!
+      If (task.Eq.100) Then
+!
+!     3D fermisurface plot
+!
+        if (associated(input%properties%fermisurfaceplot%plot3d)) then
+          np3d(:) = input%properties%fermisurfaceplot%plot3d%box%grid(:)
+          vclp3d(:,1) = input%properties%fermisurfaceplot%plot3d%box%origin%coord(:)
+          vclp3d(:,2) = input%properties%fermisurfaceplot%plot3d%box%pointarray(1)%point%coord(:)
+          vclp3d(:,3) = input%properties%fermisurfaceplot%plot3d%box%pointarray(2)%point%coord(:)
+          vclp3d(:,4) = input%properties%fermisurfaceplot%plot3d%box%pointarray(3)%point%coord(:)         
+        else
+          np3d(:)=(/20,20,20/)
+          vclp3d(:,1)=(/0.d0,0.d0,0.d0/)
+          vclp3d(:,2)=(/1.d0,0.d0,0.d0/)
+          vclp3d(:,3)=(/0.d0,1.d0,0.d0/)
+          vclp3d(:,4)=(/0.d0,0.d0,1.d0/)
+        end if
+        input%groundstate%ngridk(:)=np3d(:)
       End If
-! k-point set and box for Fermi surface plots
-      If ((task .Eq. 100) .Or. (task .Eq. 101)) Then
-         input%groundstate%ngridk (:) = np3d (:)
-         boxl (:, :) = vclp3d (:, :)
-      End If
+
       If ((task .Eq. 20) .Or. (task .Eq. 21)) Then
 ! for band structure plots generate k-points along a line
          nvp1d = size &
@@ -114,6 +131,51 @@ Subroutine init1
                End Do
             End Do
          End Do
+
+      Else If (task .Eq. 101) Then
+!
+!          2D fermisurface plot
+!
+           np2d(:) = input%properties%fermisurfaceplot%plot2d%parallelogram%grid(:)
+           vclp2d(:,1) = input%properties%fermisurfaceplot%plot2d%parallelogram%origin%coord(:)
+           vclp2d(:,2) = input%properties%fermisurfaceplot%plot2d%parallelogram%pointarray(1)%point%coord(:)
+           vclp2d(:,3) = input%properties%fermisurfaceplot%plot2d%parallelogram%pointarray(2)%point%coord(:)
+           ! generate 2D grid of k-points
+           vl1(:) = vclp2d(:,2)-vclp2d(:,1)
+           vl2(:) = vclp2d(:,3)-vclp2d(:,1)    
+           vc1(:) = bvec(:,1)*vl1(1)+bvec(:,2)*vl1(2)+bvec(:,3)*vl1(3)
+           vc2(:) = bvec(:,1)*vl2(1)+bvec(:,2)*vl2(2)+bvec(:,3)*vl2(3)
+           d1 = sqrt(vc1(1)**2+vc1(2)**2+vc1(3)**2)
+           d2 = sqrt(vc2(1)**2+vc2(2)**2+vc2(3)**2)
+           d12 = (vc1(1)*vc2(1)+vc1(2)*vc2(2)+vc1(3)*vc2(3))/(d1*d2)
+           if ( (d1.lt.input%structure%epslat) .or. (d2.lt.input%structure%epslat) ) then
+             write (*,*)
+             write (*, '("Error(fermisurf): zero length plotting vectors")')
+             write (*,*)
+             stop
+           end if
+           if ((1.d0-d12 .Lt. input%structure%epslat) .Or. (1.d0+d12 .Lt. input%structure%epslat)) then
+              write (*,*)
+              write (*, '("Error(fermisurf): zero angle between vectors defining the parallelogram")')
+              write (*,*)
+              stop
+           end if
+           nkpt = np2d(1)*np2d(2)
+           If (allocated(vkl)) deallocate (vkl)
+           Allocate (vkl(3, nkpt))
+           If (allocated(vkc)) deallocate (vkc)
+           Allocate (vkc(3, nkpt))
+           ik = 0
+           Do i1 = 0, np2d(1)-1
+              Do i2 = 0, np2d(2)-1
+                 ik = ik+1
+                 t1 = dble(i1)/dble(np2d(1))
+                 t2 = dble(i2)/dble(np2d(2))
+                 vkl(:,ik) = t1*vl1(:)+t2*vl2(:)+vclp2d(:,1)
+                 Call r3mv(bvec,vkl(:, ik),vkc(:, ik))
+              End Do
+           End Do
+
       Else
 ! determine the k-point grid automatically from radkpt if required
          If (input%groundstate%autokpt) Then
@@ -161,10 +223,78 @@ Subroutine init1
          Allocate (ikmap(0:input%groundstate%ngridk(1)-1, &
         & 0:input%groundstate%ngridk(2)-1, &
         & 0:input%groundstate%ngridk(3)-1))
+!
 ! generate the reduced k-point set
-         Call genppts (input%groundstate%reducek, .False., &
-        & input%groundstate%ngridk, boxl, nkpt, ikmap, ivk, vkl, vkc, &
-        & wkpt)
+!
+         if (input%groundstate%stypenumber < 0) then
+
+! suppress debug output in tetrahedron integration library (0)
+             call tetrasetdbglv (0)
+!
+             nkpt = input%groundstate%ngridk(1)* &
+        &           input%groundstate%ngridk(2)* &
+        &           input%groundstate%ngridk(3)
+             ntet = 6*nkpt
+             
+             if (allocated(indkp)) deallocate(indkp)
+             allocate(indkp(nkpt))
+             if (allocated(iwkp)) deallocate(iwkp)
+             allocate(iwkp(nkpt))
+             if (allocated(wtet)) deallocate(wtet)
+             allocate(wtet(ntet))
+             if (allocated(tnodes)) deallocate(tnodes)
+             allocate(tnodes(4,ntet))
+!
+             nsym=1
+             If (input%groundstate%reducek) nsym = nsymcrys
+!             
+!            get rotational part of crystal symmetries
+!
+             if(allocated(symmat))deallocate(symmat)
+             allocate(symmat(3,3,nsym))
+             Do isym = 1, nsym
+                lspl = lsplsymc(isym)
+!               transpose of rotation for use with the library
+                Do i1 = 1, 3
+                   Do i2 = 1, 3
+                      symmat(i1,i2,isym) = symlat(i2,i1,lspl)
+                   End Do
+                End Do
+             End Do
+
+             call factorize(3,input%groundstate%vkloff,ikloff,dkloff)
+
+             call kgen(bvec,nsym,symmat,input%groundstate%ngridk,ikloff,dkloff,&
+        &       nkpt,ivk,dvk,indkp,iwkp,ntet,tnodes,wtet,tvol,mnd)
+
+!            getting ikmap array
+             ik=0
+             do i3=0,input%groundstate%ngridk(3)-1
+             do i2=0,input%groundstate%ngridk(2)-1
+             do i1=0,input%groundstate%ngridk(1)-1
+                ik=ik+1
+                ikmap(i1,i2,i3)=indkp(ik)
+             end do
+             end do
+             end do
+              
+!            fractional and cartesian coordinates, and k-point weight
+             do ik=1,nkpt
+                vkl(:,ik)=dble(ivk(:,ik))/dble(dvk)
+                call r3mv(bvec,vkl(:,ik),vkc(:,ik))
+                wkpt(ik)=dble(iwkp(ik))/dble(input%groundstate%ngridk(1)*    &
+        &           input%groundstate%ngridk(2)*input%groundstate%ngridk(3))
+             enddo ! ik
+             
+             deallocate(symmat)
+!
+         else
+!
+           Call genppts (input%groundstate%reducek, .False., &
+        &    input%groundstate%ngridk, boxl, nkpt, ikmap, ivk, vkl, vkc, wkpt)
+!
+         end if ! tetra
+
 ! allocate the non-reduced k-point set arrays
          nkptnr = input%groundstate%ngridk(1) * &
         & input%groundstate%ngridk(2) * input%groundstate%ngridk(3)
@@ -240,6 +370,9 @@ Subroutine init1
       Allocate (tpgkc(2, ngkmax, nspnfv, nkpt))
       If (allocated(sfacgk)) deallocate (sfacgk)
       Allocate (sfacgk(ngkmax, natmtot, nspnfv, nkpt))
+!      If (allocated(igkfft)) deallocate (igkfft)
+!      Allocate (igkfft(ngkmax, nkpt))
+!      igkfft=0
       Do ik = 1, nkpt
          Do ispn = 1, nspnfv
             If (isspinspiral()) Then
@@ -258,6 +391,10 @@ Subroutine init1
                vc (:) = vkc (:, ik)
             End If
 ! generate the G+k-vectors
+! commented and uncommented versions differ by igkfft(:,ik)
+!            Call gengpvec (vl, vc, ngk(ispn, ik), igkig(:, ispn, ik), &
+!           & vgkl(:, :, ispn, ik), vgkc(:, :, ispn, ik), gkc(:, ispn, &
+!           & ik), tpgkc(:, :, ispn, ik),igkfft(:,ik))
             Call gengpvec (vl, vc, ngk(ispn, ik), igkig(:, ispn, ik), &
            & vgkl(:, :, ispn, ik), vgkc(:, :, ispn, ik), gkc(:, ispn, &
            & ik), tpgkc(:, :, ispn, ik))
@@ -378,44 +515,86 @@ Subroutine init1
       Allocate (oalo(apwordmax, nlomax, natmtot))
       If (allocated(ololo)) deallocate (ololo)
       Allocate (ololo(nlomax, nlomax, natmtot))
-      If (allocated(haa)) deallocate (haa)
-      Allocate (haa(apwordmax, 0:input%groundstate%lmaxmat, apwordmax, &
-     & 0:input%groundstate%lmaxapw, lmmaxvr, natmtot))
-      If (allocated(hloa)) deallocate (hloa)
-      Allocate (hloa(nlomax, apwordmax, 0:input%groundstate%lmaxmat, &
-     & lmmaxvr, natmtot))
-      If (allocated(hlolo)) deallocate (hlolo)
-      Allocate (hlolo(nlomax, nlomax, lmmaxvr, natmtot))
+
+        If (allocated(h1aa)) deallocate (h1aa)
+        Allocate (h1aa(apwordmax, apwordmax,0:input%groundstate%lmaxapw,natmtot))
+        If (allocated(h1loa)) deallocate (h1loa)
+        Allocate (h1loa(apwordmax,nlomax,natmtot))
+        If (allocated(h1lolo)) deallocate (h1lolo)
+        Allocate (h1lolo(nlomax, nlomax, natmtot))
+!      endif
 ! allocate and generate complex Gaunt coefficient array
       If (allocated(gntyry)) deallocate (gntyry)
       Allocate (gntyry(lmmaxmat, lmmaxvr, lmmaxapw))
+      nonzcount=0
       Do l1 = 0, input%groundstate%lmaxmat
          Do m1 = - l1, l1
             lm1 = idxlm (l1, m1)
             Do l2 = 0, input%groundstate%lmaxvr
                Do m2 = - l2, l2
                   lm2 = idxlm (l2, m2)
-                  Do l3 = 0, input%groundstate%lmaxapw
+                  Do l3 = 0, input%groundstate%lmaxmat
                      Do m3 = - l3, l3
                         lm3 = idxlm (l3, m3)
-                        gntyry (lm1, lm2, lm3) = gauntyry (l1, l2, l3, &
-                       & m1, m2, m3)
+                        gntyry (lm1, lm2, lm3) = gauntyry (l1, l2, l3, m1, m2, m3)
+                        if ((abs(gntyry (lm1, lm2, lm3)).gt.1d-20)) nonzcount=nonzcount+1
                      End Do
                   End Do
                End Do
             End Do
          End Do
       End Do
+      If (allocated(gntryy)) deallocate (gntryy)
+      If (allocated(gntnonz)) deallocate (gntnonz)
+      If (allocated(gntnonzlm1)) deallocate (gntnonzlm1) 
+      If (allocated(gntnonzlm2)) deallocate (gntnonzlm2)
+      If (allocated(gntnonzlm3)) deallocate (gntnonzlm3)
+      If (allocated(gntnonzlindex)) deallocate (gntnonzlindex)
+      If (allocated(gntnonzl2index)) deallocate (gntnonzl2index)
+      Allocate (gntryy(lmmaxvr, lmmaxmat, lmmaxmat))
+      allocate(gntnonz(nonzcount),gntnonzlm1(nonzcount+1),gntnonzlm2(nonzcount),gntnonzlm3(nonzcount+1))
+      allocate(gntnonzlindex(0:input%groundstate%lmaxmat))
+      allocate(gntnonzl2index(lmmaxmat,lmmaxmat))
+      i1=0
+      Do l1 = 0, input%groundstate%lmaxmat
+         gntnonzlindex(l1)=i1+1
+         Do m1 = - l1, l1
+            lm1 = idxlm (l1, m1)
+                  Do l3 = 0, input%groundstate%lmaxmat
+!                     if (lm1.eq.idxlm (l1,-l1)) gntnonzl2index(l1,l3)=i1+1
+                     Do m3 = - l3, l3
+                       lm3 = idxlm (l3, m3)
+                       gntnonzl2index(lm1,lm3)=i1+1
+
+            Do l2 = 0, input%groundstate%lmaxvr
+               Do m2 = - l2, l2
+                  lm2 = idxlm (l2, m2)
+                        gntryy (lm2, lm3, lm1) = gauntyry (l1, l2, l3, m1, m2, m3)
+                        if ((abs(gntryy (lm2, lm3, lm1)).gt.1d-20)) then
+!.and.(lm1 .Ge. lm3)) then
+!                          write(*,*) lm1,lm2,lm3
+!                          read(*,*)
+
+                           i1=i1+1
+                           gntnonz(i1)=gntryy(lm2, lm3, lm1)
+                           gntnonzlm1(i1)=lm1
+                           gntnonzlm3(i1)=lm3
+                           gntnonzlm2(i1)=lm2
+                        endif
+                     End Do
+                  End Do
+               End Do
+            End Do
+         End Do
+      End Do
+      gntnonzlm3(nonzcount+1)=0
+      gntnonzlm1(nonzcount+1)=0
 #ifdef XS
 20    Continue
-! partial charges
-  if (allocated(chgpart)) deallocate(chgpart)
-  allocate(chgpart(lmmaxvr,natmtot,nstsv))
-  chgpart(:,:,:)=0.d0
 #endif
 !
+      nullify(arpackinverse)
       Call timesec (ts1)
-      timeinit = timeinit + ts1 - ts0
 !
       Return
 End Subroutine

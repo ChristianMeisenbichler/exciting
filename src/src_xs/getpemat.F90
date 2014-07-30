@@ -61,13 +61,14 @@ Contains
                        & i2) * fourpisqt
                      Else
                         p12 (j, i1, i2) = zzero
-                        If (Abs(docc12(i1, i2)) .Gt. &
-                       & input%groundstate%epsocc) Then
+                        If ((Abs(docc12(i1, i2)) .Gt. &
+                       & input%groundstate%epsocc).And.(input%xs%dbglev .Gt. 0)) Then
                            Write (*, '("Warning(", a, "): divergent ene&
                           &rgy denominator: q-point, k-point, band indi&
-                          &ces 1-2:", 4i6, g18.10)') thisnam, iq, ik, &
+                          &ces 1-2, delta E12, delta Occ:", 4i6, 2g18.10)') &
+                          & thisnam, iq, ik, &
                           & i1 + istl1 - 1, i2 + istl2 - 1, deou (i1, &
-                          & i2)
+                          & i2), docc12(i1,i2)
                         End If
                      End If
                      If (present(p34)) Then
@@ -77,8 +78,8 @@ Contains
                           & (i2, i1) * fourpisqt
                         Else
                            p34 (j, i2, i1) = zzero
-                           If (Abs(docc21(i2, i1)) .Gt. &
-                          & input%groundstate%epsocc) Then
+                           If ((Abs(docc21(i2, i1)) .Gt. &
+                          & input%groundstate%epsocc).And.(input%xs%dbglev .Gt. 0)) Then
                               Write (*, '("Warning(", a, "): divergent &
                              &energy denominator: q-point, k-point, ban&
                              &d indices 3-4:", 4i6, g18.10)') thisnam, &
@@ -109,19 +110,16 @@ Contains
             End If
        ! consider symmetric gauge wrt. Coulomb potential (multiply with v^(1/2))
             If ( .Not. tq0) Then
-               m12 (:, :, 1) = m12 (:, :, 1) / gqc (1, iq) * fourpisqt
-               If (present(m34)) m34 (:, :, 1) = m34 (:, :, 1) / gqc &
-              & (1, iq) * fourpisqt
+               m12 (:, :, 1) = m12 (:, :, 1) *sptclg(1,iq)
+               If (present(m34)) m34 (:, :, 1) = m34 (:, :, 1) *sptclg(1,iq)
             End If
             If (n .Gt. 1) Then
                Forall (igq=2:n)
-                  m12 (:, :, igq) = m12 (:, :, igq) / gqc (igq, iq) * &
-                 & fourpisqt
+                  m12 (:, :, igq) = m12 (:, :, igq) *sptclg(igq,iq)
                End Forall
                If (present(m34)) Then
                   Forall (igq=2:n)
-                     m34 (:, :, igq) = m34 (:, :, igq) / gqc (igq, iq) &
-                    & * fourpisqt
+                     m34 (:, :, igq) = m34 (:, :, igq) *sptclg(igq,iq)
                   End Forall
                End If
             End If

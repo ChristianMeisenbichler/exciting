@@ -10,11 +10,12 @@
 ! !INTERFACE:
 !
 !
-Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
+Subroutine seceqnfv(ispn, ik, nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   ! !USES:
       Use modinput
       Use modmain
       Use modfvsystem
+      Use mod_hybrids, only: ihyb, vnlmat
 !
   ! !INPUT/OUTPUT PARAMETERS:
   !   nmatp  : order of overlap and Hamiltonian matrices (in,integer)
@@ -36,6 +37,8 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   !BOC
       Implicit None
   ! arguments
+      Integer, Intent (In) :: ispn
+      Integer, Intent (In) :: ik
       Integer, Intent (In) :: nmatp
       Integer, Intent (In) :: ngp
       Integer, Intent (In) :: igpig (ngkmax)
@@ -47,69 +50,90 @@ Subroutine seceqnfv (nmatp, ngp, igpig, vgpc, apwalm, evalfv, evecfv)
   ! local variables
       Type (evsystem) :: system
       Logical :: packed
-      Integer :: is, ia, i, m, np, info
-      Real (8) :: vl, vu
-      Real (8) :: ts0, ts1
-  ! allocatable arrays
-      Integer, Allocatable :: iwork (:)
-      Integer, Allocatable :: ifail (:)
-      Real (8), Allocatable :: w (:)
-      Real (8), Allocatable :: rwork (:)
-      Complex (8), Allocatable :: v (:)
-      Complex (8), Allocatable :: work (:)
-      np = (nmatp*(nmatp+1)) / 2
-!
+      Integer :: ist
+!      integer ik,jk,ig,iv(3),ist
+!      Complex (8), allocatable :: kinetic(:,:),vectors(:,:)
+      Complex (8), allocatable :: zm(:,:),zm2(:,:)
+
   !----------------------------------------!
   !     Hamiltonian and overlap set up     !
   !----------------------------------------!
-!
-      packed = .True.
+
+      packed = input%groundstate%solver%packedmatrixstorage
+
       Call newsystem (system, packed, nmatp)
+      h1on=(input%groundstate%ValenceRelativity.eq.'iora*')
       Call hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
-!
+
+  !------------------------------------------------------------------------!
+  !     If Hybrid potential is used apply the non-local exchange potential !
+  !------------------------------------------------------------------------!
+      if (associated(input%groundstate%Hybrid)) then
+         if (input%groundstate%Hybrid%exchangetypenumber == 1) then
+            ! Update Hamiltonian
+            if (ihyb>0) system%hamilton%za(:,:) = &
+            &  system%hamilton%za(:,:) + ex_coef*vnlmat(1:nmatp,1:nmatp,ik)
+         end if
+      end if
+
   !------------------------------------!
   !     solve the secular equation     !
   !------------------------------------!
-!
-      Call timesec (ts0)
-      vl = 0.d0
-      vu = 0.d0
-  ! LAPACK 3.0 call
-!
-      Allocate (iwork(5*nmatp))
-      Allocate (ifail(nmatp))
-      Allocate (w(nmatp))
-      Allocate (rwork(7*nmatp))
-      Allocate (v(1))
-      Allocate (work(2*nmatp))
-      Call zhpgvx (1, 'V', 'I', 'U', nmatp, system%hamilton%zap, &
-     & system%overlap%zap, vl, vu, 1, nstfv, &
-     & input%groundstate%solver%evaltol, m, w, evecfv, nmatmax, work, &
-     & rwork, iwork, ifail, info)
-      evalfv (1:nstfv) = w (1:nstfv)
-!
-!
-!
-      If (info .Ne. 0) Then
-         Write (*,*)
-         Write (*, '("Error(seceqnfv): diagonalisation failed")')
-         Write (*, '(" ZHPGVX returned INFO = ", I8)') info
-         If (info .Gt. nmatp) Then
-            i = info - nmatp
-            Write (*, '(" The leading minor of the overlap matrix of or&
-           &der ", I8)') i
-            Write (*, '("  is not positive definite")')
-            Write (*, '(" Order of overlap matrix : ", I8)') nmatp
-            Write (*,*)
-         End If
-         Stop
-      End If
-      Call timesec (ts1)
-  !$OMP CRITICAL
-      timefv = timefv + ts1 - ts0
-  !$OMP END CRITICAL
+      Call solvewithlapack(system,nstfv,evecfv,evalfv)
+
+if (input%groundstate%ValenceRelativity.eq.'iora*') then
+! normalise large components
+      Call newsystem (system, packed, nmatp) 
+      h1aa=0d0
+      h1loa=0d0
+      h1lolo=0d0 
+      h1on=.false.
+      Call hamiltonandoverlapsetup (system, ngp, apwalm, igpig, vgpc)
+      call olprad
+      allocate(zm(nmatp,nstfv))
+      allocate(zm2(nstfv,nstfv))
+      
+   
+      call zgemm('N', &           ! TRANSA = 'C'  op( A ) = A**H.
+                 'N', &           ! TRANSB = 'N'  op( B ) = B.
+                  nmatp, &          ! M ... rows of op( A ) = rows of C
+                  nstfv, &           ! N ... cols of op( B ) = cols of C
+                  nmatp, &          ! K ... cols of op( A ) = rows of op( B )
+                  zone, &          ! alpha
+                  system%overlap%za, &           ! A
+                  nmatp,&           ! LDA ... leading dimension of A
+                  evecfv, &           ! B
+                  nmatmax, &          ! LDB ... leading dimension of B
+                  zzero, &          ! beta
+                  zm, &  ! C
+                  nmatp &      ! LDC ... leading dimension of C
+                  )
+      call zgemm('C', &           ! TRANSA = 'C'  op( A ) = A**H.
+                 'N', &           ! TRANSB = 'N'  op( B ) = B.
+                  nstfv, &          ! M ... rows of op( A ) = rows of C
+                  nstfv, &           ! N ... cols of op( B ) = cols of C
+                  nmatp, &          ! K ... cols of op( A ) = rows of op( B )
+                  zone, &          ! alpha
+                  evecfv, &           ! A
+                  nmatmax,&           ! LDA ... leading dimension of A
+                  zm, &           ! B
+                  nmatp, &          ! LDB ... leading dimension of B
+                  zzero, &          ! beta
+                  zm2, &  ! C
+                  nstfv &      ! LDC ... leading dimension of C
+                  )
+
+!     write(*,*) zm2(1:2,1:2)
+!      do ist=1,nstfv
+!        write(*,*) zm2(ist,ist)
+!      enddo
+!      write(*,*) 
+      do ist=1,nstfv
+        evecfv(:,ist)=evecfv(:,ist)/sqrt(abs(zm2(ist,ist)))
+      enddo
+      deallocate(zm,zm2)
       Call deleteystem (system)
-      Deallocate (iwork, ifail, w, rwork, v, work)
-      Return
+endif
+
 End Subroutine seceqnfv
 !EOC

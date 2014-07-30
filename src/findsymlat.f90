@@ -158,6 +158,7 @@ Subroutine findsymlat
          Call r3mm (s, ainv, c)
          Call r3mm (input%structure%crystal%basevect, c, symlatc(:, :, &
         & i))
+
       End Do
       Return
 End Subroutine
